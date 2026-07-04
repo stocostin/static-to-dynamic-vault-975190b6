@@ -24,6 +24,7 @@ import { Route as AssetsImagesSplatRouteImport } from './routes/assets.images.$'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
 import { Route as AuthenticatedAdminTestimonialsRouteImport } from './routes/_authenticated/admin.testimonials'
 import { Route as AuthenticatedAdminTeamRouteImport } from './routes/_authenticated/admin.team'
+import { Route as AuthenticatedAdminShopProductsRouteImport } from './routes/_authenticated/admin.shop-products'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminServicesRouteImport } from './routes/_authenticated/admin.services'
 import { Route as AuthenticatedAdminPortfolioRouteImport } from './routes/_authenticated/admin.portfolio'
@@ -119,6 +120,12 @@ const AuthenticatedAdminTeamRoute = AuthenticatedAdminTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminShopProductsRoute =
+  AuthenticatedAdminShopProductsRouteImport.update({
+    id: '/shop-products',
+    path: '/shop-products',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
     id: '/settings',
@@ -252,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/shop-products': typeof AuthenticatedAdminShopProductsRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
   '/api/public/contact': typeof ApiPublicContactRoute
@@ -286,6 +294,7 @@ export interface FileRoutesByTo {
   '/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/shop-products': typeof AuthenticatedAdminShopProductsRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
   '/api/public/contact': typeof ApiPublicContactRoute
@@ -323,6 +332,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
   '/_authenticated/admin/services': typeof AuthenticatedAdminServicesRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/admin/shop-products': typeof AuthenticatedAdminShopProductsRoute
   '/_authenticated/admin/team': typeof AuthenticatedAdminTeamRoute
   '/_authenticated/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
   '/api/public/contact': typeof ApiPublicContactRoute
@@ -360,6 +370,7 @@ export interface FileRouteTypes {
     | '/admin/portfolio'
     | '/admin/services'
     | '/admin/settings'
+    | '/admin/shop-products'
     | '/admin/team'
     | '/admin/testimonials'
     | '/api/public/contact'
@@ -394,6 +405,7 @@ export interface FileRouteTypes {
     | '/admin/portfolio'
     | '/admin/services'
     | '/admin/settings'
+    | '/admin/shop-products'
     | '/admin/team'
     | '/admin/testimonials'
     | '/api/public/contact'
@@ -430,6 +442,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/portfolio'
     | '/_authenticated/admin/services'
     | '/_authenticated/admin/settings'
+    | '/_authenticated/admin/shop-products'
     | '/_authenticated/admin/team'
     | '/_authenticated/admin/testimonials'
     | '/api/public/contact'
@@ -563,6 +576,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/admin/team'
       preLoaderRoute: typeof AuthenticatedAdminTeamRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/shop-products': {
+      id: '/_authenticated/admin/shop-products'
+      path: '/shop-products'
+      fullPath: '/admin/shop-products'
+      preLoaderRoute: typeof AuthenticatedAdminShopProductsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/settings': {
@@ -753,6 +773,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminPortfolioRoute: typeof AuthenticatedAdminPortfolioRoute
   AuthenticatedAdminServicesRoute: typeof AuthenticatedAdminServicesRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedAdminShopProductsRoute: typeof AuthenticatedAdminShopProductsRoute
   AuthenticatedAdminTeamRoute: typeof AuthenticatedAdminTeamRoute
   AuthenticatedAdminTestimonialsRoute: typeof AuthenticatedAdminTestimonialsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -772,6 +793,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminPortfolioRoute: AuthenticatedAdminPortfolioRoute,
   AuthenticatedAdminServicesRoute: AuthenticatedAdminServicesRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
+  AuthenticatedAdminShopProductsRoute: AuthenticatedAdminShopProductsRoute,
   AuthenticatedAdminTeamRoute: AuthenticatedAdminTeamRoute,
   AuthenticatedAdminTestimonialsRoute: AuthenticatedAdminTestimonialsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
