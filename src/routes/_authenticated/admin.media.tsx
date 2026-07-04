@@ -80,7 +80,7 @@ function MediaPage() {
   });
 
   const publicUrl = (a: Asset) =>
-    supabase.storage.from(a.bucket).getPublicUrl(a.storage_path).data.publicUrl;
+    `${typeof window !== "undefined" ? window.location.origin : ""}/media/${a.storage_path}`;
 
   return (
     <div className="p-6 max-w-6xl space-y-4">

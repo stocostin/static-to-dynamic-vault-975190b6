@@ -18,9 +18,9 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MediaSplatRouteImport } from './routes/media.$'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
-import { Route as AssetsImagesSplatRouteImport } from './routes/assets.images.$'
 import { Route as AuthenticatedAdminTestimonialsRouteImport } from './routes/_authenticated/admin.testimonials'
 import { Route as AuthenticatedAdminTeamRouteImport } from './routes/_authenticated/admin.team'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
@@ -30,7 +30,6 @@ import { Route as AuthenticatedAdminPagesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminMessagesRouteImport } from './routes/_authenticated/admin.messages'
 import { Route as AuthenticatedAdminMenusRouteImport } from './routes/_authenticated/admin.menus'
 import { Route as AuthenticatedAdminMediaRouteImport } from './routes/_authenticated/admin.media'
-import { Route as AuthenticatedAdminLegacyImagesRouteImport } from './routes/_authenticated/admin.legacy-images'
 import { Route as AuthenticatedAdminFaqsRouteImport } from './routes/_authenticated/admin.faqs'
 
 const ShopRoute = ShopRouteImport.update({
@@ -77,6 +76,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MediaSplatRoute = MediaSplatRouteImport.update({
+  id: '/media/$',
+  path: '/media/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -86,11 +90,6 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AssetsImagesSplatRoute = AssetsImagesSplatRouteImport.update({
-  id: '/assets/images/$',
-  path: '/assets/images/$',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminTestimonialsRoute =
   AuthenticatedAdminTestimonialsRouteImport.update({
@@ -142,12 +141,6 @@ const AuthenticatedAdminMediaRoute = AuthenticatedAdminMediaRouteImport.update({
   path: '/media',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedAdminLegacyImagesRoute =
-  AuthenticatedAdminLegacyImagesRouteImport.update({
-    id: '/legacy-images',
-    path: '/legacy-images',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
 const AuthenticatedAdminFaqsRoute = AuthenticatedAdminFaqsRouteImport.update({
   id: '/faqs',
   path: '/faqs',
@@ -164,8 +157,8 @@ export interface FileRoutesByFullPath {
   '/services': typeof ServicesRoute
   '/shop': typeof ShopRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/media/$': typeof MediaSplatRoute
   '/admin/faqs': typeof AuthenticatedAdminFaqsRoute
-  '/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/admin/media': typeof AuthenticatedAdminMediaRoute
   '/admin/menus': typeof AuthenticatedAdminMenusRoute
   '/admin/messages': typeof AuthenticatedAdminMessagesRoute
@@ -175,7 +168,6 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
-  '/assets/images/$': typeof AssetsImagesSplatRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -187,8 +179,8 @@ export interface FileRoutesByTo {
   '/portfolio': typeof PortfolioRoute
   '/services': typeof ServicesRoute
   '/shop': typeof ShopRoute
+  '/media/$': typeof MediaSplatRoute
   '/admin/faqs': typeof AuthenticatedAdminFaqsRoute
-  '/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/admin/media': typeof AuthenticatedAdminMediaRoute
   '/admin/menus': typeof AuthenticatedAdminMenusRoute
   '/admin/messages': typeof AuthenticatedAdminMessagesRoute
@@ -198,7 +190,6 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
-  '/assets/images/$': typeof AssetsImagesSplatRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -213,8 +204,8 @@ export interface FileRoutesById {
   '/services': typeof ServicesRoute
   '/shop': typeof ShopRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/media/$': typeof MediaSplatRoute
   '/_authenticated/admin/faqs': typeof AuthenticatedAdminFaqsRoute
-  '/_authenticated/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/_authenticated/admin/media': typeof AuthenticatedAdminMediaRoute
   '/_authenticated/admin/menus': typeof AuthenticatedAdminMenusRoute
   '/_authenticated/admin/messages': typeof AuthenticatedAdminMessagesRoute
@@ -224,7 +215,6 @@ export interface FileRoutesById {
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/team': typeof AuthenticatedAdminTeamRoute
   '/_authenticated/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
-  '/assets/images/$': typeof AssetsImagesSplatRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -239,8 +229,8 @@ export interface FileRouteTypes {
     | '/services'
     | '/shop'
     | '/admin'
+    | '/media/$'
     | '/admin/faqs'
-    | '/admin/legacy-images'
     | '/admin/media'
     | '/admin/menus'
     | '/admin/messages'
@@ -250,7 +240,6 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/team'
     | '/admin/testimonials'
-    | '/assets/images/$'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -262,8 +251,8 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/services'
     | '/shop'
+    | '/media/$'
     | '/admin/faqs'
-    | '/admin/legacy-images'
     | '/admin/media'
     | '/admin/menus'
     | '/admin/messages'
@@ -273,7 +262,6 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/team'
     | '/admin/testimonials'
-    | '/assets/images/$'
     | '/admin'
   id:
     | '__root__'
@@ -287,8 +275,8 @@ export interface FileRouteTypes {
     | '/services'
     | '/shop'
     | '/_authenticated/admin'
+    | '/media/$'
     | '/_authenticated/admin/faqs'
-    | '/_authenticated/admin/legacy-images'
     | '/_authenticated/admin/media'
     | '/_authenticated/admin/menus'
     | '/_authenticated/admin/messages'
@@ -298,7 +286,6 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/team'
     | '/_authenticated/admin/testimonials'
-    | '/assets/images/$'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -312,7 +299,7 @@ export interface RootRouteChildren {
   PortfolioRoute: typeof PortfolioRoute
   ServicesRoute: typeof ServicesRoute
   ShopRoute: typeof ShopRoute
-  AssetsImagesSplatRoute: typeof AssetsImagesSplatRoute
+  MediaSplatRoute: typeof MediaSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -380,6 +367,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/media/$': {
+      id: '/media/$'
+      path: '/media/$'
+      fullPath: '/media/$'
+      preLoaderRoute: typeof MediaSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -393,13 +387,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/assets/images/$': {
-      id: '/assets/images/$'
-      path: '/assets/images/$'
-      fullPath: '/assets/images/$'
-      preLoaderRoute: typeof AssetsImagesSplatRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/testimonials': {
       id: '/_authenticated/admin/testimonials'
@@ -464,13 +451,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminMediaRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/admin/legacy-images': {
-      id: '/_authenticated/admin/legacy-images'
-      path: '/legacy-images'
-      fullPath: '/admin/legacy-images'
-      preLoaderRoute: typeof AuthenticatedAdminLegacyImagesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
     '/_authenticated/admin/faqs': {
       id: '/_authenticated/admin/faqs'
       path: '/faqs'
@@ -483,7 +463,6 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminFaqsRoute: typeof AuthenticatedAdminFaqsRoute
-  AuthenticatedAdminLegacyImagesRoute: typeof AuthenticatedAdminLegacyImagesRoute
   AuthenticatedAdminMediaRoute: typeof AuthenticatedAdminMediaRoute
   AuthenticatedAdminMenusRoute: typeof AuthenticatedAdminMenusRoute
   AuthenticatedAdminMessagesRoute: typeof AuthenticatedAdminMessagesRoute
@@ -498,7 +477,6 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminFaqsRoute: AuthenticatedAdminFaqsRoute,
-  AuthenticatedAdminLegacyImagesRoute: AuthenticatedAdminLegacyImagesRoute,
   AuthenticatedAdminMediaRoute: AuthenticatedAdminMediaRoute,
   AuthenticatedAdminMenusRoute: AuthenticatedAdminMenusRoute,
   AuthenticatedAdminMessagesRoute: AuthenticatedAdminMessagesRoute,
@@ -535,8 +513,18 @@ const rootRouteChildren: RootRouteChildren = {
   PortfolioRoute: PortfolioRoute,
   ServicesRoute: ServicesRoute,
   ShopRoute: ShopRoute,
-  AssetsImagesSplatRoute: AssetsImagesSplatRoute,
+  MediaSplatRoute: MediaSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

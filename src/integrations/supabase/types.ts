@@ -243,11 +243,15 @@ export type Database = {
           canonical_url: string | null
           content_json: Json
           created_at: string
+          excerpt: string | null
+          hero_image_url: string | null
           id: string
           is_published: boolean
+          kind: string
           meta_description: string | null
           meta_keywords: string | null
           og_image_url: string | null
+          published_at: string | null
           seo_title: string | null
           slug: string
           title: string
@@ -257,11 +261,15 @@ export type Database = {
           canonical_url?: string | null
           content_json?: Json
           created_at?: string
+          excerpt?: string | null
+          hero_image_url?: string | null
           id?: string
           is_published?: boolean
+          kind?: string
           meta_description?: string | null
           meta_keywords?: string | null
           og_image_url?: string | null
+          published_at?: string | null
           seo_title?: string | null
           slug: string
           title: string
@@ -271,11 +279,15 @@ export type Database = {
           canonical_url?: string | null
           content_json?: Json
           created_at?: string
+          excerpt?: string | null
+          hero_image_url?: string | null
           id?: string
           is_published?: boolean
+          kind?: string
           meta_description?: string | null
           meta_keywords?: string | null
           og_image_url?: string | null
+          published_at?: string | null
           seo_title?: string | null
           slug?: string
           title?: string
@@ -290,12 +302,15 @@ export type Database = {
           completion_date: string | null
           cover_image_url: string | null
           created_at: string
+          currency: string
           description: string | null
+          for_sale: boolean
           gallery: Json
           id: string
           is_featured: boolean
           is_published: boolean
           meta_description: string | null
+          price_cents: number | null
           seo_title: string | null
           slug: string
           sort_order: number
@@ -308,12 +323,15 @@ export type Database = {
           completion_date?: string | null
           cover_image_url?: string | null
           created_at?: string
+          currency?: string
           description?: string | null
+          for_sale?: boolean
           gallery?: Json
           id?: string
           is_featured?: boolean
           is_published?: boolean
           meta_description?: string | null
+          price_cents?: number | null
           seo_title?: string | null
           slug: string
           sort_order?: number
@@ -326,12 +344,15 @@ export type Database = {
           completion_date?: string | null
           cover_image_url?: string | null
           created_at?: string
+          currency?: string
           description?: string | null
+          for_sale?: boolean
           gallery?: Json
           id?: string
           is_featured?: boolean
           is_published?: boolean
           meta_description?: string | null
+          price_cents?: number | null
           seo_title?: string | null
           slug?: string
           sort_order?: number
