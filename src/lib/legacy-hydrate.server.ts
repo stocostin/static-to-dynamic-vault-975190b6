@@ -626,10 +626,20 @@ async function applyCommon(root: HTMLElement, slug: string, activePath: string) 
   applyHeaderLogo(root, ctx);
   applyLoadingOverlay(root, ctx);
   applyMenus(root, ctx, activePath);
-  applyFooter(root, ctx);
   applyGoogleReview(root, ctx);
   applyHero(root, ctx);
   applyGlobalWhatsApp(root, ctx);
+  // Footer last so the credit URL is not overwritten by the generic WhatsApp
+  // link rewrite above (the credit points to a different wa.me contact).
+  applyFooter(root, ctx);
+
+  const pageMeta = ctx.pages.get(slug);
+  if (pageMeta) {
+    const overrides = await loadPageSections(version, pageMeta.id);
+    if (overrides.length) applySectionOverrides(root, overrides);
+  }
+  return { ctx, version };
+}
 
   const pageMeta = ctx.pages.get(slug);
   if (pageMeta) {
