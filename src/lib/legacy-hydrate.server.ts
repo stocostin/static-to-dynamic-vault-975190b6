@@ -1265,6 +1265,11 @@ export async function hydrateShop(html: string): Promise<string> {
       const featured = products.filter((p) => p.is_featured).slice(0, 6);
       setInner(root, "#featuredProductsContainer", renderProductCards(featured.length ? featured : products.slice(0, 3)));
       setInner(root, "#productsContainer", renderProductCards(products));
+      const cats = Array.from(new Set(products.map((p) => (p.category ?? "").toLowerCase()).filter(Boolean))).sort();
+      const options = [`<option value="all">All Categories</option>`]
+        .concat(cats.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c.charAt(0).toUpperCase() + c.slice(1))}</option>`))
+        .join("");
+      setInner(root, "#categoryFilter", options);
     } else {
       setInner(root, "#featuredProductsContainer", renderProductCards([]));
       setInner(root, "#productsContainer", renderProductCards([]));
