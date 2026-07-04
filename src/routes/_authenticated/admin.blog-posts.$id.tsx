@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/admin/blog-posts/$id")({
 
 function BlogPostEditor() {
   const { id } = Route.useParams();
-  const nav = useNavigate();
+  
   const qc = useQueryClient();
 
   const q = useQuery({
