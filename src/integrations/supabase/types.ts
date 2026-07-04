@@ -364,6 +364,7 @@ export type Database = {
           for_sale: boolean
           gallery: Json
           id: string
+          images: string[]
           is_featured: boolean
           is_published: boolean
           location: string | null
@@ -386,6 +387,7 @@ export type Database = {
           for_sale?: boolean
           gallery?: Json
           id?: string
+          images?: string[]
           is_featured?: boolean
           is_published?: boolean
           location?: string | null
@@ -408,6 +410,7 @@ export type Database = {
           for_sale?: boolean
           gallery?: Json
           id?: string
+          images?: string[]
           is_featured?: boolean
           is_published?: boolean
           location?: string | null
@@ -490,6 +493,7 @@ export type Database = {
           gallery: Json
           id: string
           image_url: string | null
+          images: string[]
           in_stock: boolean
           is_featured: boolean
           is_published: boolean
@@ -507,6 +511,7 @@ export type Database = {
           gallery?: Json
           id?: string
           image_url?: string | null
+          images?: string[]
           in_stock?: boolean
           is_featured?: boolean
           is_published?: boolean
@@ -524,6 +529,7 @@ export type Database = {
           gallery?: Json
           id?: string
           image_url?: string | null
+          images?: string[]
           in_stock?: boolean
           is_featured?: boolean
           is_published?: boolean

@@ -155,7 +155,7 @@ async function loadPortfolio(version: string) {
   return cached("portfolio", version, async () => {
     const { data } = await sb()
       .from("portfolio_projects")
-      .select("slug,title,client,location,category,cover_image_url,is_featured")
+      .select("slug,title,client,location,category,cover_image_url,images,is_featured")
       .eq("is_published", true)
       .order("sort_order", { ascending: true });
     return data ?? [];
@@ -177,7 +177,7 @@ async function loadShopProducts(version: string) {
   return cached("shop_products", version, async () => {
     const { data } = await sb()
       .from("shop_products")
-      .select("slug,title,description,image_url,price_cents,currency,category,in_stock,is_featured")
+      .select("slug,title,description,image_url,images,price_cents,currency,category,in_stock,is_featured")
       .eq("is_published", true)
       .order("sort_order", { ascending: true });
     return data ?? [];
@@ -273,36 +273,54 @@ function renderServiceListLinks(
     .join("");
 }
 
+function pickImages(primary: string | null | undefined, extra: unknown): string[] {
+  const arr = Array.isArray(extra) ? (extra as unknown[]).map((x) => String(x)).filter(Boolean) : [];
+  const list = primary ? [primary, ...arr.filter((u) => u !== primary)] : arr.slice();
+  return list.filter(Boolean);
+}
+
+function rotatingImg(images: string[], fallback: string, alt: string): string {
+  const list = images.length ? images : [fallback];
+  const first = list[0];
+  if (list.length < 2) {
+    return `<img src="${escapeHtml(first)}" alt="${escapeHtml(alt)}">`;
+  }
+  const data = escapeHtml(JSON.stringify(list));
+  return `<div class="auto-rotate" data-images="${data}" style="position:relative;width:100%;height:100%;"><img src="${escapeHtml(first)}" alt="${escapeHtml(alt)}" style="transition:opacity .4s ease;"></div>`;
+}
+
 function renderProjectCards(
-  rows: Array<{ title: string; client: string | null; cover_image_url: string | null }>,
+  rows: Array<{ title: string; client: string | null; cover_image_url: string | null; images?: unknown }>,
 ): string {
   return rows
-    .map(
-      (r) => `
+    .map((r) => {
+      const imgs = pickImages(r.cover_image_url, r.images);
+      return `
                 <div class="project-card">
-                    <img src="${escapeHtml(r.cover_image_url ?? "assets/images/placeholder.jpg")}" alt="${escapeHtml(r.title)}">
+                    ${rotatingImg(imgs, "assets/images/placeholder.jpg", r.title)}
                     <div class="project-info">
                         <h3>${escapeHtml(r.title)}</h3>
                         <p>${escapeHtml(r.client ?? "")}</p>
                         <a href="/portfolio" class="btn-link">View More</a>
                     </div>
-                </div>`,
-    )
+                </div>`;
+    })
     .join("");
 }
 
 function renderPortfolioItems(
-  rows: Array<{ title: string; client: string | null; location?: string | null; category: string | null; cover_image_url: string | null }>,
+  rows: Array<{ title: string; client: string | null; location?: string | null; category: string | null; cover_image_url: string | null; images?: unknown }>,
 ): string {
   return rows
     .map((r) => {
       const cat = (r.category ?? "other").toLowerCase();
-      const img = r.cover_image_url ?? "assets/images/placeholder.jpg";
+      const imgs = pickImages(r.cover_image_url, r.images);
+      const primary = imgs[0] ?? "assets/images/placeholder.jpg";
       const meta = [r.client, r.location].filter(Boolean).join(" · ");
       return `
                 <div class="portfolio-item" data-category="${escapeHtml(cat)}">
-                    <a href="${escapeHtml(img)}" data-lightbox="portfolio" data-title="${escapeHtml(r.title)}">
-                        <img src="${escapeHtml(img)}" alt="${escapeHtml(r.title)}">
+                    <a href="${escapeHtml(primary)}" data-lightbox="portfolio" data-title="${escapeHtml(r.title)}">
+                        ${rotatingImg(imgs, "assets/images/placeholder.jpg", r.title)}
                         <div class="portfolio-overlay">
                             <h3>${escapeHtml(r.title)}</h3>
                             <p>${escapeHtml(meta)}</p>
@@ -383,18 +401,18 @@ function formatPrice(cents: number | null, currency: string): string {
 }
 
 function renderProductCards(
-  rows: Array<{ slug: string; title: string; description: string | null; image_url: string | null; price_cents: number | null; currency: string; category: string | null; in_stock: boolean }>,
+  rows: Array<{ slug: string; title: string; description: string | null; image_url: string | null; images?: unknown; price_cents: number | null; currency: string; category: string | null; in_stock: boolean }>,
 ): string {
   if (!rows.length) return `<div style="grid-column:1/-1;text-align:center;padding:2rem;color:#666;">No products yet.</div>`;
   return rows
     .map((r) => {
-      const img = r.image_url ?? "assets/images/placeholder.jpg";
+      const imgs = pickImages(r.image_url, r.images);
       const cat = (r.category ?? "").toLowerCase();
       const price = formatPrice(r.price_cents, r.currency);
       return `
                 <div class="product-card" data-category="${escapeHtml(cat)}">
                     <div class="product-image">
-                        <img src="${escapeHtml(img)}" alt="${escapeHtml(r.title)}">
+                        ${rotatingImg(imgs, "assets/images/placeholder.jpg", r.title)}
                         ${r.in_stock ? "" : `<span class="out-of-stock">Out of stock</span>`}
                     </div>
                     <div class="product-info">
@@ -1052,8 +1070,10 @@ const PLACEHOLDER_IMG =
 //   - `assets/foo.png` -> `/assets/foo.png` (legacy relative paths 404 on subpages)
 //   - Supabase storage public URL for `admin-uploads` -> `/uploads/<path>` proxy
 //   - Missing placeholder -> inline SVG
+const AUTO_ROTATE_SCRIPT = `<script>(function(){function bind(el){if(el.dataset.rotateBound)return;el.dataset.rotateBound="1";var imgs;try{imgs=JSON.parse(el.getAttribute("data-images")||"[]")}catch(e){return}if(!imgs||imgs.length<2)return;var img=el.querySelector("img");if(!img)return;var i=0;setInterval(function(){i=(i+1)%imgs.length;img.style.opacity="0";setTimeout(function(){img.src=imgs[i];img.style.opacity="1"},350)},3500)}function run(){document.querySelectorAll(".auto-rotate").forEach(bind)}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",run)}else{run()}})();</script>`;
+
 function postProcess(html: string): string {
-  return html
+  const rewritten = html
     .replace(
       /https?:\/\/[^"'\s)]+\/storage\/v1\/object\/public\/admin-uploads\/([^"'\s)]+)/g,
       "/uploads/$1",
@@ -1064,6 +1084,13 @@ function postProcess(html: string): string {
     )
     .replace(/url\((['"]?)assets\//g, "url($1/assets/")
     .replace(/assets\/images\/placeholder\.jpg/g, PLACEHOLDER_IMG);
+  if (rewritten.includes('class="auto-rotate"')) {
+    if (rewritten.includes("</body>")) {
+      return rewritten.replace("</body>", AUTO_ROTATE_SCRIPT + "</body>");
+    }
+    return rewritten + AUTO_ROTATE_SCRIPT;
+  }
+  return rewritten;
 }
 
 async function safe(fn: () => Promise<HTMLElement>, fallback: string): Promise<string> {

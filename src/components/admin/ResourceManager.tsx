@@ -34,6 +34,7 @@ export type FieldType =
   | "boolean"
   | "slug"
   | "image"
+  | "images"
   | "url"
   | "stringlist"
   | "richtext";
@@ -141,9 +142,31 @@ export function ResourceManager({
     const { error } = await supabase.storage.from("admin-uploads").upload(path, file);
     if (error) {
       toast.error(error.message);
-      return;
+      return null;
     }
-    setForm((f) => ({ ...f, [key]: `/uploads/${path}` }));
+    const url = `/uploads/${path}`;
+    setForm((f) => ({ ...f, [key]: url }));
+    return url;
+  };
+
+  const uploadImages = async (files: FileList, key: string) => {
+    const uploaded: string[] = [];
+    for (const file of Array.from(files)) {
+      const ext = file.name.split(".").pop();
+      const path = `${table}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("admin-uploads").upload(path, file);
+      if (error) {
+        toast.error(error.message);
+        continue;
+      }
+      uploaded.push(`/uploads/${path}`);
+    }
+    if (uploaded.length) {
+      setForm((f) => {
+        const cur = Array.isArray(f[key]) ? (f[key] as string[]) : [];
+        return { ...f, [key]: [...cur, ...uploaded] };
+      });
+    }
   };
 
   const submit = () => {
@@ -156,6 +179,9 @@ export function ResourceManager({
       }
       if (f.type === "number") payload[f.key] = v === "" || v == null ? null : Number(v);
       else if (f.type === "boolean") payload[f.key] = !!v;
+      else if (f.type === "images") {
+        payload[f.key] = Array.isArray(v) ? v.filter(Boolean) : [];
+      }
       else if (f.type === "stringlist") {
         if (Array.isArray(v)) payload[f.key] = v;
         else if (typeof v === "string") {
@@ -211,8 +237,8 @@ export function ResourceManager({
               {listQuery.data!.map((row) => (
                 <TableRow key={row.id}>
                   {listColumns.map((c) => (
-                    <TableCell key={c.key} className="max-w-xs truncate">
-                      {renderCell(row[c.key])}
+                    <TableCell key={c.key} className="max-w-xs">
+                      {renderCell(row[c.key], c.key)}
                     </TableCell>
                   ))}
                   <TableCell className="text-right">
@@ -290,6 +316,74 @@ export function ResourceManager({
                       />
                     )}
                   </div>
+                ) : f.type === "images" ? (
+                  <div className="space-y-2">
+                    {Array.isArray(form[f.key]) && (form[f.key] as string[]).length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {(form[f.key] as string[]).map((url, idx) => (
+                          <div key={idx} className="relative group">
+                            <img
+                              src={url}
+                              alt=""
+                              className="h-20 w-20 rounded border object-cover"
+                            />
+                            <div className="absolute inset-x-0 bottom-0 flex justify-between p-0.5 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                type="button"
+                                className="text-white text-xs px-1"
+                                onClick={() => {
+                                  const arr = [...(form[f.key] as string[])];
+                                  if (idx > 0) { [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; setForm({ ...form, [f.key]: arr }); }
+                                }}
+                              >←</button>
+                              <button
+                                type="button"
+                                className="text-white text-xs px-1"
+                                onClick={() => {
+                                  const arr = (form[f.key] as string[]).filter((_, i) => i !== idx);
+                                  setForm({ ...form, [f.key]: arr });
+                                }}
+                              >×</button>
+                              <button
+                                type="button"
+                                className="text-white text-xs px-1"
+                                onClick={() => {
+                                  const arr = [...(form[f.key] as string[])];
+                                  if (idx < arr.length - 1) { [arr[idx + 1], arr[idx]] = [arr[idx], arr[idx + 1]]; setForm({ ...form, [f.key]: arr }); }
+                                }}
+                              >→</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (files && files.length) uploadImages(files, f.key);
+                        e.target.value = "";
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Paste image URL and press Add"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const url = (e.target as HTMLInputElement).value.trim();
+                            if (url) {
+                              const cur = Array.isArray(form[f.key]) ? (form[f.key] as string[]) : [];
+                              setForm({ ...form, [f.key]: [...cur, url] });
+                              (e.target as HTMLInputElement).value = "";
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 ) : f.type === "stringlist" ? (
                   <Textarea
                     rows={5}
@@ -333,15 +427,31 @@ export function ResourceManager({
   );
 }
 
-function renderCell(v: unknown) {
+function renderCell(v: unknown, key?: string) {
   if (v === null || v === undefined) return <span className="text-muted-foreground">—</span>;
+  if (Array.isArray(v)) {
+    const first = v.find((x) => typeof x === "string" && x);
+    if (typeof first === "string") {
+      return (
+        <div className="flex items-center gap-1">
+          <img src={first} alt="" className="h-10 w-10 object-cover rounded border" />
+          {v.length > 1 && <span className="text-xs text-muted-foreground">+{v.length - 1}</span>}
+        </div>
+      );
+    }
+    return <span className="text-muted-foreground">—</span>;
+  }
   if (typeof v === "boolean")
     return v ? (
       <span className="text-green-600">Yes</span>
     ) : (
       <span className="text-muted-foreground">No</span>
     );
-  if (typeof v === "string" && v.startsWith("http") && /\.(png|jpe?g|webp|gif|svg)/i.test(v))
-    return <img src={v} alt="" className="h-8 w-8 object-cover rounded" />;
-  return String(v);
+  if (typeof v === "number" && key && key.endsWith("_cents")) {
+    return <span>KSh {(v / 100).toLocaleString()}</span>;
+  }
+  if (typeof v === "string" && (v.startsWith("/uploads/") || (v.startsWith("http") && /\.(png|jpe?g|webp|gif|svg)/i.test(v)))) {
+    return <img src={v} alt="" className="h-10 w-10 object-cover rounded border" />;
+  }
+  return <span className="truncate block">{String(v)}</span>;
 }
