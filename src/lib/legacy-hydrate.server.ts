@@ -1186,7 +1186,11 @@ export async function hydrateContact(html: string): Promise<string> {
 export async function hydrateBlog(html: string): Promise<string> {
   return safe(async () => {
     const root = parseDoc(html);
-    await applyCommon(root, "blog", "/blog");
+    const { version } = await applyCommon(root, "blog", "/blog");
+    const posts = await loadBlogPosts(version);
+    if (posts.length) {
+      setInner(root, ".blog-grid", renderBlogCards(posts));
+    }
     return root;
   }, html);
 }
@@ -1194,7 +1198,16 @@ export async function hydrateBlog(html: string): Promise<string> {
 export async function hydrateShop(html: string): Promise<string> {
   return safe(async () => {
     const root = parseDoc(html);
-    await applyCommon(root, "shop", "/shop");
+    const { version } = await applyCommon(root, "shop", "/shop");
+    const products = await loadShopProducts(version);
+    if (products.length) {
+      const featured = products.filter((p) => p.is_featured).slice(0, 6);
+      setInner(root, "#featuredProductsContainer", renderProductCards(featured.length ? featured : products.slice(0, 3)));
+      setInner(root, "#productsContainer", renderProductCards(products));
+    } else {
+      setInner(root, "#featuredProductsContainer", renderProductCards([]));
+      setInner(root, "#productsContainer", renderProductCards([]));
+    }
     return root;
   }, html);
 }
