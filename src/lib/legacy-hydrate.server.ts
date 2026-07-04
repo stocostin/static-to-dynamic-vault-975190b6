@@ -291,7 +291,7 @@ function applyFooter(root: HTMLElement, ctx: SiteContext) {
     // Footer social-links
     const social = footer.querySelector(".social-links");
     if (social) {
-      const links = SOCIAL_ICONS.filter((s2) => s.[s2.key] && s[s2.key])
+      const links = SOCIAL_ICONS.filter((s2) => !!s[s2.key])
         .map(
           (s2) =>
             `<a href="${escapeHtml(s[s2.key])}" target="_blank" rel="noopener"><i class="${s2.icon}"></i></a>`,
