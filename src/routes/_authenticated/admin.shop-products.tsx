@@ -11,9 +11,8 @@ export const Route = createFileRoute("/_authenticated/admin/shop-products")({
       defaultValues={{ is_published: true, in_stock: true, currency: "KES", sort_order: 0 }}
       listColumns={[
         { key: "image_url", label: "" },
-        { key: "title", label: "Title" },
-        { key: "category", label: "Category" },
-        { key: "price_cents", label: "Price (cents)" },
+        { key: "title", label: "Product" },
+        { key: "price_cents", label: "Price" },
         { key: "is_featured", label: "Featured" },
         { key: "is_published", label: "Published" },
       ]}
