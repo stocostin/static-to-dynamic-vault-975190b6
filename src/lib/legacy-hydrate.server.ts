@@ -321,11 +321,11 @@ function renderPortfolioItems(
                 <div class="portfolio-item" data-category="${escapeHtml(cat)}">
                     <a href="${escapeHtml(primary)}" data-lightbox="portfolio" data-title="${escapeHtml(r.title)}">
                         ${rotatingImg(imgs, "assets/images/placeholder.jpg", r.title)}
-                        <div class="portfolio-overlay">
-                            <h3>${escapeHtml(r.title)}</h3>
-                            <p>${escapeHtml(meta)}</p>
-                        </div>
                     </a>
+                    <div class="portfolio-info">
+                        <h3>${escapeHtml(r.title)}</h3>
+                        <p>${escapeHtml(meta)}</p>
+                    </div>
                 </div>`;
     })
     .join("");
