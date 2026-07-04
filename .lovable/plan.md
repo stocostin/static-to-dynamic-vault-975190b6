@@ -1,127 +1,70 @@
 
-## Goal
+## Problem
 
-Two problems to solve, in one pass:
+Right now most sections you asked about (About hero, Mission/Vision, Our Story, Process, Team intro; Services page intro & "What We Offer"; Portfolio hero; Shop hero & products; Blog list & post editor; Contact details) are only editable through the generic **Page Sections** screen, which asks for CSS selectors. That is technical and easy to break.
 
-1. **Edits from the CMS don't always show up** on the public site.
-2. **Large parts of the public site are still hardcoded** (hero, "Why choose us", feature cards, service detail blocks, about page, contact form, blog, shop, google-review widget, nav menu, footer links, copyright, WhatsApp CTAs, etc.).
+The plan is to replace that with **one friendly editor per page**, each with named fields that map to the exact blocks on the live site. No visual changes to the public site.
 
-The public site's HTML/CSS/JS stays byte-identical in structure — only the *text/image/link content* is swapped in from the database. The CMS itself gets restructured to make editing all of this easy.
+## What gets added
 
----
+### 1. `/admin/pages/about` — About page editor
+Named fields (all pre-seeded with current copy):
+- Hero: eyebrow, title, subtitle, background image
+- Our Mission: title + body
+- Vision & Objective: title + body (two side-by-side cards, each with title/body)
+- Our Story: title, body, image
+- Our Process: title + repeater of steps (number, title, description)
+- Meet Our Craftsmen: section title + subtitle (the team cards themselves stay wired to the existing **Team** admin)
 
-## Part 1 — Fix "edits don't appear"
+### 2. `/admin/pages/services` — Services page editor
+- Hero: title ("Expert Woodwork Services in Kenya"), subtitle, background image
+- "What We Offer" intro: title + body
+- Per-service detail blocks: title, long description, feature bullets (repeater), image, CTA label + link — one block per service, pulled from and saved back to the existing `services` table (extended with a `features jsonb` and `long_description` column so the block renders identically to today)
+- Bottom CTA: title, body, button label + link
 
-Root cause: the server-side hydration layer has a 30s in-memory cache with no invalidation. On a multi-instance worker each instance also caches independently, so an edit may take up to 30s to appear on some requests and inconsistently across instances.
+### 3. `/admin/pages/portfolio` — Portfolio page editor
+- Hero: title ("Crafted to Impress — See What We Build"), subtitle, background image
+- Filters intro copy
+- Bottom CTA
+- Individual projects continue to be edited on the existing **Portfolio** admin, which already covers title, description, category, location (added), cover image, gallery, completion date, featured flag, sort order. A "Location" text column will be added to `portfolio_projects` since the live cards show it.
 
-Fix:
-- Drop the TTL to **5 seconds**.
-- Add a `content_version` row in `site_settings`, bumped by a lightweight trigger whenever any content table (`site_settings`, `pages`, `services`, `portfolio_projects`, `testimonials`, `team_members`, `faqs`, `menus`, `menu_items`, `page_sections`) is written. Cache keys include this version → any edit invalidates all caches instantly.
-- Send `Cache-Control: no-store` on the hydrated HTML responses so no CDN/browser cache masks fresh edits.
-- Add a small "Preview live site" button in the CMS that opens `/` with `?preview=1`, which bypasses the cache entirely.
+### 4. `/admin/pages/shop` — Shop page editor
+- Hero: title, subtitle, background image
+- Featured products section: title + subtitle + which products are featured (uses `is_featured` flag on products)
+- All products section: title + subtitle
+- Products themselves are managed on a new `/admin/shop-products` screen (title, description, image, gallery, price, currency, in-stock, featured, sort). Backed by a new `shop_products` table so shop items are separate from portfolio pieces.
 
----
+### 5. `/admin/pages/blog` — Blog list + `/admin/blog/$id` post editor
+- Blog list page fields: hero title, subtitle, background image, intro copy
+- New **rich-text editor** (Tiptap) for each post with: bold/italic/underline, headings, lists, links, images (uploaded to the existing `admin-uploads` bucket), quotes, code, alignment
+- Post fields: title, slug, cover image, excerpt, category, tags, author, published_at, is_published, body (rich HTML), SEO title & meta description
+- Backed by a new `blog_posts` table (replaces the earlier idea of storing posts as page_sections)
 
-## Part 2 — Make every section editable
+### 6. `/admin/pages/contact` — Contact page editor
+- Hero: title, subtitle, background image
+- Intro copy
+- Contact details block: address, phone(s), email(s), business hours (repeater: day + hours), Google Maps embed URL
+- "Send us a message" form heading + subtitle + success message text
+- Social icons already live in Settings → Contact & Social
 
-Two mechanisms cover everything without touching visual markup:
+### 7. Admin navigation
+The admin sidebar gets a new **Pages** group with one entry per page above, plus keeps the existing collection managers (Services, Portfolio, Team, Testimonials, FAQs, Messages, Menus, Settings). The old generic "Page Sections" screen stays available under **Advanced** for power users but is no longer the primary way to edit copy.
 
-### A. Extend `site_settings` (global values)
+## How it hooks into the live site
 
-New keys, all optional strings, with sensible defaults preserving current copy:
-
-- Header: `header_logo_url`
-- Hero: `hero_title`, `hero_subtitle`, `hero_bg_1/2/3`, `hero_cta_primary_label/url`, `hero_cta_secondary_label/url`
-- WhatsApp / phone: `whatsapp_number`, `whatsapp_default_message`
-- Google review widget: `google_review_url`, `google_rating_value`, `google_rating_count`, `google_reviews_current`, `google_reviews_goal`, `google_qr_image_url`
-- Footer: `footer_logo_url`, `footer_tagline`, `footer_copyright`, `footer_credit_label`, `footer_credit_url`, plus the existing social + contact keys
-- Loading overlay: `loading_welcome_text`, `loading_tagline`
-- Maps / address: `google_maps_url`
-- Extra socials already present: `social_tiktok`
-
-The Settings admin page is rebuilt into **grouped tabs** (Branding, Hero, Contact & Social, Google Reviews, Footer, SEO defaults) so this doesn't turn into a wall of inputs.
-
-### B. Use `page_sections` for per-page content blocks
-
-Each editable text/image block on a page becomes one row keyed by `(page slug, section_key)`. Fields already exist: `title`, `subtitle`/`body`, `image_url`, `sort_order`, plus a JSON `content` field for lists (e.g. service features, process steps, "Why choose us" cards).
-
-Blocks to seed (existing copy preserved exactly):
-
-- **Home:** `why_choose_us` (list of 4 feature cards), `services_preview_intro`, `featured_projects_intro`, `cta_footer`
-- **Services:** `page_header`, `intro`, `overview`, per-service detail (`doors`, `frames`, `staircases`, `furniture` — heading, description, features list, image, CTA links), `process` (steps list), `cta_footer`
-- **About:** all sections currently in `about.html` (mission, story, values, team intro, CTA)
-- **Portfolio:** `page_header`, `cta_footer`
-- **Contact:** `page_header`, `intro`, `office_hours`, `map_embed_url`, CTA
-- **Blog:** `page_header`, blog posts themselves become `page_sections` rows with `section_type = 'blog_post'` on the `blog` page (title, excerpt, cover, body, published_at) — no schema change
-- **Shop:** `page_header`, product cards as `page_sections` rows with `section_type = 'product'` (title, image, price, url) — no new table; a proper commerce layer is out of scope
-
-### C. Editable navigation via `menus` / `menu_items`
-
-- Hydrate `<header nav ul>` from menu with slug `main`.
-- Hydrate footer "Quick Links" from menu `footer_quick_links`, "Services" from `footer_services`.
-- Seed those three menus with the current hardcoded links so nothing changes visually.
-- New admin screen `/admin/menus/$slug` for reordering/editing items (label, url, sort_order, open_in_new_tab).
-
-### D. Contact form wiring
-
-`contact.html`'s form currently does nothing. Wire it to POST to a small server route that inserts into `contact_messages` (table + admin already exist). Success/error states are shown inline; no visual redesign.
-
-### E. FAQs
-
-FAQs table + admin already exist but aren't rendered. Add an FAQ block to About and Contact pages (hydrated into an existing accordion container if present; otherwise added as a `page_sections` block whose renderer emits the same markup the theme already styles).
-
----
-
-## Part 3 — CMS improvements (visual changes allowed here only)
-
-- Rebuild `/admin/settings` into grouped tabs (Branding / Hero / Contact & Social / Google Reviews / Footer / SEO), image pickers for URL fields, phone/email validation.
-- New `/admin/page-sections` screen: pick a page → see its blocks in order → edit inline (title, body, image, list items via a small repeater). Blocks are pre-seeded so the user sees exactly what's on the live page and can just edit text.
-- New `/admin/menus/$slug` item editor (drag to reorder, add/remove).
-- Every admin form gains an "Open live page" button that opens the corresponding public URL with `?preview=1`.
-- Dashboard shows a "Last edited" list and a "View site" link.
-
----
-
-## Non-goals
-
-- No visual/CSS changes to the public site.
-- No new e-commerce backend (shop items are simple editable cards).
-- No blog rich-text WYSIWYG beyond a textarea (basic HTML allowed); can be upgraded later.
-- No auth/role changes.
-
----
-
-## Technical details
-
-**Migrations (one migration):**
-- `site_settings`: upsert seed rows for every new key above using values pulled from current HTML.
-- `menus` + `menu_items`: seed `main`, `footer_quick_links`, `footer_services` with current links.
-- `page_sections`: seed one row per block listed in Part 2B, with current copy/images.
-- `content_version` row in `site_settings`.
-- Postgres trigger on the listed content tables: `AFTER INSERT/UPDATE/DELETE` → `UPDATE site_settings SET value = extract(epoch from now())::text WHERE key = 'content_version'`.
-- All grants already in place; only add `GRANT SELECT ... TO anon` on `menu_items` and confirm on `page_sections`.
-
-**Hydration layer (`src/lib/legacy-hydrate.server.ts`):**
-- Replace 30s TTL with a version-keyed cache; cache key = `${page}:${content_version}`. Fetch `content_version` fresh on each request (single tiny query).
-- New helpers: `applyGlobals(root, ctx)` — hero, header logo, loading overlay, footer tagline/copyright/credit, WhatsApp/phone/map buttons, google-review widget. `applyMenu(root, sel, menuSlug)` — replace nav `<ul>` contents.
-- Per-page hydrators grow to iterate `page_sections` rows for that slug and route each `section_key` to the correct selector via a small `section_key → selector + renderer` map per page. Missing rows fall back to the current hardcoded HTML (safety net).
-- Response headers: `Cache-Control: no-store`.
-- New file `src/routes/api/public/contact.ts`: POST, Zod-validated, inserts into `contact_messages` via publishable client.
-
-**Admin (`src/routes/_authenticated/`):**
-- Rewrite `admin.settings.tsx` with tabs and grouped keys.
-- New `admin.page-sections.tsx` with a page picker + per-block editor (uses existing `ResourceManager`-style patterns where possible, custom repeater for list-type blocks).
-- New `admin.menus.$slug.tsx` for menu item editing.
-- Add "Open live page" buttons and cache-version indicator ("Live cache: 5s").
-
-**Public site files:** untouched except that the existing hardcoded strings/images serve as the default fallbacks and as the seed data source. No CSS/JS/markup edits.
-
----
+- Each named field is stored as a `page_sections` row with a stable `section_key` (e.g. `about.hero.title`, `services.what_we_offer.body`, `contact.hours`). The hydration layer already reads `page_sections`; it gets a small per-page map from `section_key → live-site selector + renderer` so authors never touch selectors.
+- All new tables get RLS + GRANTs matching existing patterns (editors write, anon reads published rows), and the existing `bump_content_version` trigger is extended to `blog_posts` and `shop_products` so edits appear on the live site within ~1 second.
+- No CSS/HTML/JS changes to the public site — only the hydration map grows and two new tables render into existing markup slots.
 
 ## Deliverable order
 
-1. Migration (schema + seeds + trigger).
-2. Hydration layer upgrade (version cache, globals, menus, page_sections renderers).
-3. Contact form endpoint.
-4. Admin: rebuilt Settings, new Page sections, new Menu items editor.
-5. Manual walk-through: edit one field per page in CMS, confirm it appears on the live page within ~1s.
+1. Migration: add `blog_posts`, `shop_products`, `portfolio_projects.location`, `services.long_description`/`features`, seed `page_sections` rows for every named field above with current copy.
+2. Hydration: extend per-page hydrators with the new `section_key` map; render blog list, blog post detail, shop products, service detail blocks from the new tables.
+3. Admin: new page editors + shop products manager + blog post editor with Tiptap. Sidebar reorganized into "Pages" and "Collections" groups.
+4. Manual walkthrough: edit one field per page, confirm it appears live within ~1s.
+
+## Non-goals
+
+- No visual redesign of the public site.
+- No checkout/payments on the shop (products stay display-only, matching today).
+- No multi-language / draft-preview workflow beyond the existing `is_published` flag.
