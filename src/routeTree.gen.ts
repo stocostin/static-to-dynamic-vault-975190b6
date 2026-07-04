@@ -36,6 +36,7 @@ import { Route as AuthenticatedAdminMediaRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminLegacyImagesRouteImport } from './routes/_authenticated/admin.legacy-images'
 import { Route as AuthenticatedAdminFaqsRouteImport } from './routes/_authenticated/admin.faqs'
 import { Route as AuthenticatedAdminPagesServicesRouteImport } from './routes/_authenticated/admin.pages.services'
+import { Route as AuthenticatedAdminPagesPortfolioRouteImport } from './routes/_authenticated/admin.pages.portfolio'
 import { Route as AuthenticatedAdminPagesAboutRouteImport } from './routes/_authenticated/admin.pages.about'
 
 const ShopRoute = ShopRouteImport.update({
@@ -181,6 +182,12 @@ const AuthenticatedAdminPagesServicesRoute =
     path: '/services',
     getParentRoute: () => AuthenticatedAdminPagesRoute,
   } as any)
+const AuthenticatedAdminPagesPortfolioRoute =
+  AuthenticatedAdminPagesPortfolioRouteImport.update({
+    id: '/portfolio',
+    path: '/portfolio',
+    getParentRoute: () => AuthenticatedAdminPagesRoute,
+  } as any)
 const AuthenticatedAdminPagesAboutRoute =
   AuthenticatedAdminPagesAboutRouteImport.update({
     id: '/about',
@@ -215,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
+  '/admin/pages/portfolio': typeof AuthenticatedAdminPagesPortfolioRoute
   '/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
 }
 export interface FileRoutesByTo {
@@ -243,6 +251,7 @@ export interface FileRoutesByTo {
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
+  '/admin/pages/portfolio': typeof AuthenticatedAdminPagesPortfolioRoute
   '/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
 }
 export interface FileRoutesById {
@@ -274,6 +283,7 @@ export interface FileRoutesById {
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
+  '/_authenticated/admin/pages/portfolio': typeof AuthenticatedAdminPagesPortfolioRoute
   '/_authenticated/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
 }
 export interface FileRouteTypes {
@@ -305,6 +315,7 @@ export interface FileRouteTypes {
     | '/assets/images/$'
     | '/admin/'
     | '/admin/pages/about'
+    | '/admin/pages/portfolio'
     | '/admin/pages/services'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -333,6 +344,7 @@ export interface FileRouteTypes {
     | '/assets/images/$'
     | '/admin'
     | '/admin/pages/about'
+    | '/admin/pages/portfolio'
     | '/admin/pages/services'
   id:
     | '__root__'
@@ -363,6 +375,7 @@ export interface FileRouteTypes {
     | '/assets/images/$'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/pages/about'
+    | '/_authenticated/admin/pages/portfolio'
     | '/_authenticated/admin/pages/services'
   fileRoutesById: FileRoutesById
 }
@@ -571,6 +584,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPagesServicesRouteImport
       parentRoute: typeof AuthenticatedAdminPagesRoute
     }
+    '/_authenticated/admin/pages/portfolio': {
+      id: '/_authenticated/admin/pages/portfolio'
+      path: '/portfolio'
+      fullPath: '/admin/pages/portfolio'
+      preLoaderRoute: typeof AuthenticatedAdminPagesPortfolioRouteImport
+      parentRoute: typeof AuthenticatedAdminPagesRoute
+    }
     '/_authenticated/admin/pages/about': {
       id: '/_authenticated/admin/pages/about'
       path: '/about'
@@ -583,12 +603,15 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminPagesRouteChildren {
   AuthenticatedAdminPagesAboutRoute: typeof AuthenticatedAdminPagesAboutRoute
+  AuthenticatedAdminPagesPortfolioRoute: typeof AuthenticatedAdminPagesPortfolioRoute
   AuthenticatedAdminPagesServicesRoute: typeof AuthenticatedAdminPagesServicesRoute
 }
 
 const AuthenticatedAdminPagesRouteChildren: AuthenticatedAdminPagesRouteChildren =
   {
     AuthenticatedAdminPagesAboutRoute: AuthenticatedAdminPagesAboutRoute,
+    AuthenticatedAdminPagesPortfolioRoute:
+      AuthenticatedAdminPagesPortfolioRoute,
     AuthenticatedAdminPagesServicesRoute: AuthenticatedAdminPagesServicesRoute,
   }
 
