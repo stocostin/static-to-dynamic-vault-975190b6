@@ -396,7 +396,7 @@ function renderBlogCards(
 
 function formatPrice(cents: number | null, currency: string): string {
   if (cents == null) return "";
-  const amount = (cents / 100).toLocaleString("en-KE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const amount = cents.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return `${escapeHtml(currency)} ${amount}`;
 }
 
