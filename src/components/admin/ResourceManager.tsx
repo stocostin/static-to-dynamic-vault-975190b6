@@ -316,6 +316,74 @@ export function ResourceManager({
                       />
                     )}
                   </div>
+                ) : f.type === "images" ? (
+                  <div className="space-y-2">
+                    {Array.isArray(form[f.key]) && (form[f.key] as string[]).length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {(form[f.key] as string[]).map((url, idx) => (
+                          <div key={idx} className="relative group">
+                            <img
+                              src={url}
+                              alt=""
+                              className="h-20 w-20 rounded border object-cover"
+                            />
+                            <div className="absolute inset-x-0 bottom-0 flex justify-between p-0.5 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                type="button"
+                                className="text-white text-xs px-1"
+                                onClick={() => {
+                                  const arr = [...(form[f.key] as string[])];
+                                  if (idx > 0) { [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; setForm({ ...form, [f.key]: arr }); }
+                                }}
+                              >←</button>
+                              <button
+                                type="button"
+                                className="text-white text-xs px-1"
+                                onClick={() => {
+                                  const arr = (form[f.key] as string[]).filter((_, i) => i !== idx);
+                                  setForm({ ...form, [f.key]: arr });
+                                }}
+                              >×</button>
+                              <button
+                                type="button"
+                                className="text-white text-xs px-1"
+                                onClick={() => {
+                                  const arr = [...(form[f.key] as string[])];
+                                  if (idx < arr.length - 1) { [arr[idx + 1], arr[idx]] = [arr[idx], arr[idx + 1]]; setForm({ ...form, [f.key]: arr }); }
+                                }}
+                              >→</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (files && files.length) uploadImages(files, f.key);
+                        e.target.value = "";
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Paste image URL and press Add"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const url = (e.target as HTMLInputElement).value.trim();
+                            if (url) {
+                              const cur = Array.isArray(form[f.key]) ? (form[f.key] as string[]) : [];
+                              setForm({ ...form, [f.key]: [...cur, url] });
+                              (e.target as HTMLInputElement).value = "";
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 ) : f.type === "stringlist" ? (
                   <Textarea
                     rows={5}
