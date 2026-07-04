@@ -31,6 +31,7 @@ import { Route as AuthenticatedAdminPagesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminPageSectionsRouteImport } from './routes/_authenticated/admin.page-sections'
 import { Route as AuthenticatedAdminMessagesRouteImport } from './routes/_authenticated/admin.messages'
 import { Route as AuthenticatedAdminMenusRouteImport } from './routes/_authenticated/admin.menus'
+import { Route as AuthenticatedAdminMenuItemsRouteImport } from './routes/_authenticated/admin.menu-items'
 import { Route as AuthenticatedAdminMediaRouteImport } from './routes/_authenticated/admin.media'
 import { Route as AuthenticatedAdminLegacyImagesRouteImport } from './routes/_authenticated/admin.legacy-images'
 import { Route as AuthenticatedAdminFaqsRouteImport } from './routes/_authenticated/admin.faqs'
@@ -150,6 +151,12 @@ const AuthenticatedAdminMenusRoute = AuthenticatedAdminMenusRouteImport.update({
   path: '/menus',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminMenuItemsRoute =
+  AuthenticatedAdminMenuItemsRouteImport.update({
+    id: '/menu-items',
+    path: '/menu-items',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminMediaRoute = AuthenticatedAdminMediaRouteImport.update({
   id: '/media',
   path: '/media',
@@ -180,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/admin/media': typeof AuthenticatedAdminMediaRoute
+  '/admin/menu-items': typeof AuthenticatedAdminMenuItemsRoute
   '/admin/menus': typeof AuthenticatedAdminMenusRoute
   '/admin/messages': typeof AuthenticatedAdminMessagesRoute
   '/admin/page-sections': typeof AuthenticatedAdminPageSectionsRoute
@@ -205,6 +213,7 @@ export interface FileRoutesByTo {
   '/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/admin/media': typeof AuthenticatedAdminMediaRoute
+  '/admin/menu-items': typeof AuthenticatedAdminMenuItemsRoute
   '/admin/menus': typeof AuthenticatedAdminMenusRoute
   '/admin/messages': typeof AuthenticatedAdminMessagesRoute
   '/admin/page-sections': typeof AuthenticatedAdminPageSectionsRoute
@@ -233,6 +242,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/_authenticated/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/_authenticated/admin/media': typeof AuthenticatedAdminMediaRoute
+  '/_authenticated/admin/menu-items': typeof AuthenticatedAdminMenuItemsRoute
   '/_authenticated/admin/menus': typeof AuthenticatedAdminMenusRoute
   '/_authenticated/admin/messages': typeof AuthenticatedAdminMessagesRoute
   '/_authenticated/admin/page-sections': typeof AuthenticatedAdminPageSectionsRoute
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/admin/faqs'
     | '/admin/legacy-images'
     | '/admin/media'
+    | '/admin/menu-items'
     | '/admin/menus'
     | '/admin/messages'
     | '/admin/page-sections'
@@ -286,6 +297,7 @@ export interface FileRouteTypes {
     | '/admin/faqs'
     | '/admin/legacy-images'
     | '/admin/media'
+    | '/admin/menu-items'
     | '/admin/menus'
     | '/admin/messages'
     | '/admin/page-sections'
@@ -313,6 +325,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/faqs'
     | '/_authenticated/admin/legacy-images'
     | '/_authenticated/admin/media'
+    | '/_authenticated/admin/menu-items'
     | '/_authenticated/admin/menus'
     | '/_authenticated/admin/messages'
     | '/_authenticated/admin/page-sections'
@@ -497,6 +510,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminMenusRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/menu-items': {
+      id: '/_authenticated/admin/menu-items'
+      path: '/menu-items'
+      fullPath: '/admin/menu-items'
+      preLoaderRoute: typeof AuthenticatedAdminMenuItemsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/media': {
       id: '/_authenticated/admin/media'
       path: '/media'
@@ -525,6 +545,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminFaqsRoute: typeof AuthenticatedAdminFaqsRoute
   AuthenticatedAdminLegacyImagesRoute: typeof AuthenticatedAdminLegacyImagesRoute
   AuthenticatedAdminMediaRoute: typeof AuthenticatedAdminMediaRoute
+  AuthenticatedAdminMenuItemsRoute: typeof AuthenticatedAdminMenuItemsRoute
   AuthenticatedAdminMenusRoute: typeof AuthenticatedAdminMenusRoute
   AuthenticatedAdminMessagesRoute: typeof AuthenticatedAdminMessagesRoute
   AuthenticatedAdminPageSectionsRoute: typeof AuthenticatedAdminPageSectionsRoute
@@ -541,6 +562,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminFaqsRoute: AuthenticatedAdminFaqsRoute,
   AuthenticatedAdminLegacyImagesRoute: AuthenticatedAdminLegacyImagesRoute,
   AuthenticatedAdminMediaRoute: AuthenticatedAdminMediaRoute,
+  AuthenticatedAdminMenuItemsRoute: AuthenticatedAdminMenuItemsRoute,
   AuthenticatedAdminMenusRoute: AuthenticatedAdminMenusRoute,
   AuthenticatedAdminMessagesRoute: AuthenticatedAdminMessagesRoute,
   AuthenticatedAdminPageSectionsRoute: AuthenticatedAdminPageSectionsRoute,
