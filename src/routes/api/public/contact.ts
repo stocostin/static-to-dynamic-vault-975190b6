@@ -58,9 +58,10 @@ export const Route = createFileRoute("/api/public/contact")({
         const { error } = await sb.from("contact_messages").insert({
           name: d.name,
           phone: d.phone || null,
-          email: d.email || null,
-          service_interest: d.service || null,
+          email: d.email || "",
+          subject: d.service ? `Interest: ${d.service}` : null,
           message: d.message,
+          source_page: "/contact",
         });
         if (error) {
           console.error("[contact] insert failed", error);
