@@ -1,46 +1,66 @@
-## Why images aren't showing
+## Goal
 
-Three separate bugs, all fixable in one pass:
+Support multiple auto-rotating images per shop product and per portfolio project, and clean up the CMS list views to show a thumbnail instead of the raw URL.
 
-**1. Legacy image paths are relative, so they 404 on every subpage.**
-The static HTML uses `src="assets/images/logo.png"` (no leading slash). On `/about` the browser resolves that to `/about/assets/images/logo.png` → 404. The `/assets/images/*` server route only fires when the path starts with `/assets/`.
+## 1. Database — add `images` array
 
-**2. The `admin-uploads` bucket is private, but the CMS hands out public URLs.**
-`PageEditor`, `ResourceManager`, and `RichTextEditor` all call `supabase.storage.from("admin-uploads").getPublicUrl(...)`. That URL returns 400/403 because the bucket is not public — so every image uploaded via the CMS breaks the moment it's rendered.
+One migration adds a `images text[] not null default '{}'` column to both `shop_products` and `portfolio_projects`. Existing single `image_url` / `cover_image_url` stays as the primary/first image so nothing already saved disappears; the array holds the full ordered gallery (including the primary).
 
-**3. Placeholder fallback uses a relative path too.**
-`legacy-hydrate.server.ts` falls back to `assets/images/placeholder.jpg` for missing images. Same 404 problem, and the placeholder file doesn't exist.
+## 2. CMS editor — multi-image field
 
-## Fix
+Add a new `"images"` field type to `ResourceManager` (`src/components/admin/ResourceManager.tsx`):
 
-Three surgical changes, no visual changes to the site:
+- Renders the list of current image URLs as small thumbnails with a remove (×) button on each and drag-free up/down reorder arrows.
+- One file input that accepts `multiple` — each selected file uploads to `admin-uploads` via the existing helper and appends `/uploads/<path>` to the array.
+- Also accepts a pasted URL via an "Add URL" input.
+- Stored as `text[]`.
 
-### a. Make `admin-uploads` public so CMS-uploaded images actually load
+Wire it into:
+- `src/routes/_authenticated/admin.shop-products.tsx` — add `{ key: "images", label: "Gallery images", type: "images", help: "First image is the main/cover" }`.
+- `src/routes/_authenticated/admin.portfolio.tsx` — same field, labelled "Gallery images".
 
-Flip the bucket to public via `storage_update_bucket`. Read policies stay open; write/delete policies keep requiring admin/editor role, so admins are still the only ones who can upload. After this, every `getPublicUrl(...)` URL already stored (and any future upload) resolves.
+Keep the existing single `image_url` / `cover_image_url` fields so the primary image is explicit and legacy rows keep working. On save, if `images` is empty but a single image exists, we mirror it into `images[0]`; if the single field is empty but `images[0]` exists, we mirror it back. This keeps the public renderer (which currently reads only the single field) working unchanged until it's updated in step 4.
 
-If the workspace blocks public buckets, fall back to switching the three upload helpers to `createSignedUrl(..., 60*60*24*365)` and store the signed URL. Bucket-public is the cleaner default.
+## 3. CMS list view — thumbnail + tighter columns
 
-### b. Normalize legacy image paths in the hydrator
+Update `renderCell` in `ResourceManager.tsx` so that when a column value is either an `/uploads/...` path OR an `http(s)` image URL OR an array of image URLs, it renders a 40×40 rounded thumbnail (first image if array) instead of the truncated string. Also drop the `max-w-xs truncate` on the image column.
+
+Then update the `listColumns` for both admin routes:
+
+- `admin.shop-products.tsx` →
+  ```
+  { key: "image_url", label: "" },
+  { key: "title", label: "Product" },
+  { key: "price_cents", label: "Price" },
+  { key: "is_featured", label: "Featured" },
+  { key: "is_published", label: "Published" },
+  ```
+  Price gets a small formatter in `renderCell` — if the column key ends with `_cents` and value is a number, show `KSh {value/100}`.
+- `admin.portfolio.tsx` →
+  ```
+  { key: "cover_image_url", label: "" },
+  { key: "title", label: "Project" },
+  { key: "category", label: "Category" },
+  { key: "is_featured", label: "Featured" },
+  { key: "is_published", label: "Published" },
+  ```
+
+## 4. Public site — auto-rotating gallery
 
 In `src/lib/legacy-hydrate.server.ts`:
 
-- Add a small `normalizeImg(url)` helper: if the URL is empty → return the CDN placeholder; if it starts with `assets/` → prepend `/`; if it starts with `http`, `/`, `data:`, or `blob:` → leave alone.
-- Run it on every `image_url`/`cover_image_url`/`photo_url` before it's written into `src=`, and on the `site_settings` `header_logo_url` / `footer_logo_url` / `hero_bg_*` / `google_qr_image_url` values.
-- After all mutations, do one final sweep on the whole document that rewrites any remaining `src="assets/…"` / `href="assets/…"` / `url('assets/…')` (in inline styles) to leading-slash form. This catches images inside legacy blocks the hydrator doesn't touch (e.g. footer logo, feature icons).
-
-### c. Replace the missing placeholder
-
-Change the hardcoded `"assets/images/placeholder.jpg"` fallbacks in `renderPortfolioCards`, `renderPortfolioListCards`, `renderServiceDetailBlock`, `renderBlogCards`, `renderProductCards`, and `renderTeamCards` to a real inline SVG data URL (a light-gray 4:3 "Image" tile). No file needed, no 404, and it disappears the moment an admin uploads a real image.
-
-## Verification
-
-- Open `/`, `/about`, `/services`, `/portfolio`, `/shop`, `/blog`, `/contact` — logo, hero background, service images, team photos, and any CMS-uploaded image all render (given the corresponding legacy files have been uploaded via `/admin/legacy-images`; if not, the placeholder shows instead of a broken icon).
-- Upload a fresh image in `/admin/pages/about` → hero image field → save → reload `/about`: the new image appears.
-- Same for `/admin/services` (service card image), `/admin/portfolio` (project cover), `/admin/blog-posts/:id` (cover + inline rich-text images), `/admin/shop-products` (product photo).
+- `renderProductCards` and `renderPortfolioCards` / `renderPortfolioListCards`: when `images` has 2+ entries, emit the card image as a small `<div class="auto-rotate" data-images='["url1","url2",...]'>` wrapping an `<img>` set to the first image. Single-image rows render unchanged.
+- Inject a tiny inline `<script>` at the end of the hydrated body that finds every `.auto-rotate`, parses `data-images`, and swaps the `<img src>` every 3.5s with a short CSS opacity transition. No dependencies, no framework — safe inside the legacy HTML.
+- Same treatment on the service-detail and portfolio-detail hero when those pages have multiple images (portfolio only for now — services stays single-image unless asked).
 
 ## Out of scope
 
-- No visual/styling changes to the public site.
-- No new admin screens.
-- Doesn't re-upload the legacy image files themselves — the admin does that once at `/admin/legacy-images`. This plan only makes sure that once they're uploaded, they render everywhere, and that any image uploaded via the CMS from now on renders too.
+- No visual redesign of the shop or portfolio cards themselves.
+- No lightbox / click-to-zoom.
+- No reordering by drag; up/down arrows only.
+
+## Technical notes
+
+- The new column is `text[]`, so `ResourceManager`'s save path needs the same array handling used for `stringlist` (it already branches on `Array.isArray`); the `images` type reuses that branch and just skips the newline-split fallback.
+- `renderCell` image detection: `typeof v === "string" && (v.startsWith("/uploads/") || v.startsWith("http"))` — the existing regex only matched http URLs with image extensions, which is why `/uploads/...` currently renders as raw text.
+- The auto-rotate script is idempotent (guards on `dataset.rotateBound`) so re-hydration on client nav won't stack intervals.
