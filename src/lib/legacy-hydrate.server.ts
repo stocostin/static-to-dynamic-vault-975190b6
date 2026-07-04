@@ -286,7 +286,7 @@ function rotatingImg(images: string[], fallback: string, alt: string): string {
     return `<img src="${escapeHtml(first)}" alt="${escapeHtml(alt)}">`;
   }
   const data = escapeHtml(JSON.stringify(list));
-  return `<div class="auto-rotate" data-images="${data}" style="position:relative;width:100%;height:100%;"><img src="${escapeHtml(first)}" alt="${escapeHtml(alt)}" style="transition:opacity .4s ease;"></div>`;
+  return `<img class="auto-rotate" data-images="${data}" src="${escapeHtml(first)}" alt="${escapeHtml(alt)}" style="transition:opacity .4s ease;">`;
 }
 
 function renderProjectCards(
