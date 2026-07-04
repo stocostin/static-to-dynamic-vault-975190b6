@@ -1,22 +1,26 @@
-## Working search, category filter, and pagination on /shop
+### Goal
+Restructure the portfolio project cards so the project name and description appear **below** the image as a static caption, instead of the current hover overlay.
 
-The shop template already has `#searchInput`, `#categoryFilter`, `#productsContainer`, and `#paginationContainer` in `src/legacy/shop.html`, but nothing wires them up (the old `shop.js` was stripped). All CMS products are currently rendered into `#productsContainer` at once with no controls.
+### Changes
 
-### Changes (all in `src/lib/legacy-hydrate.server.ts`)
+#### 1. HTML structure (`src/legacy/portfolio.html`)
+Move the `.portfolio-overlay` divs (containing `<h3>` and `<p>`) outside the lightbox `<a>` tag so they sit as a sibling below the image. Change `.portfolio-overlay` to a static info block (e.g., `.portfolio-info`) inside `.portfolio-item`.
 
-1. **Tag each product card with filter data** in `renderProductCards`: add `data-title`, `data-category`, and `data-desc` to the outer `.product-card` so the client script can filter without re-parsing text.
+#### 2. Server-side rendering (`src/lib/legacy-hydrate.server.ts`)
+Update `renderPortfolioItems()` to emit the same restructured markup: the image/rotating image inside the lightbox `<a>`, and the title + meta text in a separate `<div class="portfolio-info">` below the `<a>`.
 
-2. **Populate the category dropdown from real data** in `hydrateShop`: build the unique sorted list of `category` values from the fetched products and rewrite `#categoryFilter`'s `<option>` list to `All Categories` + one option per real category (slug value, human label). Keeps `all` as the default value.
+#### 3. CSS (`public/assets/css/style.css`)
+- Remove absolute positioning and hover-transform rules from `.portfolio-overlay` / `.portfolio-info`.
+- Convert `.portfolio-item` from a fixed-height container to a card-style layout where the image is at the top and the info block sits naturally below it.
+- Keep the image at a consistent aspect ratio (e.g., `height: 220px`, `object-fit: cover`).
+- Style `.portfolio-info` with padding, background, and readable text color.
+- Ensure the existing `.portfolio-filter` JS logic (in `public/assets/js/main.js`) continues to work by keeping `data-category` on `.portfolio-item` and `display: none` behavior unchanged.
 
-3. **Inject a shop controls script** (appended once, alongside the existing auto-rotate script) that:
-   - Reads every `.product-card` inside `#productsContainer` into an in-memory array.
-   - On `input` in `#searchInput`, `change` in `#categoryFilter`, click on `#searchBtn`, and pagination clicks: filter by category (`all` = no filter) and case-insensitive substring match on title + description, then paginate at **15 per page**.
-   - Renders `#paginationContainer` as `‹ Prev | 1 2 3 … | Next ›` buttons with the current page highlighted; hides the container when there is only one page.
-   - Resets to page 1 whenever search/filter changes; scrolls the grid into view on page change.
-   - Shows an empty-state message inside `#productsContainer` when no products match.
-
-Featured products section is untouched — pagination applies only to `#productsContainer` (All Products).
+#### 4. Verification
+Check that:
+- Filter buttons still hide/show items correctly.
+- Lightbox clicks still open from the image.
+- Layout is responsive and text is clearly visible without hovering.
 
 ### Out of scope
-- No URL search-param state (kept simple, client-only). Can add `?page=&q=&cat=` later if needed.
-- No changes to admin, card styling, or WhatsApp button.
+No changes to the filter buttons, lightbox library, or other sections of the page.
