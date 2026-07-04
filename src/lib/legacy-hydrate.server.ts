@@ -155,7 +155,7 @@ async function loadPortfolio(version: string) {
   return cached("portfolio", version, async () => {
     const { data } = await sb()
       .from("portfolio_projects")
-      .select("slug,title,client,location,category,cover_image_url,is_featured")
+      .select("slug,title,client,location,category,cover_image_url,images,is_featured")
       .eq("is_published", true)
       .order("sort_order", { ascending: true });
     return data ?? [];
@@ -177,7 +177,7 @@ async function loadShopProducts(version: string) {
   return cached("shop_products", version, async () => {
     const { data } = await sb()
       .from("shop_products")
-      .select("slug,title,description,image_url,price_cents,currency,category,in_stock,is_featured")
+      .select("slug,title,description,image_url,images,price_cents,currency,category,in_stock,is_featured")
       .eq("is_published", true)
       .order("sort_order", { ascending: true });
     return data ?? [];
