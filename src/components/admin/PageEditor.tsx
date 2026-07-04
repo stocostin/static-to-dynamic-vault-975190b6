@@ -144,19 +144,20 @@ export function PageEditor({ spec }: { spec: PageEditorSpec }) {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{spec.pageTitle}</h1>
+    <div className="p-4 sm:p-6 space-y-6 max-w-4xl">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-semibold">{spec.pageTitle}</h1>
           {spec.intro && <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{spec.intro}</p>}
         </div>
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="shrink-0 self-start sm:self-auto">
           <a href={spec.liveUrl} target="_blank" rel="noreferrer">
             <ExternalLink className="h-4 w-4 mr-2" />
             Open live page
           </a>
         </Button>
       </div>
+
 
       {spec.sections.map((s) => {
         const content = state[s.key] ?? {};
