@@ -1,21 +1,20 @@
-## Preserve the original green "Request Quote" button on shop cards
+## Show prices as whole units with 2 decimals
 
-The CMS-rendered product cards currently emit `<a class="btn btn-primary">Enquire on WhatsApp</a>`, which reverted to the site's default primary style after the legacy `shop.js` was stripped. The original green pill button with the WhatsApp icon and "Request Quote" label is already styled in `public/assets/css/shop.css` as `.quote-btn`.
+Currently `price_cents` is treated as cents (divided by 100), so entering `450` renders as `KSh 5`. Switch to whole-unit storage with 2-decimal display so `450` → `KSh 450.00`.
 
-### Change
+### Changes
 
-In `src/lib/legacy-hydrate.server.ts`, inside `renderProductCards`, replace the button markup with:
+1. **`src/lib/legacy-hydrate.server.ts` — `formatPrice`** (line 397): stop dividing by 100; format with `minimumFractionDigits: 2, maximumFractionDigits: 2`.
+   ```ts
+   const amount = cents.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+   ```
 
-```html
-<a href="https://wa.me/254721499606?text=..." target="_blank" class="quote-btn">
-  <i class="fab fa-whatsapp"></i> Request Quote
-</a>
-```
+2. **`src/components/admin/ResourceManager.tsx`** (line 450): the `_cents` display helper also divides by 100 — update it to render the raw value with 2 decimals so the admin table matches the site.
 
-That's the only change. Same href, same target, same message text — just the class and label/icon are restored so the existing `.quote-btn` CSS renders the green pill exactly as it looked before.
+3. **`src/routes/_authenticated/admin.shop-products.tsx`** (line 26): update the field label/help to say "Price (KSh)" with example `450 = KSh 450.00` — no more "cents" wording.
+
+Column key stays `price_cents` (no DB migration) to avoid rewriting the schema and existing rows. Existing rows that used the old cents convention will need to be re-entered by the user; that's expected since the display convention is changing.
 
 ### Out of scope
-
-- No changes to product card layout, images, price, or other buttons.
-- No CSS edits — `.quote-btn` already exists in `shop.css`.
-- No changes to portfolio or home cards.
+- No DB migration or column rename.
+- No changes to portfolio, currency selector, or button styling.
