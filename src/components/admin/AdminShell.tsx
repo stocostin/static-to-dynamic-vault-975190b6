@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
 import {
   LayoutDashboard,
   FileText,
@@ -70,8 +72,52 @@ const groups: NavGroup[] = [
   },
 ];
 
+function NavContent({ pathname, onNavigate, onSignOut }: { pathname: string; onNavigate?: () => void; onSignOut: () => void }) {
+  return (
+    <>
+      <nav className="flex-1 overflow-y-auto p-2 space-y-3">
+        {groups.map((g) => (
+          <div key={g.label} className="space-y-0.5">
+            <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {g.label}
+            </div>
+            {g.items.map((item) => {
+              const active = item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(item.to + "/");
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to as never}
+                  onClick={onNavigate}
+                  className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors ${
+                    active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  }`}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+      <div className="p-2 border-t space-y-1">
+        <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+          <a href="/" target="_blank" rel="noreferrer">
+            <Globe className="h-4 w-4 mr-2" /> View site
+          </a>
+        </Button>
+        <Button variant="ghost" size="sm" className="w-full justify-start" onClick={onSignOut}>
+          <LogOut className="h-4 w-4 mr-2" /> Sign out
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export function AdminShell() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const [open, setOpen] = useState(false);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -80,51 +126,41 @@ export function AdminShell() {
 
   return (
     <div className="min-h-screen flex w-full bg-muted/30">
-      <aside className="w-60 border-r bg-card flex flex-col">
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex w-60 border-r bg-card flex-col shrink-0">
         <div className="px-5 py-4 border-b">
           <Link to="/admin" className="text-base font-semibold">
             Shachavir CMS
           </Link>
         </div>
-        <nav className="flex-1 overflow-y-auto p-2 space-y-3">
-          {groups.map((g) => (
-            <div key={g.label} className="space-y-0.5">
-              <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {g.label}
-              </div>
-              {g.items.map((item) => {
-                const active = item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(item.to + "/");
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to as never}
-                    className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors ${
-                      active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
-        <div className="p-2 border-t space-y-1">
-          <Button asChild variant="ghost" size="sm" className="w-full justify-start">
-            <a href="/" target="_blank" rel="noreferrer">
-              <Globe className="h-4 w-4 mr-2" /> View site
-            </a>
-          </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" /> Sign out
-          </Button>
-        </div>
+        <NavContent pathname={pathname} onSignOut={signOut} />
       </aside>
-      <main className="flex-1 overflow-x-hidden">
-        <Outlet />
-      </main>
+
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile top bar */}
+        <header className="lg:hidden sticky top-0 z-30 flex items-center gap-2 border-b bg-card px-3 py-2">
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Open menu">
+                <MenuIcon className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-72 p-0 flex flex-col">
+              <SheetHeader className="px-5 py-4 border-b">
+                <SheetTitle className="text-left text-base">Shachavir CMS</SheetTitle>
+              </SheetHeader>
+              <NavContent pathname={pathname} onNavigate={() => setOpen(false)} onSignOut={signOut} />
+            </SheetContent>
+          </Sheet>
+          <Link to="/admin" className="text-sm font-semibold truncate">
+            Shachavir CMS
+          </Link>
+        </header>
+
+        <main className="flex-1 overflow-x-hidden min-w-0">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
