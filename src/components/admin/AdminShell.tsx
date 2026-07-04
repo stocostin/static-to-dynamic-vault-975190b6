@@ -55,7 +55,7 @@ export function AdminShell() {
             return (
               <Link
                 key={item.to}
-                to={item.to}
+                to={item.to as never}
                 className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
                   active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 }`}
@@ -63,6 +63,7 @@ export function AdminShell() {
                 <Icon className="h-4 w-4" />
                 {item.label}
               </Link>
+
             );
           })}
         </nav>
