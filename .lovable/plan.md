@@ -1,70 +1,39 @@
+## Goal
 
-## Problem
+Seed the database with all the content that currently lives in the legacy HTML files, so the CMS shows the real site copy (not empty fields) and admins edit existing content instead of retyping it from scratch.
 
-Right now most sections you asked about (About hero, Mission/Vision, Our Story, Process, Team intro; Services page intro & "What We Offer"; Portfolio hero; Shop hero & products; Blog list & post editor; Contact details) are only editable through the generic **Page Sections** screen, which asks for CSS selectors. That is technical and easy to break.
+## What went wrong
 
-The plan is to replace that with **one friendly editor per page**, each with named fields that map to the exact blocks on the live site. No visual changes to the public site.
+When the schema-driven `PageEditor` and new tables (`blog_posts`, `shop_products`, extended `services`/`portfolio_projects`) were introduced, hydration started reading from DB rows. The rows were mostly empty, so the live site fell back to whatever the templating left in place — and the CMS forms showed blank fields. You expected the existing website copy to be pre-populated in the CMS.
 
-## What gets added
+## Fix — one seeding migration
 
-### 1. `/admin/pages/about` — About page editor
-Named fields (all pre-seeded with current copy):
-- Hero: eyebrow, title, subtitle, background image
-- Our Mission: title + body
-- Vision & Objective: title + body (two side-by-side cards, each with title/body)
-- Our Story: title, body, image
-- Our Process: title + repeater of steps (number, title, description)
-- Meet Our Craftsmen: section title + subtitle (the team cards themselves stay wired to the existing **Team** admin)
+Parse each legacy HTML file and write the content into the matching table/row. Use `INSERT ... ON CONFLICT DO UPDATE` guarded by "only overwrite when the current DB value is NULL/empty" so this is safe to re-run and never clobbers content an admin has already edited.
 
-### 2. `/admin/pages/services` — Services page editor
-- Hero: title ("Expert Woodwork Services in Kenya"), subtitle, background image
-- "What We Offer" intro: title + body
-- Per-service detail blocks: title, long description, feature bullets (repeater), image, CTA label + link — one block per service, pulled from and saved back to the existing `services` table (extended with a `features jsonb` and `long_description` column so the block renders identically to today)
-- Bottom CTA: title, body, button label + link
+### Data to seed (source → destination)
 
-### 3. `/admin/pages/portfolio` — Portfolio page editor
-- Hero: title ("Crafted to Impress — See What We Build"), subtitle, background image
-- Filters intro copy
-- Bottom CTA
-- Individual projects continue to be edited on the existing **Portfolio** admin, which already covers title, description, category, location (added), cover image, gallery, completion date, featured flag, sort order. A "Location" text column will be added to `portfolio_projects` since the live cards show it.
+1. **`src/legacy/about.html`** → `page_sections` rows keyed `about:hero`, `about:our_story`, `about:mission_vision` (mission/vision/objective titles + bodies), `about:process` (title, intro, `steps[]` repeater, summary), `about:team_intro`.
+2. **`src/legacy/services.html`** → `page_sections` rows `services:hero`, `services:what_we_offer`, `services:cta_footer`; plus one row per service card into `services` (title, short + long description, `features` jsonb bullet list, image_url, CTA label/url, display_order, is_active).
+3. **`src/legacy/portfolio.html`** → `page_sections` rows `portfolio:hero`, `portfolio:filters_intro`, `portfolio:cta_footer`; plus each project card into `portfolio_projects` (title, description, category, location, image_url, order).
+4. **`src/legacy/shop.html`** → `page_sections` rows `shop:hero`, `shop:featured`, `shop:all_products`; plus each product card into `shop_products` (name, description, price, image_url, category, is_featured, is_active, order).
+5. **`src/legacy/blog.html`** → `page_sections` rows `blog:hero`, `blog:intro`; plus each existing article card into `blog_posts` (title, slug, excerpt, cover image, category, body_html — from the article body if present, otherwise the card excerpt as a placeholder paragraph, `is_published = true`, `published_at = now()`).
+6. **`src/legacy/contact.html`** → `page_sections` rows `contact:hero`, `contact:intro`, `contact:details` (address, phones, emails, map embed url), `contact:hours` (repeater), `contact:form` (heading, subtitle, success message).
+7. **`src/legacy/index.html`** + shared chrome → `site_settings` keys already used by hydration (brand, hero, contact/social, footer, google reviews) only when currently empty.
+8. **Team, testimonials, FAQs** → seed rows from `about.html` / `index.html` into `team_members`, `testimonials`, `faqs` when those tables are empty.
 
-### 4. `/admin/pages/shop` — Shop page editor
-- Hero: title, subtitle, background image
-- Featured products section: title + subtitle + which products are featured (uses `is_featured` flag on products)
-- All products section: title + subtitle
-- Products themselves are managed on a new `/admin/shop-products` screen (title, description, image, gallery, price, currency, in-stock, featured, sort). Backed by a new `shop_products` table so shop items are separate from portfolio pieces.
+### Safety rules for the seed
 
-### 5. `/admin/pages/blog` — Blog list + `/admin/blog/$id` post editor
-- Blog list page fields: hero title, subtitle, background image, intro copy
-- New **rich-text editor** (Tiptap) for each post with: bold/italic/underline, headings, lists, links, images (uploaded to the existing `admin-uploads` bucket), quotes, code, alignment
-- Post fields: title, slug, cover image, excerpt, category, tags, author, published_at, is_published, body (rich HTML), SEO title & meta description
-- Backed by a new `blog_posts` table (replaces the earlier idea of storing posts as page_sections)
+- Every insert uses a stable natural key (`section_key`, `slug`, or `(title, display_order)`) with `ON CONFLICT DO UPDATE SET col = COALESCE(NULLIF(target.col, ''), EXCLUDED.col)` so admin edits are preserved.
+- No table is truncated. No existing row is deleted.
+- Runs inside a single migration so approval is one click, and `bump_content_version` fires once at the end to refresh the public cache.
 
-### 6. `/admin/pages/contact` — Contact page editor
-- Hero: title, subtitle, background image
-- Intro copy
-- Contact details block: address, phone(s), email(s), business hours (repeater: day + hours), Google Maps embed URL
-- "Send us a message" form heading + subtitle + success message text
-- Social icons already live in Settings → Contact & Social
+### Deliverable
 
-### 7. Admin navigation
-The admin sidebar gets a new **Pages** group with one entry per page above, plus keeps the existing collection managers (Services, Portfolio, Team, Testimonials, FAQs, Messages, Menus, Settings). The old generic "Page Sections" screen stays available under **Advanced** for power users but is no longer the primary way to edit copy.
+One new migration file that performs the seed described above. No changes to the public site's styling, no changes to hydration logic, no new admin screens.
 
-## How it hooks into the live site
+## Verification
 
-- Each named field is stored as a `page_sections` row with a stable `section_key` (e.g. `about.hero.title`, `services.what_we_offer.body`, `contact.hours`). The hydration layer already reads `page_sections`; it gets a small per-page map from `section_key → live-site selector + renderer` so authors never touch selectors.
-- All new tables get RLS + GRANTs matching existing patterns (editors write, anon reads published rows), and the existing `bump_content_version` trigger is extended to `blog_posts` and `shop_products` so edits appear on the live site within ~1 second.
-- No CSS/HTML/JS changes to the public site — only the hydration map grows and two new tables render into existing markup slots.
-
-## Deliverable order
-
-1. Migration: add `blog_posts`, `shop_products`, `portfolio_projects.location`, `services.long_description`/`features`, seed `page_sections` rows for every named field above with current copy.
-2. Hydration: extend per-page hydrators with the new `section_key` map; render blog list, blog post detail, shop products, service detail blocks from the new tables.
-3. Admin: new page editors + shop products manager + blog post editor with Tiptap. Sidebar reorganized into "Pages" and "Collections" groups.
-4. Manual walkthrough: edit one field per page, confirm it appears live within ~1s.
-
-## Non-goals
-
-- No visual redesign of the public site.
-- No checkout/payments on the shop (products stay display-only, matching today).
-- No multi-language / draft-preview workflow beyond the existing `is_published` flag.
+After the migration runs:
+- Open `/admin/pages/about`, `/services`, `/portfolio`, `/shop`, `/blog`, `/contact` — every field is pre-filled with the copy from the legacy HTML.
+- Open `/admin/services`, `/admin/portfolio`, `/admin/shop-products`, `/admin/blog-posts`, `/admin/team`, `/admin/testimonials`, `/admin/faqs` — rows already exist, each editable.
+- Live pages render identically to before (the hydrator now finds the same text in the DB that used to be inline).
