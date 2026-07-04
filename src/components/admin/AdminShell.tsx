@@ -29,6 +29,7 @@ const nav: { to: string; label: string; icon: typeof LayoutDashboard; exact?: bo
   { to: "/admin/messages", label: "Messages", icon: Inbox },
   { to: "/admin/media", label: "Media", icon: ImageIcon },
   { to: "/admin/settings", label: "Site Settings", icon: Settings },
+  { to: "/admin/legacy-images", label: "Legacy images (temp)", icon: ImageIcon },
 ];
 
 
