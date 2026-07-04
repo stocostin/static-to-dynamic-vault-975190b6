@@ -273,36 +273,54 @@ function renderServiceListLinks(
     .join("");
 }
 
+function pickImages(primary: string | null | undefined, extra: unknown): string[] {
+  const arr = Array.isArray(extra) ? (extra as unknown[]).map((x) => String(x)).filter(Boolean) : [];
+  const list = primary ? [primary, ...arr.filter((u) => u !== primary)] : arr.slice();
+  return list.filter(Boolean);
+}
+
+function rotatingImg(images: string[], fallback: string, alt: string): string {
+  const list = images.length ? images : [fallback];
+  const first = list[0];
+  if (list.length < 2) {
+    return `<img src="${escapeHtml(first)}" alt="${escapeHtml(alt)}">`;
+  }
+  const data = escapeHtml(JSON.stringify(list));
+  return `<div class="auto-rotate" data-images="${data}" style="position:relative;width:100%;height:100%;"><img src="${escapeHtml(first)}" alt="${escapeHtml(alt)}" style="transition:opacity .4s ease;"></div>`;
+}
+
 function renderProjectCards(
-  rows: Array<{ title: string; client: string | null; cover_image_url: string | null }>,
+  rows: Array<{ title: string; client: string | null; cover_image_url: string | null; images?: unknown }>,
 ): string {
   return rows
-    .map(
-      (r) => `
+    .map((r) => {
+      const imgs = pickImages(r.cover_image_url, r.images);
+      return `
                 <div class="project-card">
-                    <img src="${escapeHtml(r.cover_image_url ?? "assets/images/placeholder.jpg")}" alt="${escapeHtml(r.title)}">
+                    ${rotatingImg(imgs, "assets/images/placeholder.jpg", r.title)}
                     <div class="project-info">
                         <h3>${escapeHtml(r.title)}</h3>
                         <p>${escapeHtml(r.client ?? "")}</p>
                         <a href="/portfolio" class="btn-link">View More</a>
                     </div>
-                </div>`,
-    )
+                </div>`;
+    })
     .join("");
 }
 
 function renderPortfolioItems(
-  rows: Array<{ title: string; client: string | null; location?: string | null; category: string | null; cover_image_url: string | null }>,
+  rows: Array<{ title: string; client: string | null; location?: string | null; category: string | null; cover_image_url: string | null; images?: unknown }>,
 ): string {
   return rows
     .map((r) => {
       const cat = (r.category ?? "other").toLowerCase();
-      const img = r.cover_image_url ?? "assets/images/placeholder.jpg";
+      const imgs = pickImages(r.cover_image_url, r.images);
+      const primary = imgs[0] ?? "assets/images/placeholder.jpg";
       const meta = [r.client, r.location].filter(Boolean).join(" · ");
       return `
                 <div class="portfolio-item" data-category="${escapeHtml(cat)}">
-                    <a href="${escapeHtml(img)}" data-lightbox="portfolio" data-title="${escapeHtml(r.title)}">
-                        <img src="${escapeHtml(img)}" alt="${escapeHtml(r.title)}">
+                    <a href="${escapeHtml(primary)}" data-lightbox="portfolio" data-title="${escapeHtml(r.title)}">
+                        ${rotatingImg(imgs, "assets/images/placeholder.jpg", r.title)}
                         <div class="portfolio-overlay">
                             <h3>${escapeHtml(r.title)}</h3>
                             <p>${escapeHtml(meta)}</p>
