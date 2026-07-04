@@ -1080,7 +1080,16 @@ export async function hydrateServices(html: string): Promise<string> {
     const root = parseDoc(html);
     const { version } = await applyCommon(root, "services", "/services");
     const services = await loadServices(version);
-    if (services.length) setInner(root, "ul.service-list2", renderServiceListLinks(services));
+    if (services.length) {
+      setInner(root, "ul.service-list2", renderServiceListLinks(services));
+      // Replace the "What We Offer" links to point at each slug anchor
+      const container = root.querySelector(".services-detail .container");
+      if (container) {
+        container.set_content(
+          services.map((s, i) => renderServiceDetailBlock(s, i % 2 === 1)).join(""),
+        );
+      }
+    }
     return root;
   }, html);
 }
