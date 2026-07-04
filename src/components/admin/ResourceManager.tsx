@@ -300,7 +300,7 @@ export function ResourceManager({
                 ) : f.type === "richtext" ? (
                   <RichTextEditor
                     value={form[f.key] ?? ""}
-                    onChange={(v) => setForm({ ...form, [f.key]: v })}
+                    onChange={(v: string) => setForm({ ...form, [f.key]: v })}
                   />
                 ) : (
                   <Input
