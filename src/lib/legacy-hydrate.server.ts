@@ -410,7 +410,7 @@ function renderProductCards(
       const cat = (r.category ?? "").toLowerCase();
       const price = formatPrice(r.price_cents, r.currency);
       return `
-                <div class="product-card" data-category="${escapeHtml(cat)}">
+                <div class="product-card" data-category="${escapeHtml(cat)}" data-title="${escapeHtml((r.title || "").toLowerCase())}" data-desc="${escapeHtml((r.description || "").toLowerCase())}">
                     <div class="product-image">
                         ${rotatingImg(imgs, "assets/images/placeholder.jpg", r.title)}
                         ${r.in_stock ? "" : `<span class="out-of-stock">Out of stock</span>`}
