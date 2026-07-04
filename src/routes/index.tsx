@@ -8,7 +8,10 @@ export const Route = createFileRoute("/")({
         const { hydrateIndex } = await import("@/lib/legacy-hydrate.server");
         const body = await hydrateIndex(html);
         return new Response(body, {
-          headers: { "content-type": "text/html; charset=utf-8" },
+          headers: {
+            "content-type": "text/html; charset=utf-8",
+            "cache-control": "no-store",
+          },
         });
       },
     },
