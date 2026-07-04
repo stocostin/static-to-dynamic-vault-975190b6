@@ -15,25 +15,62 @@ import {
   LogOut,
   Star,
   Globe,
+  Newspaper,
+  ShoppingBag,
+  Home,
+  Info,
+  Wrench,
+  Layers,
+  Phone,
 } from "lucide-react";
 
-const nav: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
-  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/admin/pages", label: "Pages", icon: FileText },
-  { to: "/admin/page-sections", label: "Page sections", icon: FileText },
-  { to: "/admin/services", label: "Services", icon: Briefcase },
-  { to: "/admin/portfolio", label: "Portfolio", icon: ImageIcon },
-  { to: "/admin/testimonials", label: "Testimonials", icon: Star },
-  { to: "/admin/team", label: "Team", icon: Users },
-  { to: "/admin/faqs", label: "FAQs", icon: HelpCircle },
-  { to: "/admin/menus", label: "Menus", icon: MenuIcon },
-  { to: "/admin/menu-items", label: "Menu items", icon: MenuIcon },
-  { to: "/admin/messages", label: "Messages", icon: Inbox },
-  { to: "/admin/media", label: "Media", icon: ImageIcon },
-  { to: "/admin/settings", label: "Site Settings", icon: Settings },
-  { to: "/admin/legacy-images", label: "Legacy images (temp)", icon: ImageIcon },
-];
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+type NavGroup = { label: string; items: NavItem[] };
 
+const groups: NavGroup[] = [
+  {
+    label: "Overview",
+    items: [
+      { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+    ],
+  },
+  {
+    label: "Pages",
+    items: [
+      { to: "/admin/pages/about", label: "About page", icon: Info },
+      { to: "/admin/pages/services", label: "Services page", icon: Wrench },
+      { to: "/admin/pages/portfolio", label: "Portfolio page", icon: Layers },
+      { to: "/admin/pages/shop", label: "Shop page", icon: ShoppingBag },
+      { to: "/admin/pages/blog", label: "Blog page", icon: Newspaper },
+      { to: "/admin/pages/contact", label: "Contact page", icon: Phone },
+    ],
+  },
+  {
+    label: "Collections",
+    items: [
+      { to: "/admin/services", label: "Services", icon: Briefcase },
+      { to: "/admin/portfolio", label: "Portfolio projects", icon: ImageIcon },
+      { to: "/admin/shop-products", label: "Shop products", icon: ShoppingBag },
+      { to: "/admin/blog-posts", label: "Blog posts", icon: Newspaper },
+      { to: "/admin/testimonials", label: "Testimonials", icon: Star },
+      { to: "/admin/team", label: "Team", icon: Users },
+      { to: "/admin/faqs", label: "FAQs", icon: HelpCircle },
+      { to: "/admin/menus", label: "Menus", icon: MenuIcon },
+      { to: "/admin/menu-items", label: "Menu items", icon: MenuIcon },
+      { to: "/admin/messages", label: "Messages", icon: Inbox },
+      { to: "/admin/media", label: "Media", icon: ImageIcon },
+    ],
+  },
+  {
+    label: "Settings",
+    items: [
+      { to: "/admin/settings", label: "Site settings", icon: Settings },
+      { to: "/admin/pages", label: "Page SEO", icon: FileText },
+      { to: "/admin/page-sections", label: "Advanced sections", icon: FileText },
+      { to: "/admin/legacy-images", label: "Legacy images", icon: ImageIcon },
+    ],
+  },
+];
 
 export function AdminShell() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
@@ -51,24 +88,30 @@ export function AdminShell() {
             Shachavir CMS
           </Link>
         </div>
-        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
-          {nav.map((item) => {
-            const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.to}
-                to={item.to as never}
-                className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                  active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-
-            );
-          })}
+        <nav className="flex-1 overflow-y-auto p-2 space-y-3">
+          {groups.map((g) => (
+            <div key={g.label} className="space-y-0.5">
+              <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {g.label}
+              </div>
+              {g.items.map((item) => {
+                const active = item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(item.to + "/");
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to as never}
+                    className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors ${
+                      active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
         <div className="p-2 border-t space-y-1">
           <Button asChild variant="ghost" size="sm" className="w-full justify-start">
