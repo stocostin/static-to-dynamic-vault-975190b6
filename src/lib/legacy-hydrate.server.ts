@@ -286,7 +286,7 @@ function rotatingImg(images: string[], fallback: string, alt: string): string {
     return `<img src="${escapeHtml(first)}" alt="${escapeHtml(alt)}">`;
   }
   const data = escapeHtml(JSON.stringify(list));
-  return `<div class="auto-rotate" data-images="${data}" style="position:relative;width:100%;height:100%;"><img src="${escapeHtml(first)}" alt="${escapeHtml(alt)}" style="transition:opacity .4s ease;"></div>`;
+  return `<img class="auto-rotate" data-images="${data}" src="${escapeHtml(first)}" alt="${escapeHtml(alt)}" style="transition:opacity .4s ease;">`;
 }
 
 function renderProjectCards(
@@ -1070,7 +1070,7 @@ const PLACEHOLDER_IMG =
 //   - `assets/foo.png` -> `/assets/foo.png` (legacy relative paths 404 on subpages)
 //   - Supabase storage public URL for `admin-uploads` -> `/uploads/<path>` proxy
 //   - Missing placeholder -> inline SVG
-const AUTO_ROTATE_SCRIPT = `<script>(function(){function bind(el){if(el.dataset.rotateBound)return;el.dataset.rotateBound="1";var imgs;try{imgs=JSON.parse(el.getAttribute("data-images")||"[]")}catch(e){return}if(!imgs||imgs.length<2)return;var img=el.querySelector("img");if(!img)return;var i=0;setInterval(function(){i=(i+1)%imgs.length;img.style.opacity="0";setTimeout(function(){img.src=imgs[i];img.style.opacity="1"},350)},3500)}function run(){document.querySelectorAll(".auto-rotate").forEach(bind)}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",run)}else{run()}})();</script>`;
+const AUTO_ROTATE_SCRIPT = `<script>(function(){function bind(img){if(img.dataset.rotateBound)return;img.dataset.rotateBound="1";var list;try{list=JSON.parse(img.getAttribute("data-images")||"[]")}catch(e){return}if(!list||list.length<2)return;var i=0;setInterval(function(){i=(i+1)%list.length;img.style.opacity="0";setTimeout(function(){img.src=list[i];img.style.opacity="1"},350)},3500)}function run(){document.querySelectorAll("img.auto-rotate").forEach(bind)}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",run)}else{run()}})();</script>`;
 
 function postProcess(html: string): string {
   const rewritten = html
