@@ -3,7 +3,7 @@
 // the "Public can read published …" RLS policies on each table.
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
 
 function serverPublic() {
   return createClient<Database>(
@@ -20,7 +20,7 @@ export type SitePage = {
   meta_description: string | null;
   hero_image_url: string | null;
   excerpt: string | null;
-  content_json: Record<string, unknown> | null;
+  content_json: Json | null;
 };
 
 export type SiteService = {
