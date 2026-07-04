@@ -1,39 +1,46 @@
-## Goal
+## Why images aren't showing
 
-Seed the database with all the content that currently lives in the legacy HTML files, so the CMS shows the real site copy (not empty fields) and admins edit existing content instead of retyping it from scratch.
+Three separate bugs, all fixable in one pass:
 
-## What went wrong
+**1. Legacy image paths are relative, so they 404 on every subpage.**
+The static HTML uses `src="assets/images/logo.png"` (no leading slash). On `/about` the browser resolves that to `/about/assets/images/logo.png` → 404. The `/assets/images/*` server route only fires when the path starts with `/assets/`.
 
-When the schema-driven `PageEditor` and new tables (`blog_posts`, `shop_products`, extended `services`/`portfolio_projects`) were introduced, hydration started reading from DB rows. The rows were mostly empty, so the live site fell back to whatever the templating left in place — and the CMS forms showed blank fields. You expected the existing website copy to be pre-populated in the CMS.
+**2. The `admin-uploads` bucket is private, but the CMS hands out public URLs.**
+`PageEditor`, `ResourceManager`, and `RichTextEditor` all call `supabase.storage.from("admin-uploads").getPublicUrl(...)`. That URL returns 400/403 because the bucket is not public — so every image uploaded via the CMS breaks the moment it's rendered.
 
-## Fix — one seeding migration
+**3. Placeholder fallback uses a relative path too.**
+`legacy-hydrate.server.ts` falls back to `assets/images/placeholder.jpg` for missing images. Same 404 problem, and the placeholder file doesn't exist.
 
-Parse each legacy HTML file and write the content into the matching table/row. Use `INSERT ... ON CONFLICT DO UPDATE` guarded by "only overwrite when the current DB value is NULL/empty" so this is safe to re-run and never clobbers content an admin has already edited.
+## Fix
 
-### Data to seed (source → destination)
+Three surgical changes, no visual changes to the site:
 
-1. **`src/legacy/about.html`** → `page_sections` rows keyed `about:hero`, `about:our_story`, `about:mission_vision` (mission/vision/objective titles + bodies), `about:process` (title, intro, `steps[]` repeater, summary), `about:team_intro`.
-2. **`src/legacy/services.html`** → `page_sections` rows `services:hero`, `services:what_we_offer`, `services:cta_footer`; plus one row per service card into `services` (title, short + long description, `features` jsonb bullet list, image_url, CTA label/url, display_order, is_active).
-3. **`src/legacy/portfolio.html`** → `page_sections` rows `portfolio:hero`, `portfolio:filters_intro`, `portfolio:cta_footer`; plus each project card into `portfolio_projects` (title, description, category, location, image_url, order).
-4. **`src/legacy/shop.html`** → `page_sections` rows `shop:hero`, `shop:featured`, `shop:all_products`; plus each product card into `shop_products` (name, description, price, image_url, category, is_featured, is_active, order).
-5. **`src/legacy/blog.html`** → `page_sections` rows `blog:hero`, `blog:intro`; plus each existing article card into `blog_posts` (title, slug, excerpt, cover image, category, body_html — from the article body if present, otherwise the card excerpt as a placeholder paragraph, `is_published = true`, `published_at = now()`).
-6. **`src/legacy/contact.html`** → `page_sections` rows `contact:hero`, `contact:intro`, `contact:details` (address, phones, emails, map embed url), `contact:hours` (repeater), `contact:form` (heading, subtitle, success message).
-7. **`src/legacy/index.html`** + shared chrome → `site_settings` keys already used by hydration (brand, hero, contact/social, footer, google reviews) only when currently empty.
-8. **Team, testimonials, FAQs** → seed rows from `about.html` / `index.html` into `team_members`, `testimonials`, `faqs` when those tables are empty.
+### a. Make `admin-uploads` public so CMS-uploaded images actually load
 
-### Safety rules for the seed
+Flip the bucket to public via `storage_update_bucket`. Read policies stay open; write/delete policies keep requiring admin/editor role, so admins are still the only ones who can upload. After this, every `getPublicUrl(...)` URL already stored (and any future upload) resolves.
 
-- Every insert uses a stable natural key (`section_key`, `slug`, or `(title, display_order)`) with `ON CONFLICT DO UPDATE SET col = COALESCE(NULLIF(target.col, ''), EXCLUDED.col)` so admin edits are preserved.
-- No table is truncated. No existing row is deleted.
-- Runs inside a single migration so approval is one click, and `bump_content_version` fires once at the end to refresh the public cache.
+If the workspace blocks public buckets, fall back to switching the three upload helpers to `createSignedUrl(..., 60*60*24*365)` and store the signed URL. Bucket-public is the cleaner default.
 
-### Deliverable
+### b. Normalize legacy image paths in the hydrator
 
-One new migration file that performs the seed described above. No changes to the public site's styling, no changes to hydration logic, no new admin screens.
+In `src/lib/legacy-hydrate.server.ts`:
+
+- Add a small `normalizeImg(url)` helper: if the URL is empty → return the CDN placeholder; if it starts with `assets/` → prepend `/`; if it starts with `http`, `/`, `data:`, or `blob:` → leave alone.
+- Run it on every `image_url`/`cover_image_url`/`photo_url` before it's written into `src=`, and on the `site_settings` `header_logo_url` / `footer_logo_url` / `hero_bg_*` / `google_qr_image_url` values.
+- After all mutations, do one final sweep on the whole document that rewrites any remaining `src="assets/…"` / `href="assets/…"` / `url('assets/…')` (in inline styles) to leading-slash form. This catches images inside legacy blocks the hydrator doesn't touch (e.g. footer logo, feature icons).
+
+### c. Replace the missing placeholder
+
+Change the hardcoded `"assets/images/placeholder.jpg"` fallbacks in `renderPortfolioCards`, `renderPortfolioListCards`, `renderServiceDetailBlock`, `renderBlogCards`, `renderProductCards`, and `renderTeamCards` to a real inline SVG data URL (a light-gray 4:3 "Image" tile). No file needed, no 404, and it disappears the moment an admin uploads a real image.
 
 ## Verification
 
-After the migration runs:
-- Open `/admin/pages/about`, `/services`, `/portfolio`, `/shop`, `/blog`, `/contact` — every field is pre-filled with the copy from the legacy HTML.
-- Open `/admin/services`, `/admin/portfolio`, `/admin/shop-products`, `/admin/blog-posts`, `/admin/team`, `/admin/testimonials`, `/admin/faqs` — rows already exist, each editable.
-- Live pages render identically to before (the hydrator now finds the same text in the DB that used to be inline).
+- Open `/`, `/about`, `/services`, `/portfolio`, `/shop`, `/blog`, `/contact` — logo, hero background, service images, team photos, and any CMS-uploaded image all render (given the corresponding legacy files have been uploaded via `/admin/legacy-images`; if not, the placeholder shows instead of a broken icon).
+- Upload a fresh image in `/admin/pages/about` → hero image field → save → reload `/about`: the new image appears.
+- Same for `/admin/services` (service card image), `/admin/portfolio` (project cover), `/admin/blog-posts/:id` (cover + inline rich-text images), `/admin/shop-products` (product photo).
+
+## Out of scope
+
+- No visual/styling changes to the public site.
+- No new admin screens.
+- Doesn't re-upload the legacy image files themselves — the admin does that once at `/admin/legacy-images`. This plan only makes sure that once they're uploaded, they render everywhere, and that any image uploaded via the CMS from now on renders too.
