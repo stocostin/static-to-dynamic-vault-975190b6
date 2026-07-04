@@ -35,6 +35,7 @@ import { Route as AuthenticatedAdminMenuItemsRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminMediaRouteImport } from './routes/_authenticated/admin.media'
 import { Route as AuthenticatedAdminLegacyImagesRouteImport } from './routes/_authenticated/admin.legacy-images'
 import { Route as AuthenticatedAdminFaqsRouteImport } from './routes/_authenticated/admin.faqs'
+import { Route as AuthenticatedAdminPagesShopRouteImport } from './routes/_authenticated/admin.pages.shop'
 import { Route as AuthenticatedAdminPagesServicesRouteImport } from './routes/_authenticated/admin.pages.services'
 import { Route as AuthenticatedAdminPagesPortfolioRouteImport } from './routes/_authenticated/admin.pages.portfolio'
 import { Route as AuthenticatedAdminPagesAboutRouteImport } from './routes/_authenticated/admin.pages.about'
@@ -176,6 +177,12 @@ const AuthenticatedAdminFaqsRoute = AuthenticatedAdminFaqsRouteImport.update({
   path: '/faqs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminPagesShopRoute =
+  AuthenticatedAdminPagesShopRouteImport.update({
+    id: '/shop',
+    path: '/shop',
+    getParentRoute: () => AuthenticatedAdminPagesRoute,
+  } as any)
 const AuthenticatedAdminPagesServicesRoute =
   AuthenticatedAdminPagesServicesRouteImport.update({
     id: '/services',
@@ -224,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
   '/admin/pages/portfolio': typeof AuthenticatedAdminPagesPortfolioRoute
   '/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
+  '/admin/pages/shop': typeof AuthenticatedAdminPagesShopRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -253,6 +261,7 @@ export interface FileRoutesByTo {
   '/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
   '/admin/pages/portfolio': typeof AuthenticatedAdminPagesPortfolioRoute
   '/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
+  '/admin/pages/shop': typeof AuthenticatedAdminPagesShopRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -285,6 +294,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
   '/_authenticated/admin/pages/portfolio': typeof AuthenticatedAdminPagesPortfolioRoute
   '/_authenticated/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
+  '/_authenticated/admin/pages/shop': typeof AuthenticatedAdminPagesShopRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -317,6 +327,7 @@ export interface FileRouteTypes {
     | '/admin/pages/about'
     | '/admin/pages/portfolio'
     | '/admin/pages/services'
+    | '/admin/pages/shop'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -346,6 +357,7 @@ export interface FileRouteTypes {
     | '/admin/pages/about'
     | '/admin/pages/portfolio'
     | '/admin/pages/services'
+    | '/admin/pages/shop'
   id:
     | '__root__'
     | '/'
@@ -377,6 +389,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/pages/about'
     | '/_authenticated/admin/pages/portfolio'
     | '/_authenticated/admin/pages/services'
+    | '/_authenticated/admin/pages/shop'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -577,6 +590,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminFaqsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/pages/shop': {
+      id: '/_authenticated/admin/pages/shop'
+      path: '/shop'
+      fullPath: '/admin/pages/shop'
+      preLoaderRoute: typeof AuthenticatedAdminPagesShopRouteImport
+      parentRoute: typeof AuthenticatedAdminPagesRoute
+    }
     '/_authenticated/admin/pages/services': {
       id: '/_authenticated/admin/pages/services'
       path: '/services'
@@ -605,6 +625,7 @@ interface AuthenticatedAdminPagesRouteChildren {
   AuthenticatedAdminPagesAboutRoute: typeof AuthenticatedAdminPagesAboutRoute
   AuthenticatedAdminPagesPortfolioRoute: typeof AuthenticatedAdminPagesPortfolioRoute
   AuthenticatedAdminPagesServicesRoute: typeof AuthenticatedAdminPagesServicesRoute
+  AuthenticatedAdminPagesShopRoute: typeof AuthenticatedAdminPagesShopRoute
 }
 
 const AuthenticatedAdminPagesRouteChildren: AuthenticatedAdminPagesRouteChildren =
@@ -613,6 +634,7 @@ const AuthenticatedAdminPagesRouteChildren: AuthenticatedAdminPagesRouteChildren
     AuthenticatedAdminPagesPortfolioRoute:
       AuthenticatedAdminPagesPortfolioRoute,
     AuthenticatedAdminPagesServicesRoute: AuthenticatedAdminPagesServicesRoute,
+    AuthenticatedAdminPagesShopRoute: AuthenticatedAdminPagesShopRoute,
   }
 
 const AuthenticatedAdminPagesRouteWithChildren =
