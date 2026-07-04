@@ -410,7 +410,7 @@ function renderProductCards(
       const cat = (r.category ?? "").toLowerCase();
       const price = formatPrice(r.price_cents, r.currency);
       return `
-                <div class="product-card" data-category="${escapeHtml(cat)}">
+                <div class="product-card" data-category="${escapeHtml(cat)}" data-title="${escapeHtml((r.title || "").toLowerCase())}" data-desc="${escapeHtml((r.description || "").toLowerCase())}">
                     <div class="product-image">
                         ${rotatingImg(imgs, "assets/images/placeholder.jpg", r.title)}
                         ${r.in_stock ? "" : `<span class="out-of-stock">Out of stock</span>`}
@@ -1071,6 +1071,7 @@ const PLACEHOLDER_IMG =
 //   - Supabase storage public URL for `admin-uploads` -> `/uploads/<path>` proxy
 //   - Missing placeholder -> inline SVG
 const AUTO_ROTATE_SCRIPT = `<script>(function(){function bind(img){if(img.dataset.rotateBound)return;img.dataset.rotateBound="1";var list;try{list=JSON.parse(img.getAttribute("data-images")||"[]")}catch(e){return}if(!list||list.length<2)return;var i=0;setInterval(function(){i=(i+1)%list.length;img.style.opacity="0";setTimeout(function(){img.src=list[i];img.style.opacity="1"},350)},3500)}function run(){document.querySelectorAll("img.auto-rotate").forEach(bind)}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",run)}else{run()}})();</script>`;
+const SHOP_CONTROLS_SCRIPT = `<script>(function(){function init(){var grid=document.getElementById("productsContainer");var pag=document.getElementById("paginationContainer");var search=document.getElementById("searchInput");var sbtn=document.getElementById("searchBtn");var cat=document.getElementById("categoryFilter");if(!grid||!pag)return;var all=Array.prototype.slice.call(grid.querySelectorAll(".product-card"));if(!all.length)return;var PER=15;var page=1;var q="";var c="all";function match(card){var okC=(c==="all"||(card.getAttribute("data-category")||"")===c);if(!okC)return false;if(!q)return true;var t=card.getAttribute("data-title")||"";var d=card.getAttribute("data-desc")||"";return t.indexOf(q)>-1||d.indexOf(q)>-1}function render(){var filtered=all.filter(match);var total=filtered.length;var pages=Math.max(1,Math.ceil(total/PER));if(page>pages)page=pages;var start=(page-1)*PER;var end=start+PER;grid.innerHTML="";if(!total){var e=document.createElement("div");e.style.cssText="grid-column:1/-1;text-align:center;padding:2rem;color:#666;";e.textContent="No products match your search.";grid.appendChild(e)}else{filtered.slice(start,end).forEach(function(el){grid.appendChild(el)})}pag.innerHTML="";if(pages<=1){pag.style.display="none";return}pag.style.display="";function btn(label,p,dis,active){var b=document.createElement("button");b.type="button";b.className="page-btn"+(active?" active":"");b.textContent=label;b.disabled=!!dis;if(!dis){b.addEventListener("click",function(){page=p;render();grid.scrollIntoView({behavior:"smooth",block:"start"})})}pag.appendChild(b)}btn("‹ Prev",page-1,page<=1,false);var win=2;for(var i=1;i<=pages;i++){if(i===1||i===pages||(i>=page-win&&i<=page+win)){btn(String(i),i,false,i===page)}else if(i===page-win-1||i===page+win+1){var s=document.createElement("span");s.className="page-ellipsis";s.textContent="…";pag.appendChild(s)}}btn("Next ›",page+1,page>=pages,false);document.querySelectorAll("img.auto-rotate").forEach(function(img){if(!img.dataset.rotateBound&&window.__bindRotate)window.__bindRotate(img)})}function reset(){page=1;render()}if(search){search.addEventListener("input",function(){q=(search.value||"").toLowerCase().trim();reset()})}if(sbtn){sbtn.addEventListener("click",function(){q=(search?(search.value||""):"").toLowerCase().trim();reset()})}if(cat){cat.addEventListener("change",function(){c=cat.value||"all";reset()})}render()}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",init)}else{init()}})();</script>`;
 
 function postProcess(html: string): string {
   const rewritten = html
@@ -1084,13 +1085,14 @@ function postProcess(html: string): string {
     )
     .replace(/url\((['"]?)assets\//g, "url($1/assets/")
     .replace(/assets\/images\/placeholder\.jpg/g, PLACEHOLDER_IMG);
-  if (rewritten.includes('class="auto-rotate"')) {
-    if (rewritten.includes("</body>")) {
-      return rewritten.replace("</body>", AUTO_ROTATE_SCRIPT + "</body>");
-    }
-    return rewritten + AUTO_ROTATE_SCRIPT;
+  const needsRotate = rewritten.includes('class="auto-rotate"');
+  const needsShop = rewritten.includes('id="productsContainer"');
+  const inject = (needsRotate ? AUTO_ROTATE_SCRIPT : "") + (needsShop ? SHOP_CONTROLS_SCRIPT : "");
+  if (!inject) return rewritten;
+  if (rewritten.includes("</body>")) {
+    return rewritten.replace("</body>", inject + "</body>");
   }
-  return rewritten;
+  return rewritten + inject;
 }
 
 async function safe(fn: () => Promise<HTMLElement>, fallback: string): Promise<string> {
@@ -1263,6 +1265,11 @@ export async function hydrateShop(html: string): Promise<string> {
       const featured = products.filter((p) => p.is_featured).slice(0, 6);
       setInner(root, "#featuredProductsContainer", renderProductCards(featured.length ? featured : products.slice(0, 3)));
       setInner(root, "#productsContainer", renderProductCards(products));
+      const cats = Array.from(new Set(products.map((p) => (p.category ?? "").toLowerCase()).filter(Boolean))).sort();
+      const options = [`<option value="all">All Categories</option>`]
+        .concat(cats.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c.charAt(0).toUpperCase() + c.slice(1))}</option>`))
+        .join("");
+      setInner(root, "#categoryFilter", options);
     } else {
       setInner(root, "#featuredProductsContainer", renderProductCards([]));
       setInner(root, "#productsContainer", renderProductCards([]));

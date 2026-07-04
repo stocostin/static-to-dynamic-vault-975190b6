@@ -1,20 +1,22 @@
-## Show prices as whole units with 2 decimals
+## Working search, category filter, and pagination on /shop
 
-Currently `price_cents` is treated as cents (divided by 100), so entering `450` renders as `KSh 5`. Switch to whole-unit storage with 2-decimal display so `450` → `KSh 450.00`.
+The shop template already has `#searchInput`, `#categoryFilter`, `#productsContainer`, and `#paginationContainer` in `src/legacy/shop.html`, but nothing wires them up (the old `shop.js` was stripped). All CMS products are currently rendered into `#productsContainer` at once with no controls.
 
-### Changes
+### Changes (all in `src/lib/legacy-hydrate.server.ts`)
 
-1. **`src/lib/legacy-hydrate.server.ts` — `formatPrice`** (line 397): stop dividing by 100; format with `minimumFractionDigits: 2, maximumFractionDigits: 2`.
-   ```ts
-   const amount = cents.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-   ```
+1. **Tag each product card with filter data** in `renderProductCards`: add `data-title`, `data-category`, and `data-desc` to the outer `.product-card` so the client script can filter without re-parsing text.
 
-2. **`src/components/admin/ResourceManager.tsx`** (line 450): the `_cents` display helper also divides by 100 — update it to render the raw value with 2 decimals so the admin table matches the site.
+2. **Populate the category dropdown from real data** in `hydrateShop`: build the unique sorted list of `category` values from the fetched products and rewrite `#categoryFilter`'s `<option>` list to `All Categories` + one option per real category (slug value, human label). Keeps `all` as the default value.
 
-3. **`src/routes/_authenticated/admin.shop-products.tsx`** (line 26): update the field label/help to say "Price (KSh)" with example `450 = KSh 450.00` — no more "cents" wording.
+3. **Inject a shop controls script** (appended once, alongside the existing auto-rotate script) that:
+   - Reads every `.product-card` inside `#productsContainer` into an in-memory array.
+   - On `input` in `#searchInput`, `change` in `#categoryFilter`, click on `#searchBtn`, and pagination clicks: filter by category (`all` = no filter) and case-insensitive substring match on title + description, then paginate at **15 per page**.
+   - Renders `#paginationContainer` as `‹ Prev | 1 2 3 … | Next ›` buttons with the current page highlighted; hides the container when there is only one page.
+   - Resets to page 1 whenever search/filter changes; scrolls the grid into view on page change.
+   - Shows an empty-state message inside `#productsContainer` when no products match.
 
-Column key stays `price_cents` (no DB migration) to avoid rewriting the schema and existing rows. Existing rows that used the old cents convention will need to be re-entered by the user; that's expected since the display convention is changing.
+Featured products section is untouched — pagination applies only to `#productsContainer` (All Products).
 
 ### Out of scope
-- No DB migration or column rename.
-- No changes to portfolio, currency selector, or button styling.
+- No URL search-param state (kept simple, client-only). Can add `?page=&q=&cat=` later if needed.
+- No changes to admin, card styling, or WhatsApp button.
