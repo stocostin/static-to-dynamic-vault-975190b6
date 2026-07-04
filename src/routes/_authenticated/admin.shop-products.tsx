@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/admin/shop-products")({
         { key: "image_url", label: "Main image (cover)", type: "image" },
         { key: "images", label: "Gallery images (auto-rotate)", type: "images", help: "Add multiple images; they auto-rotate on the shop page." },
         { key: "category", label: "Category", type: "text", help: "e.g. doors, frames, furniture, staircases" },
-        { key: "price_cents", label: "Price (in cents / smallest unit)", type: "number", help: "45000 = KSh 450" },
+        { key: "price_cents", label: "Price (KSh)", type: "number", help: "Enter whole amount, e.g. 450 shows as KSh 450.00" },
         { key: "currency", label: "Currency", type: "text" },
         { key: "in_stock", label: "In stock", type: "boolean" },
         { key: "is_featured", label: "Featured", type: "boolean" },
