@@ -20,6 +20,7 @@ import {
 const nav: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/pages", label: "Pages", icon: FileText },
+  { to: "/admin/page-sections", label: "Page sections", icon: FileText },
   { to: "/admin/services", label: "Services", icon: Briefcase },
   { to: "/admin/portfolio", label: "Portfolio", icon: ImageIcon },
   { to: "/admin/testimonials", label: "Testimonials", icon: Star },
