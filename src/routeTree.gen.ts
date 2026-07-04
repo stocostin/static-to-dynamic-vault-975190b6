@@ -18,6 +18,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UploadsSplatRouteImport } from './routes/uploads.$'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AssetsImagesSplatRouteImport } from './routes/assets.images.$'
@@ -87,6 +88,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UploadsSplatRoute = UploadsSplatRouteImport.update({
+  id: '/uploads/$',
+  path: '/uploads/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -247,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/services': typeof ServicesRoute
   '/shop': typeof ShopRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/uploads/$': typeof UploadsSplatRoute
   '/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRouteWithChildren
   '/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
@@ -282,6 +289,7 @@ export interface FileRoutesByTo {
   '/portfolio': typeof PortfolioRoute
   '/services': typeof ServicesRoute
   '/shop': typeof ShopRoute
+  '/uploads/$': typeof UploadsSplatRoute
   '/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRouteWithChildren
   '/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
@@ -320,6 +328,7 @@ export interface FileRoutesById {
   '/services': typeof ServicesRoute
   '/shop': typeof ShopRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/uploads/$': typeof UploadsSplatRoute
   '/_authenticated/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRouteWithChildren
   '/_authenticated/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/_authenticated/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
@@ -358,6 +367,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/shop'
     | '/admin'
+    | '/uploads/$'
     | '/admin/blog-posts'
     | '/admin/faqs'
     | '/admin/legacy-images'
@@ -393,6 +403,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/services'
     | '/shop'
+    | '/uploads/$'
     | '/admin/blog-posts'
     | '/admin/faqs'
     | '/admin/legacy-images'
@@ -430,6 +441,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/shop'
     | '/_authenticated/admin'
+    | '/uploads/$'
     | '/_authenticated/admin/blog-posts'
     | '/_authenticated/admin/faqs'
     | '/_authenticated/admin/legacy-images'
@@ -467,6 +479,7 @@ export interface RootRouteChildren {
   PortfolioRoute: typeof PortfolioRoute
   ServicesRoute: typeof ServicesRoute
   ShopRoute: typeof ShopRoute
+  UploadsSplatRoute: typeof UploadsSplatRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
   AssetsImagesSplatRoute: typeof AssetsImagesSplatRoute
 }
@@ -534,6 +547,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/uploads/$': {
+      id: '/uploads/$'
+      path: '/uploads/$'
+      fullPath: '/uploads/$'
+      preLoaderRoute: typeof UploadsSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -823,9 +843,20 @@ const rootRouteChildren: RootRouteChildren = {
   PortfolioRoute: PortfolioRoute,
   ServicesRoute: ServicesRoute,
   ShopRoute: ShopRoute,
+  UploadsSplatRoute: UploadsSplatRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
   AssetsImagesSplatRoute: AssetsImagesSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

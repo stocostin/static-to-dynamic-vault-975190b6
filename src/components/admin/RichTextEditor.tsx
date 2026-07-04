@@ -67,8 +67,7 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
     const path = `blog/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from("admin-uploads").upload(path, file);
     if (error) { toast.error(error.message); return; }
-    const { data } = supabase.storage.from("admin-uploads").getPublicUrl(path);
-    editor.chain().focus().setImage({ src: data.publicUrl }).run();
+    editor.chain().focus().setImage({ src: `/uploads/${path}` }).run();
   };
 
   const btn = (active: boolean, onClick: () => void, Icon: typeof Bold, label: string) => (

@@ -126,8 +126,7 @@ export function PageEditor({ spec }: { spec: PageEditorSpec }) {
     const path = `pages/${spec.pageSlug}/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from("admin-uploads").upload(path, file);
     if (error) { toast.error(error.message); return; }
-    const { data } = supabase.storage.from("admin-uploads").getPublicUrl(path);
-    setSectionField(sectionKey, fieldKey, data.publicUrl);
+    setSectionField(sectionKey, fieldKey, `/uploads/${path}`);
   };
 
   const setSectionField = (sectionKey: string, fieldKey: string, value: unknown) => {
