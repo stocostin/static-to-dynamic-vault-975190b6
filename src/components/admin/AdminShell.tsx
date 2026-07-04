@@ -27,6 +27,7 @@ const nav: { to: string; label: string; icon: typeof LayoutDashboard; exact?: bo
   { to: "/admin/team", label: "Team", icon: Users },
   { to: "/admin/faqs", label: "FAQs", icon: HelpCircle },
   { to: "/admin/menus", label: "Menus", icon: MenuIcon },
+  { to: "/admin/menu-items", label: "Menu items", icon: MenuIcon },
   { to: "/admin/messages", label: "Messages", icon: Inbox },
   { to: "/admin/media", label: "Media", icon: ImageIcon },
   { to: "/admin/settings", label: "Site Settings", icon: Settings },
