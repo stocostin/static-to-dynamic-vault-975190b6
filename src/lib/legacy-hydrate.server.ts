@@ -1041,15 +1041,41 @@ async function applyCommon(root: HTMLElement, slug: string, activePath: string) 
 
 // --- per-page hydrators -----------------------------------------------------
 
+// Inline SVG placeholder — replaces the missing /assets/images/placeholder.jpg
+const PLACEHOLDER_IMG =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><rect fill='%23e5e7eb' width='400' height='300'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='20' fill='%239ca3af'>Image</text></svg>`,
+  );
+
+// Rewrite image URLs at output time:
+//   - `assets/foo.png` -> `/assets/foo.png` (legacy relative paths 404 on subpages)
+//   - Supabase storage public URL for `admin-uploads` -> `/uploads/<path>` proxy
+//   - Missing placeholder -> inline SVG
+function postProcess(html: string): string {
+  return html
+    .replace(
+      /https?:\/\/[^"'\s)]+\/storage\/v1\/object\/public\/admin-uploads\/([^"'\s)]+)/g,
+      "/uploads/$1",
+    )
+    .replace(
+      /(src|href|poster)=("|')assets\//g,
+      '$1=$2/assets/',
+    )
+    .replace(/url\((['"]?)assets\//g, "url($1/assets/")
+    .replace(/assets\/images\/placeholder\.jpg/g, PLACEHOLDER_IMG);
+}
+
 async function safe(fn: () => Promise<HTMLElement>, fallback: string): Promise<string> {
   try {
     const root = await fn();
-    return root.toString();
+    return postProcess(root.toString());
   } catch (err) {
     console.error("[legacy-hydrate] failed:", err);
-    return fallback;
+    return postProcess(fallback);
   }
 }
+
 
 export async function hydrateIndex(html: string): Promise<string> {
   return safe(async () => {
