@@ -42,6 +42,7 @@ import { Route as AuthenticatedAdminPagesPortfolioRouteImport } from './routes/_
 import { Route as AuthenticatedAdminPagesContactRouteImport } from './routes/_authenticated/admin.pages.contact'
 import { Route as AuthenticatedAdminPagesBlogRouteImport } from './routes/_authenticated/admin.pages.blog'
 import { Route as AuthenticatedAdminPagesAboutRouteImport } from './routes/_authenticated/admin.pages.about'
+import { Route as AuthenticatedAdminBlogPostsIdRouteImport } from './routes/_authenticated/admin.blog-posts.$id'
 
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
@@ -222,6 +223,12 @@ const AuthenticatedAdminPagesAboutRoute =
     path: '/about',
     getParentRoute: () => AuthenticatedAdminPagesRoute,
   } as any)
+const AuthenticatedAdminBlogPostsIdRoute =
+  AuthenticatedAdminBlogPostsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedAdminBlogPostsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -233,7 +240,7 @@ export interface FileRoutesByFullPath {
   '/services': typeof ServicesRoute
   '/shop': typeof ShopRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRoute
+  '/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRouteWithChildren
   '/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/admin/media': typeof AuthenticatedAdminMediaRoute
@@ -250,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/api/public/contact': typeof ApiPublicContactRoute
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/blog-posts/$id': typeof AuthenticatedAdminBlogPostsIdRoute
   '/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
   '/admin/pages/blog': typeof AuthenticatedAdminPagesBlogRoute
   '/admin/pages/contact': typeof AuthenticatedAdminPagesContactRoute
@@ -266,7 +274,7 @@ export interface FileRoutesByTo {
   '/portfolio': typeof PortfolioRoute
   '/services': typeof ServicesRoute
   '/shop': typeof ShopRoute
-  '/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRoute
+  '/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRouteWithChildren
   '/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/admin/media': typeof AuthenticatedAdminMediaRoute
@@ -283,6 +291,7 @@ export interface FileRoutesByTo {
   '/api/public/contact': typeof ApiPublicContactRoute
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/blog-posts/$id': typeof AuthenticatedAdminBlogPostsIdRoute
   '/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
   '/admin/pages/blog': typeof AuthenticatedAdminPagesBlogRoute
   '/admin/pages/contact': typeof AuthenticatedAdminPagesContactRoute
@@ -302,7 +311,7 @@ export interface FileRoutesById {
   '/services': typeof ServicesRoute
   '/shop': typeof ShopRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/_authenticated/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRoute
+  '/_authenticated/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRouteWithChildren
   '/_authenticated/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/_authenticated/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/_authenticated/admin/media': typeof AuthenticatedAdminMediaRoute
@@ -319,6 +328,7 @@ export interface FileRoutesById {
   '/api/public/contact': typeof ApiPublicContactRoute
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/blog-posts/$id': typeof AuthenticatedAdminBlogPostsIdRoute
   '/_authenticated/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
   '/_authenticated/admin/pages/blog': typeof AuthenticatedAdminPagesBlogRoute
   '/_authenticated/admin/pages/contact': typeof AuthenticatedAdminPagesContactRoute
@@ -355,6 +365,7 @@ export interface FileRouteTypes {
     | '/api/public/contact'
     | '/assets/images/$'
     | '/admin/'
+    | '/admin/blog-posts/$id'
     | '/admin/pages/about'
     | '/admin/pages/blog'
     | '/admin/pages/contact'
@@ -388,6 +399,7 @@ export interface FileRouteTypes {
     | '/api/public/contact'
     | '/assets/images/$'
     | '/admin'
+    | '/admin/blog-posts/$id'
     | '/admin/pages/about'
     | '/admin/pages/blog'
     | '/admin/pages/contact'
@@ -423,6 +435,7 @@ export interface FileRouteTypes {
     | '/api/public/contact'
     | '/assets/images/$'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/blog-posts/$id'
     | '/_authenticated/admin/pages/about'
     | '/_authenticated/admin/pages/blog'
     | '/_authenticated/admin/pages/contact'
@@ -678,8 +691,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPagesAboutRouteImport
       parentRoute: typeof AuthenticatedAdminPagesRoute
     }
+    '/_authenticated/admin/blog-posts/$id': {
+      id: '/_authenticated/admin/blog-posts/$id'
+      path: '/$id'
+      fullPath: '/admin/blog-posts/$id'
+      preLoaderRoute: typeof AuthenticatedAdminBlogPostsIdRouteImport
+      parentRoute: typeof AuthenticatedAdminBlogPostsRoute
+    }
   }
 }
+
+interface AuthenticatedAdminBlogPostsRouteChildren {
+  AuthenticatedAdminBlogPostsIdRoute: typeof AuthenticatedAdminBlogPostsIdRoute
+}
+
+const AuthenticatedAdminBlogPostsRouteChildren: AuthenticatedAdminBlogPostsRouteChildren =
+  {
+    AuthenticatedAdminBlogPostsIdRoute: AuthenticatedAdminBlogPostsIdRoute,
+  }
+
+const AuthenticatedAdminBlogPostsRouteWithChildren =
+  AuthenticatedAdminBlogPostsRoute._addFileChildren(
+    AuthenticatedAdminBlogPostsRouteChildren,
+  )
 
 interface AuthenticatedAdminPagesRouteChildren {
   AuthenticatedAdminPagesAboutRoute: typeof AuthenticatedAdminPagesAboutRoute
@@ -707,7 +741,7 @@ const AuthenticatedAdminPagesRouteWithChildren =
   )
 
 interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminBlogPostsRoute: typeof AuthenticatedAdminBlogPostsRoute
+  AuthenticatedAdminBlogPostsRoute: typeof AuthenticatedAdminBlogPostsRouteWithChildren
   AuthenticatedAdminFaqsRoute: typeof AuthenticatedAdminFaqsRoute
   AuthenticatedAdminLegacyImagesRoute: typeof AuthenticatedAdminLegacyImagesRoute
   AuthenticatedAdminMediaRoute: typeof AuthenticatedAdminMediaRoute
@@ -725,7 +759,8 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminBlogPostsRoute: AuthenticatedAdminBlogPostsRoute,
+  AuthenticatedAdminBlogPostsRoute:
+    AuthenticatedAdminBlogPostsRouteWithChildren,
   AuthenticatedAdminFaqsRoute: AuthenticatedAdminFaqsRoute,
   AuthenticatedAdminLegacyImagesRoute: AuthenticatedAdminLegacyImagesRoute,
   AuthenticatedAdminMediaRoute: AuthenticatedAdminMediaRoute,
