@@ -24,6 +24,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Pencil, Plus, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 
 export type FieldType =
   | "text"
@@ -33,7 +34,9 @@ export type FieldType =
   | "boolean"
   | "slug"
   | "image"
-  | "url";
+  | "url"
+  | "stringlist"
+  | "richtext";
 
 export interface FieldDef {
   key: string;
@@ -154,6 +157,12 @@ export function ResourceManager({
       }
       if (f.type === "number") payload[f.key] = v === "" || v == null ? null : Number(v);
       else if (f.type === "boolean") payload[f.key] = !!v;
+      else if (f.type === "stringlist") {
+        if (Array.isArray(v)) payload[f.key] = v;
+        else if (typeof v === "string") {
+          payload[f.key] = v.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+        } else payload[f.key] = [];
+      }
       else payload[f.key] = v ?? null;
     }
     saveMutation.mutate(payload);
@@ -277,6 +286,22 @@ export function ResourceManager({
                       />
                     )}
                   </div>
+                ) : f.type === "stringlist" ? (
+                  <Textarea
+                    rows={5}
+                    value={
+                      Array.isArray(form[f.key])
+                        ? (form[f.key] as string[]).join("\n")
+                        : (form[f.key] ?? "")
+                    }
+                    placeholder={f.placeholder ?? "One item per line"}
+                    onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                  />
+                ) : f.type === "richtext" ? (
+                  <RichTextEditor
+                    value={form[f.key] ?? ""}
+                    onChange={(v: string) => setForm({ ...form, [f.key]: v })}
+                  />
                 ) : (
                   <Input
                     type={f.type === "number" ? "number" : "text"}

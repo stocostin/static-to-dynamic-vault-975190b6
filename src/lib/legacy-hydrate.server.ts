@@ -144,7 +144,7 @@ async function loadServices(version: string) {
   return cached("services", version, async () => {
     const { data } = await sb()
       .from("services")
-      .select("slug,title,short_description,icon")
+      .select("slug,title,short_description,long_description,icon,image_url,features,cta_label,cta_url")
       .eq("is_published", true)
       .order("sort_order", { ascending: true });
     return data ?? [];
@@ -155,7 +155,29 @@ async function loadPortfolio(version: string) {
   return cached("portfolio", version, async () => {
     const { data } = await sb()
       .from("portfolio_projects")
-      .select("slug,title,client,category,cover_image_url,is_featured")
+      .select("slug,title,client,location,category,cover_image_url,is_featured")
+      .eq("is_published", true)
+      .order("sort_order", { ascending: true });
+    return data ?? [];
+  });
+}
+
+async function loadBlogPosts(version: string) {
+  return cached("blog_posts", version, async () => {
+    const { data } = await sb()
+      .from("blog_posts")
+      .select("slug,title,excerpt,cover_image_url,category,published_at,is_published")
+      .eq("is_published", true)
+      .order("published_at", { ascending: false, nullsFirst: false });
+    return data ?? [];
+  });
+}
+
+async function loadShopProducts(version: string) {
+  return cached("shop_products", version, async () => {
+    const { data } = await sb()
+      .from("shop_products")
+      .select("slug,title,description,image_url,price_cents,currency,category,in_stock,is_featured")
       .eq("is_published", true)
       .order("sort_order", { ascending: true });
     return data ?? [];
@@ -270,21 +292,117 @@ function renderProjectCards(
 }
 
 function renderPortfolioItems(
-  rows: Array<{ title: string; client: string | null; category: string | null; cover_image_url: string | null }>,
+  rows: Array<{ title: string; client: string | null; location?: string | null; category: string | null; cover_image_url: string | null }>,
 ): string {
   return rows
     .map((r) => {
       const cat = (r.category ?? "other").toLowerCase();
       const img = r.cover_image_url ?? "assets/images/placeholder.jpg";
+      const meta = [r.client, r.location].filter(Boolean).join(" · ");
       return `
                 <div class="portfolio-item" data-category="${escapeHtml(cat)}">
                     <a href="${escapeHtml(img)}" data-lightbox="portfolio" data-title="${escapeHtml(r.title)}">
                         <img src="${escapeHtml(img)}" alt="${escapeHtml(r.title)}">
                         <div class="portfolio-overlay">
                             <h3>${escapeHtml(r.title)}</h3>
-                            <p>${escapeHtml(r.client ?? "")}</p>
+                            <p>${escapeHtml(meta)}</p>
                         </div>
                     </a>
+                </div>`;
+    })
+    .join("");
+}
+
+function renderServiceDetailBlock(
+  s: { slug: string; title: string; long_description: string | null; short_description: string | null; features: unknown; image_url: string | null; cta_label: string | null; cta_url: string | null },
+  imageLeft: boolean,
+): string {
+  const desc = s.long_description ?? s.short_description ?? "";
+  const feats = Array.isArray(s.features) ? (s.features as unknown[]).map(String) : [];
+  const featuresHtml = feats
+    .map((f) => `<li><i class="fas fa-check-circle"></i> ${escapeHtml(f)}</li>`)
+    .join("");
+  const img = s.image_url ?? "assets/images/placeholder.jpg";
+  const ctaLabel = s.cta_label ?? "Learn More";
+  const ctaUrl = s.cta_url ?? `/portfolio?filter=${encodeURIComponent(s.slug)}`;
+  const shopUrl = `/shop?filter=${encodeURIComponent(s.slug)}`;
+  const content = `
+                <div class="service-content">
+                    <h2>${escapeHtml(s.title)}</h2>
+                    <p>${escapeHtml(desc)}</p>
+                    ${featuresHtml ? `<ul class="service-features">${featuresHtml}</ul>` : ""}
+                    <a href="${escapeHtml(ctaUrl)}" class="btn btn-primary">${escapeHtml(ctaLabel)}</a>
+                    <a href="${escapeHtml(shopUrl)}" class="btn btn-secondary">Shop ${escapeHtml(s.title)}</a>
+                </div>`;
+  const image = `
+                <div class="service-image">
+                    <img src="${escapeHtml(img)}" alt="${escapeHtml(s.title)}">
+                </div>`;
+  const inner = imageLeft ? image + content : content + image;
+  return `
+            <div class="service" id="${escapeHtml(s.slug)}">${inner}
+            </div>`;
+}
+
+function renderBlogCards(
+  rows: Array<{ slug: string; title: string; excerpt: string | null; cover_image_url: string | null; category: string | null; published_at: string | null }>,
+): string {
+  if (!rows.length) return "";
+  return rows
+    .map((r, i) => {
+      const featured = i === 0 ? " featured" : "";
+      const badge = i === 0 ? `<div class="featured-badge">Featured</div>` : "";
+      const date = r.published_at
+        ? new Date(r.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+        : "";
+      const img = r.cover_image_url ?? "assets/images/placeholder.jpg";
+      return `
+                <article class="blog-card${featured}">
+                    <div class="blog-image">
+                        <img src="${escapeHtml(img)}" alt="${escapeHtml(r.title)}">
+                        ${badge}
+                    </div>
+                    <div class="blog-content">
+                        <div class="blog-meta">
+                            <span class="category">${escapeHtml(r.category ?? "")}</span>
+                            <span class="date">${escapeHtml(date)}</span>
+                        </div>
+                        <h3><a href="/blog/${escapeHtml(r.slug)}">${escapeHtml(r.title)}</a></h3>
+                        <p>${escapeHtml(r.excerpt ?? "")}</p>
+                        <a href="/blog/${escapeHtml(r.slug)}" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </article>`;
+    })
+    .join("");
+}
+
+function formatPrice(cents: number | null, currency: string): string {
+  if (cents == null) return "";
+  const amount = (cents / 100).toLocaleString("en-KE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return `${escapeHtml(currency)} ${amount}`;
+}
+
+function renderProductCards(
+  rows: Array<{ slug: string; title: string; description: string | null; image_url: string | null; price_cents: number | null; currency: string; category: string | null; in_stock: boolean }>,
+): string {
+  if (!rows.length) return `<div style="grid-column:1/-1;text-align:center;padding:2rem;color:#666;">No products yet.</div>`;
+  return rows
+    .map((r) => {
+      const img = r.image_url ?? "assets/images/placeholder.jpg";
+      const cat = (r.category ?? "").toLowerCase();
+      const price = formatPrice(r.price_cents, r.currency);
+      return `
+                <div class="product-card" data-category="${escapeHtml(cat)}">
+                    <div class="product-image">
+                        <img src="${escapeHtml(img)}" alt="${escapeHtml(r.title)}">
+                        ${r.in_stock ? "" : `<span class="out-of-stock">Out of stock</span>`}
+                    </div>
+                    <div class="product-info">
+                        <h3>${escapeHtml(r.title)}</h3>
+                        <p class="product-desc">${escapeHtml(r.description ?? "")}</p>
+                        ${price ? `<p class="product-price">${price}</p>` : ""}
+                        <a href="https://wa.me/254721499606?text=${encodeURIComponent(`Hello, I'm interested in ${r.title}`)}" target="_blank" class="btn btn-primary">Enquire on WhatsApp</a>
+                    </div>
                 </div>`;
     })
     .join("");
@@ -619,6 +737,282 @@ function applySectionOverrides(root: HTMLElement, overrides: SectionOverride[]) 
   }
 }
 
+// --- named page section handlers -------------------------------------------
+// Structured content maps to specific slots on the live HTML.
+// Content shape is per-section (see PageEditor specs).
+
+type NamedContent = Record<string, unknown>;
+const str = (v: unknown) => (typeof v === "string" ? v : "");
+
+function applyHeroBlock(el: HTMLElement | null, c: NamedContent) {
+  if (!el) return;
+  const h1 = el.querySelector("h1, h2");
+  if (h1 && str(c.title)) h1.set_content(escapeHtml(str(c.title)));
+  const subs = el.querySelectorAll("p");
+  if (subs[0] && str(c.subtitle)) subs[0].set_content(escapeHtml(str(c.subtitle)));
+  if (str(c.image_url)) {
+    const existing = el.getAttribute("style") ?? "";
+    el.setAttribute(
+      "style",
+      `${existing};background-image:linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),url('${str(c.image_url)}');background-size:cover;background-position:center;`,
+    );
+  }
+}
+
+function applyTitleBodyBlock(el: HTMLElement | null, c: NamedContent) {
+  if (!el) return;
+  const h = el.querySelector("h1, h2, h3");
+  if (h && str(c.title)) h.set_content(escapeHtml(str(c.title)));
+  const p = el.querySelector("p");
+  if (p && str(c.body)) p.set_content(escapeHtml(str(c.body)));
+}
+
+function applyNamedSection(root: HTMLElement, slug: string, key: string, content: NamedContent) {
+  const k = `${slug}:${key}`;
+  switch (k) {
+    // --- ABOUT ---
+    case "about:hero":
+      applyHeroBlock(root.querySelector(".page-header"), content);
+      break;
+    case "about:our_story": {
+      const wrap = root.querySelector(".about-section .about-text");
+      if (wrap) {
+        const h2 = wrap.querySelector("h2");
+        if (h2 && str(content.title)) h2.set_content(escapeHtml(str(content.title)));
+        if (str(content.body)) {
+          const paras = str(content.body).split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+          const existingPs = wrap.querySelectorAll("p");
+          for (let i = 0; i < Math.min(paras.length, existingPs.length); i++) {
+            existingPs[i].set_content(escapeHtml(paras[i]));
+          }
+        }
+      }
+      if (str(content.image_url)) {
+        const img = root.querySelector(".about-section .about-image img");
+        if (img) img.setAttribute("src", str(content.image_url));
+      }
+      if (str(content.badge_number) || str(content.badge_text)) {
+        const badge = root.querySelector(".experience-badge");
+        if (badge) {
+          const span = badge.querySelector("span");
+          const p = badge.querySelector("p");
+          if (span && str(content.badge_number)) span.set_content(escapeHtml(str(content.badge_number)));
+          if (p && str(content.badge_text)) p.set_content(escapeHtml(str(content.badge_text)));
+        }
+      }
+      break;
+    }
+    case "about:mission_vision": {
+      const wrap = root.querySelector(".mission-vision-values");
+      if (!wrap) break;
+      const title = wrap.querySelector("h2");
+      if (title && str(content.title)) title.set_content(escapeHtml(str(content.title)));
+      const mission = wrap.querySelector(".mission");
+      if (mission) {
+        const h = mission.querySelector("h3");
+        const p = mission.querySelector("p");
+        if (h && str(content.mission_title)) h.set_content(escapeHtml(str(content.mission_title)));
+        if (p && str(content.mission_body)) p.set_content(escapeHtml(str(content.mission_body)));
+      }
+      const visions = wrap.querySelectorAll(".vision");
+      const groups = [
+        [str(content.vision_title), str(content.vision_body)],
+        [str(content.objective_title), str(content.objective_body)],
+      ];
+      for (let i = 0; i < Math.min(visions.length, groups.length); i++) {
+        const [t, b] = groups[i];
+        const h = visions[i].querySelector("h3");
+        const p = visions[i].querySelector("p");
+        if (h && t) h.set_content(escapeHtml(t));
+        if (p && b) p.set_content(escapeHtml(b));
+      }
+      break;
+    }
+    case "about:process": {
+      const wrap = root.querySelector(".process-section");
+      if (!wrap) break;
+      const title = wrap.querySelector("h2");
+      if (title && str(content.title)) title.set_content(escapeHtml(str(content.title)));
+      const intro = wrap.querySelector("p:not(.process-summary)");
+      if (intro && str(content.intro)) intro.set_content(escapeHtml(str(content.intro)));
+      const summary = wrap.querySelector(".process-summary");
+      if (summary && str(content.summary)) summary.set_content(escapeHtml(str(content.summary)));
+      const steps = Array.isArray(content.steps) ? (content.steps as { title: string; body: string }[]) : [];
+      if (steps.length) {
+        const stepsWrap = wrap.querySelector(".process-steps");
+        if (stepsWrap) {
+          stepsWrap.set_content(
+            steps.map((s) => `
+              <div class="process-step">
+                <span class="step-number"></span>
+                <h3>${escapeHtml(s.title ?? "")}</h3>
+                <p>${escapeHtml(s.body ?? "")}</p>
+              </div>`).join(""),
+          );
+        }
+      }
+      break;
+    }
+    case "about:team_intro": {
+      const wrap = root.querySelector(".team-section .container");
+      if (wrap) {
+        const h = wrap.querySelector("h2");
+        const p = wrap.querySelector("p");
+        if (h && str(content.title)) h.set_content(escapeHtml(str(content.title)));
+        if (p && str(content.body)) p.set_content(escapeHtml(str(content.body)));
+      }
+      break;
+    }
+
+    // --- SERVICES ---
+    case "services:hero":
+      applyTitleBodyBlock(root.querySelector(".services-intro1 .container1"), content);
+      if (str(content.image_url)) {
+        applyHeroBlock(root.querySelector(".page-header"), { image_url: content.image_url });
+      }
+      break;
+    case "services:what_we_offer":
+      applyTitleBodyBlock(root.querySelector(".services-overview2 .container2"), content);
+      break;
+    case "services:cta_footer": {
+      const wrap = root.querySelector("section.cta-section .container");
+      if (wrap) {
+        const h = wrap.querySelector("h2");
+        const p = wrap.querySelector("p");
+        if (h && str(content.title)) h.set_content(escapeHtml(str(content.title)));
+        if (p && str(content.body)) p.set_content(escapeHtml(str(content.body)));
+        const btn = wrap.querySelector(".cta-buttons a, .btn");
+        if (btn) {
+          if (str(content.cta_label)) btn.set_content(escapeHtml(str(content.cta_label)));
+          if (str(content.cta_url)) btn.setAttribute("href", str(content.cta_url));
+        }
+      }
+      break;
+    }
+
+    // --- PORTFOLIO ---
+    case "portfolio:hero":
+      applyHeroBlock(root.querySelector(".page-header"), content);
+      break;
+    case "portfolio:filters_intro": {
+      // Optional intro text above filters — inject if placeholder missing
+      break;
+    }
+    case "portfolio:cta_footer": {
+      const wrap = root.querySelector("section.cta-section .container");
+      if (wrap) {
+        const h = wrap.querySelector("h2");
+        const p = wrap.querySelector("p");
+        if (h && str(content.title)) h.set_content(escapeHtml(str(content.title)));
+        if (p && str(content.body)) p.set_content(escapeHtml(str(content.body)));
+      }
+      break;
+    }
+
+    // --- SHOP ---
+    case "shop:hero":
+      applyHeroBlock(root.querySelector(".page-header"), content);
+      break;
+    case "shop:featured":
+      applyTitleBodyBlock(root.querySelector(".featured-products .container"), content);
+      break;
+    case "shop:all_products":
+      applyTitleBodyBlock(root.querySelector(".introduction .container"), content);
+      break;
+
+    // --- BLOG ---
+    case "blog:hero":
+      applyHeroBlock(root.querySelector(".page-header"), content);
+      break;
+    case "blog:intro":
+      applyTitleBodyBlock(root.querySelector(".blog-intro .container"), content);
+      break;
+
+    // --- CONTACT ---
+    case "contact:hero":
+      applyHeroBlock(root.querySelector(".page-header"), content);
+      break;
+    case "contact:intro":
+      // Intro block — no explicit slot in default HTML; skip if none
+      break;
+    case "contact:details": {
+      const info = root.querySelector(".contact-info");
+      if (!info) break;
+      const items = info.querySelectorAll(".info-item");
+      // items[0] = Location, [1] = Phone, [2] = WhatsApp, [3] = Email, [4] = Hours
+      if (items[0] && str(content.address)) {
+        const div = items[0].querySelector("div");
+        if (div) {
+          const paras = div.querySelectorAll("p");
+          const lines = str(content.address).split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+          for (let i = 0; i < Math.min(paras.length, lines.length); i++) {
+            paras[i].set_content(escapeHtml(lines[i]));
+          }
+        }
+      }
+      if (items[1]) {
+        const div = items[1].querySelector("div");
+        if (div) {
+          const paras = div.querySelectorAll("p");
+          const phones = [str(content.phone), str(content.phone_2)].filter(Boolean);
+          for (let i = 0; i < Math.min(paras.length, phones.length); i++) {
+            paras[i].set_content(`<a href="tel:${escapeHtml(phones[i].replace(/\s+/g, ""))}">${escapeHtml(phones[i])}</a>`);
+          }
+        }
+      }
+      if (items[3]) {
+        const div = items[3].querySelector("div");
+        if (div) {
+          const paras = div.querySelectorAll("p");
+          const emails = [str(content.email), str(content.email_2)].filter(Boolean);
+          for (let i = 0; i < Math.min(paras.length, emails.length); i++) {
+            paras[i].set_content(`<a href="mailto:${escapeHtml(emails[i])}">${escapeHtml(emails[i])}</a>`);
+          }
+        }
+      }
+      if (str(content.map_embed_url)) {
+        const iframe = root.querySelector(".map-container iframe");
+        if (iframe) iframe.setAttribute("src", str(content.map_embed_url));
+      }
+      break;
+    }
+    case "contact:hours": {
+      const info = root.querySelector(".contact-info");
+      const items = info?.querySelectorAll(".info-item");
+      const last = items && items[items.length - 1];
+      if (last) {
+        const div = last.querySelector("div");
+        if (div) {
+          const h3 = div.querySelector("h3");
+          if (h3 && str(content.title)) h3.set_content(escapeHtml(str(content.title)));
+          const rows = Array.isArray(content.items) ? (content.items as { day: string; hours: string }[]) : [];
+          if (rows.length) {
+            const oldP = div.querySelectorAll("p");
+            for (const p of oldP) p.remove();
+            for (const r of rows) {
+              div.insertAdjacentHTML(
+                "beforeend",
+                `<p>${escapeHtml(r.day ?? "")}: ${escapeHtml(r.hours ?? "")}</p>`,
+              );
+            }
+          }
+        }
+      }
+      break;
+    }
+    case "contact:form": {
+      const wrap = root.querySelector(".contact-form-section");
+      if (wrap) {
+        const h = wrap.querySelector("h2");
+        const p = wrap.querySelector("p");
+        if (h && str(content.title)) h.set_content(escapeHtml(str(content.title)));
+        if (p && str(content.subtitle)) p.set_content(escapeHtml(str(content.subtitle)));
+      }
+      break;
+    }
+  }
+}
+
 async function applyCommon(root: HTMLElement, slug: string, activePath: string) {
   const version = await getContentVersion();
   const ctx = await loadSiteContext(version);
@@ -629,14 +1023,18 @@ async function applyCommon(root: HTMLElement, slug: string, activePath: string) 
   applyGoogleReview(root, ctx);
   applyHero(root, ctx);
   applyGlobalWhatsApp(root, ctx);
-  // Footer last so the credit URL is not overwritten by the generic WhatsApp
-  // link rewrite above (the credit points to a different wa.me contact).
   applyFooter(root, ctx);
 
   const pageMeta = ctx.pages.get(slug);
   if (pageMeta) {
     const overrides = await loadPageSections(version, pageMeta.id);
-    if (overrides.length) applySectionOverrides(root, overrides);
+    if (overrides.length) {
+      // Named sections first (structured), then generic selector overrides.
+      for (const ov of overrides) {
+        applyNamedSection(root, slug, ov.section_key, ov.content ?? {});
+      }
+      applySectionOverrides(root, overrides);
+    }
   }
   return { ctx, version };
 }
@@ -682,7 +1080,16 @@ export async function hydrateServices(html: string): Promise<string> {
     const root = parseDoc(html);
     const { version } = await applyCommon(root, "services", "/services");
     const services = await loadServices(version);
-    if (services.length) setInner(root, "ul.service-list2", renderServiceListLinks(services));
+    if (services.length) {
+      setInner(root, "ul.service-list2", renderServiceListLinks(services));
+      // Replace the "What We Offer" links to point at each slug anchor
+      const container = root.querySelector(".services-detail .container");
+      if (container) {
+        container.set_content(
+          services.map((s, i) => renderServiceDetailBlock(s, i % 2 === 1)).join(""),
+        );
+      }
+    }
     return root;
   }, html);
 }
@@ -779,7 +1186,11 @@ export async function hydrateContact(html: string): Promise<string> {
 export async function hydrateBlog(html: string): Promise<string> {
   return safe(async () => {
     const root = parseDoc(html);
-    await applyCommon(root, "blog", "/blog");
+    const { version } = await applyCommon(root, "blog", "/blog");
+    const posts = await loadBlogPosts(version);
+    if (posts.length) {
+      setInner(root, ".blog-grid", renderBlogCards(posts));
+    }
     return root;
   }, html);
 }
@@ -787,7 +1198,16 @@ export async function hydrateBlog(html: string): Promise<string> {
 export async function hydrateShop(html: string): Promise<string> {
   return safe(async () => {
     const root = parseDoc(html);
-    await applyCommon(root, "shop", "/shop");
+    const { version } = await applyCommon(root, "shop", "/shop");
+    const products = await loadShopProducts(version);
+    if (products.length) {
+      const featured = products.filter((p) => p.is_featured).slice(0, 6);
+      setInner(root, "#featuredProductsContainer", renderProductCards(featured.length ? featured : products.slice(0, 3)));
+      setInner(root, "#productsContainer", renderProductCards(products));
+    } else {
+      setInner(root, "#featuredProductsContainer", renderProductCards([]));
+      setInner(root, "#productsContainer", renderProductCards([]));
+    }
     return root;
   }, html);
 }
