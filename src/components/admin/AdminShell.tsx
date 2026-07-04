@@ -17,7 +17,7 @@ import {
   Globe,
 } from "lucide-react";
 
-const nav = [
+const nav: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/pages", label: "Pages", icon: FileText },
   { to: "/admin/services", label: "Services", icon: Briefcase },
@@ -29,7 +29,8 @@ const nav = [
   { to: "/admin/messages", label: "Messages", icon: Inbox },
   { to: "/admin/media", label: "Media", icon: ImageIcon },
   { to: "/admin/settings", label: "Site Settings", icon: Settings },
-] as const;
+];
+
 
 export function AdminShell() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
