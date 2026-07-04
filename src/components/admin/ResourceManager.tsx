@@ -233,7 +233,9 @@ export function ResourceManager({
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
+
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
