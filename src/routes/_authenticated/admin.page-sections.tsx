@@ -94,17 +94,17 @@ function PageSectionsPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const content: Record<string, unknown> = {};
+      const content: Record<string, string> = {};
       for (const k of Object.keys(form.content) as (keyof typeof EMPTY_CONTENT)[]) {
         const v = form.content[k];
-        if (v !== "" && v != null) content[k] = v;
+        if (v !== "" && v != null) content[k] = String(v);
       }
       const payload = {
         page_id: pageId,
         section_key: form.section_key.trim(),
         sort_order: Number(form.sort_order) || 0,
         is_visible: form.is_visible,
-        content,
+        content: content as unknown as import("@/integrations/supabase/types").Json,
       };
       if (!payload.section_key) throw new Error("Section key is required");
       if (editing) {
