@@ -34,6 +34,7 @@ export type FieldType =
   | "boolean"
   | "slug"
   | "image"
+  | "images"
   | "url"
   | "stringlist"
   | "richtext";
