@@ -427,15 +427,31 @@ export function ResourceManager({
   );
 }
 
-function renderCell(v: unknown) {
+function renderCell(v: unknown, key?: string) {
   if (v === null || v === undefined) return <span className="text-muted-foreground">—</span>;
+  if (Array.isArray(v)) {
+    const first = v.find((x) => typeof x === "string" && x);
+    if (typeof first === "string") {
+      return (
+        <div className="flex items-center gap-1">
+          <img src={first} alt="" className="h-10 w-10 object-cover rounded border" />
+          {v.length > 1 && <span className="text-xs text-muted-foreground">+{v.length - 1}</span>}
+        </div>
+      );
+    }
+    return <span className="text-muted-foreground">—</span>;
+  }
   if (typeof v === "boolean")
     return v ? (
       <span className="text-green-600">Yes</span>
     ) : (
       <span className="text-muted-foreground">No</span>
     );
-  if (typeof v === "string" && v.startsWith("http") && /\.(png|jpe?g|webp|gif|svg)/i.test(v))
-    return <img src={v} alt="" className="h-8 w-8 object-cover rounded" />;
-  return String(v);
+  if (typeof v === "number" && key && key.endsWith("_cents")) {
+    return <span>KSh {(v / 100).toLocaleString()}</span>;
+  }
+  if (typeof v === "string" && (v.startsWith("/uploads/") || (v.startsWith("http") && /\.(png|jpe?g|webp|gif|svg)/i.test(v)))) {
+    return <img src={v} alt="" className="h-10 w-10 object-cover rounded border" />;
+  }
+  return <span className="truncate block">{String(v)}</span>;
 }
