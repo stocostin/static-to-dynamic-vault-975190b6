@@ -144,7 +144,7 @@ async function loadServices(version: string) {
   return cached("services", version, async () => {
     const { data } = await sb()
       .from("services")
-      .select("slug,title,short_description,icon")
+      .select("slug,title,short_description,long_description,icon,image_url,features,cta_label,cta_url")
       .eq("is_published", true)
       .order("sort_order", { ascending: true });
     return data ?? [];
@@ -155,7 +155,29 @@ async function loadPortfolio(version: string) {
   return cached("portfolio", version, async () => {
     const { data } = await sb()
       .from("portfolio_projects")
-      .select("slug,title,client,category,cover_image_url,is_featured")
+      .select("slug,title,client,location,category,cover_image_url,is_featured")
+      .eq("is_published", true)
+      .order("sort_order", { ascending: true });
+    return data ?? [];
+  });
+}
+
+async function loadBlogPosts(version: string) {
+  return cached("blog_posts", version, async () => {
+    const { data } = await sb()
+      .from("blog_posts")
+      .select("slug,title,excerpt,cover_image_url,category,published_at,is_published")
+      .eq("is_published", true)
+      .order("published_at", { ascending: false, nullsFirst: false });
+    return data ?? [];
+  });
+}
+
+async function loadShopProducts(version: string) {
+  return cached("shop_products", version, async () => {
+    const { data } = await sb()
+      .from("shop_products")
+      .select("slug,title,description,image_url,price_cents,currency,category,in_stock,is_featured")
       .eq("is_published", true)
       .order("sort_order", { ascending: true });
     return data ?? [];
