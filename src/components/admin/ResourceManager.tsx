@@ -448,7 +448,7 @@ function renderCell(v: unknown, key?: string) {
       <span className="text-muted-foreground">No</span>
     );
   if (typeof v === "number" && key && key.endsWith("_cents")) {
-    return <span>KSh {(v / 100).toLocaleString()}</span>;
+    return <span>KSh {v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>;
   }
   if (typeof v === "string" && (v.startsWith("/uploads/") || (v.startsWith("http") && /\.(png|jpe?g|webp|gif|svg)/i.test(v)))) {
     return <img src={v} alt="" className="h-10 w-10 object-cover rounded border" />;
