@@ -285,6 +285,22 @@ export function ResourceManager({
                       />
                     )}
                   </div>
+                ) : f.type === "stringlist" ? (
+                  <Textarea
+                    rows={5}
+                    value={
+                      Array.isArray(form[f.key])
+                        ? (form[f.key] as string[]).join("\n")
+                        : (form[f.key] ?? "")
+                    }
+                    placeholder={f.placeholder ?? "One item per line"}
+                    onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                  />
+                ) : f.type === "richtext" ? (
+                  <RichTextEditor
+                    value={form[f.key] ?? ""}
+                    onChange={(v) => setForm({ ...form, [f.key]: v })}
+                  />
                 ) : (
                   <Input
                     type={f.type === "number" ? "number" : "text"}
