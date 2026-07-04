@@ -1,109 +1,55 @@
+## Goal
 
-# Static → CMS Migration Plan
+Add a temporary admin page that lets you drop in all the original site images at once and have each file land at the exact relative path the legacy HTML/CSS expects (e.g. `assets/images/logo.png`, `assets/images/portfolio/door1.jpg`). This unblocks the visual restore without wiring the CMS yet.
 
-Goal: your existing HTML/CSS/JS becomes React route components in TanStack Start with **zero visual change**. All text/images/menus/products/posts are read from Lovable Cloud (Supabase) and edited via an admin CMS. Empty schema at launch — you populate it.
+## Approach
 
-Given the enormous scope (Core + Blog + Shop + Advanced admin), this is delivered in **4 sequential phases**. Each phase is shippable. You approve one plan; I execute Phase 1 first, then we iterate.
+The legacy pages are served as raw HTML from `src/legacy/*.html` and reference images with relative paths like `assets/images/hero-bg.jpg`. These resolve to `/assets/images/...` at the site root. Rather than committing binary files into `public/`, we serve them out of the existing private `admin-uploads` Supabase Storage bucket under a `legacy/` prefix and add a tiny server route that proxies `/assets/images/*` to those objects. This keeps the migration reversible and requires no build step per upload.
 
----
+### 1. New admin route: `/admin/legacy-images`
 
-## Design preservation strategy (applies to all phases)
+- New file `src/routes/_authenticated/admin.legacy-images.tsx`.
+- Add a "Legacy images" link to `AdminShell.tsx` nav (flagged as temporary).
+- UI:
+  - Dropzone accepting multiple files + whole-folder selection (`<input webkitdirectory multiple>`).
+  - A pre-populated checklist of the 34 expected paths (derived from the grep of `src/legacy/` + CSS). Each row shows: expected filename, target path, status (missing / uploaded / mismatch).
+  - Auto-match strategy: for each dropped file, resolve its target path by
+    1. exact relative path if the folder upload preserved `assets/images/...`,
+    2. otherwise match by basename against the expected list,
+    3. otherwise show it in an "Unmatched — assign manually" list with a dropdown of remaining expected paths.
+  - "Upload all" button uploads each file to `admin-uploads` at key `legacy/assets/images/<same subpath>` with `upsert: true`.
+  - Re-upload overwrites. A "Delete" per row removes the object.
+- Live status is fetched from `supabase.storage.from('admin-uploads').list('legacy/assets/images', { limit: 1000, recursive... })` (recursive listing via subfolder calls).
 
-- Original `assets/css/style.css` (2117 lines) and `shop.css` copied verbatim into `src/styles.css` (below the Tailwind import) — untouched.
-- Original `main.js` and `shop.js` copied verbatim into `public/legacy/` and loaded via a `<script>` tag in `__root.tsx`. No rewrite into React idioms.
-- Each `.html` page becomes a route component whose JSX mirrors the original DOM 1:1 — same tags, same classes, same IDs, same order. Only difference: hardcoded strings/URLs are replaced with `{data.field}` reads from Cloud.
-- Same nav markup in `__root.tsx` for header/footer; page routes render the middle.
-- Fonts, icons, favicon: kept as `<link>` tags in the root head exactly as in the originals.
+### 2. Serve uploaded files at their original URLs
 
-Verification per page: I open the original HTML and the new route side-by-side in Playwright at desktop + mobile widths and diff screenshots before marking a page done.
+The legacy HTML uses relative `assets/images/...`, which resolves under each page URL. Two lightweight server routes handle this so the same file works for `/assets/images/x.jpg` and `/portfolio/assets/images/x.jpg`:
 
----
+- `src/routes/api/legacy-image.$.tsx` — server route matching `/assets/images/*` and `/portfolio/assets/images/*` etc. Actually cleanest: one catch-all `src/routes/assets.images.$.tsx` with a `server.handlers.GET` that:
+  1. Reads the splat path.
+  2. Calls `supabaseAdmin.storage.from('admin-uploads').download('legacy/assets/images/' + splat)` (loaded via `await import('@/integrations/supabase/client.server')`).
+  3. Returns the bytes with proper `Content-Type` (inferred from extension) and a `Cache-Control: public, max-age=300` header.
+  4. 404s cleanly when the object doesn't exist.
 
-## Phase 1 — Foundation + public pages (this approval)
+Because the legacy HTML routes (`/about`, `/portfolio`, etc.) are top-level page paths, browser-relative `assets/images/...` resolves to `/assets/images/...`, which this route serves. No changes to legacy HTML.
 
-Scope:
-1. Enable Lovable Cloud.
-2. Copy `style.css`, `shop.css`, `main.js`, `shop.js` into the project untouched. Wire them in `__root.tsx`.
-3. Create routes matching the original files:
-   - `/` (index.html), `/about`, `/services`, `/portfolio`, `/blog`, `/shop`, `/contact`, `/cms` (kept for reference, will be replaced by real admin in Phase 3).
-   - Each route file mirrors original DOM exactly with placeholder-safe reads from Cloud.
-4. Global CMS tables (all with RLS + admin-only write, public read):
-   - `site_settings` (logo, business name, contact info, social links, footer copy, analytics IDs, favicon)
-   - `pages` (slug, seo_title, meta_description, og_image, published)
-   - `page_sections` (page_id, key, content_json) — the flexible bag every route reads from
-   - `menus` + `menu_items` (header/footer nav)
-   - `services`, `portfolio_projects`, `testimonials`, `team_members`, `faqs`
-   - `contact_messages` (writable by anon, readable admin-only)
-   - `media_assets` (Supabase Storage pointers)
-5. Storage buckets: `public-media` (public), `admin-uploads` (private).
-6. Auth: email/password + Google. `_authenticated/route.tsx` gates admin.
-7. `user_roles` table + `has_role()` RPC. First-signup-becomes-admin bootstrap trigger (documented, one-shot).
-8. Head metadata per route reading from `pages` table.
-9. Sitemap + robots.
+### 3. Expected-paths manifest
 
-Deliverable: public site renders identically to your HTML, but every string comes from Cloud. Contact form persists submissions. Admin doesn't exist yet — content is inserted via a temporary seed script or Cloud table editor.
+`src/lib/legacy-images.ts` exports the exact list grepped from `src/legacy/` and CSS (34 files). The admin page imports it to drive the checklist and the "still missing" counter.
 
----
+### 4. Temporary flag
 
-## Phase 2 — Admin CMS core
+- Route file header comment marks this as temporary Phase-1 tooling to be removed once images are moved into the CMS media library / portfolio records in Phase 2.
+- Nav item labelled "Legacy images (temp)".
 
-Scope (built as protected routes under `/admin`):
-- Login (reuses Supabase auth).
-- Dashboard: submission count, recent activity, quick links.
-- Sidebar shell with dark-mode toggle, profile menu.
-- CRUD screens for: Pages, Sections, Services, Portfolio, Testimonials, Team, FAQs, Menus, Global Settings.
-- Media Library: upload/browse/delete, image preview, folder-ish tagging, bulk delete.
-- Contact Messages: list, filter, mark read, delete, export CSV.
-- Profile: change password, edit name/avatar.
-- Rich text editor (TipTap) for long-form fields.
+## Out of scope
 
----
-
-## Phase 3 — Blog
-
-Scope:
-- Tables: `blog_posts`, `blog_categories`, `blog_tags`, `blog_post_tags`, `blog_comments`.
-- Public routes: `/blog` (list, paginated, category/tag filter, search), `/blog/$slug` (post with SEO head from row).
-- Admin: post CRUD, draft/publish/schedule, featured image, categories/tags, SEO fields, comment moderation.
-- RSS feed + sitemap entries per published post.
-
----
-
-## Phase 4 — Shop + Advanced admin
-
-Shop scope:
-- Tables: `products`, `product_variants`, `product_images`, `product_categories`, `orders`, `order_items`, `carts`.
-- Public: `/shop` list, `/shop/$slug` detail — DOM cloned from your `shop.html`. Cart in localStorage + persisted for logged-in users.
-- Checkout: **requires a payment provider decision** — I'll ask before starting Phase 4 (Stripe vs Paddle vs Shopify per Lovable payments flow).
-- Admin: product CRUD, inventory, orders, order-status workflow.
-
-Advanced admin scope:
-- Roles + permissions matrix (extends `user_roles`).
-- Activity logs (audit table + trigger on writes).
-- 2FA (Supabase TOTP factors).
-- Session management (list/revoke).
-- Page duplication, soft-delete + restore, drafts.
-- Redirects table + middleware.
-- Newsletter subscribers + basic broadcast (via Lovable Email once enabled).
-
----
+- No changes to legacy HTML.
+- No CMS wiring of these images (that's Phase 2).
+- No public `public/` binary commits.
 
 ## Technical notes
 
-- Stack: TanStack Start (React 19, Vite 7), Lovable Cloud (Supabase), Tailwind v4 for admin only. Public pages use your original CSS untouched.
-- Data reads on public routes: `createServerFn` (publishable-key client) called from route loaders via `queryClient.ensureQueryData`, so first paint has real content and SEO works.
-- Admin writes: `createServerFn` + `requireSupabaseAuth` + `has_role('admin')` check.
-- Zero pixel diff enforcement: every public route change ends with a Playwright screenshot comparison vs the original HTML file served from `/tmp`.
-- No redesign, no Tailwind classes added to public-facing markup, no shadcn components on the public site.
-
----
-
-## What I need from you to start Phase 1
-
-Just approve this plan. I'll then:
-1. Enable Cloud.
-2. Copy your CSS/JS assets in verbatim.
-3. Build the 8 public routes as 1:1 clones of your HTML, wired to (empty) Cloud tables.
-4. Ship the schema + storage + auth scaffolding.
-
-Phases 2–4 are separate approvals — I won't start them until Phase 1 is verified.
+- Bucket `admin-uploads` already exists and is private; the server route uses `supabaseAdmin` so RLS/private status is fine. If a future page allows-listing, we can tighten by adding an allow-list check against the manifest before download.
+- Content-Type map: `.jpg/.jpeg → image/jpeg`, `.png → image/png`, `.webp → image/webp`, `.svg → image/svg+xml`, `.gif → image/gif`; default `application/octet-stream`.
+- The route uses `await import('@/integrations/supabase/client.server')` inside the handler to keep the admin client out of the client bundle.
