@@ -1,55 +1,59 @@
-## Goal
+# Move hardcoded page content to the database
 
-Add a temporary admin page that lets you drop in all the original site images at once and have each file land at the exact relative path the legacy HTML/CSS expects (e.g. `assets/images/logo.png`, `assets/images/portfolio/door1.jpg`). This unblocks the visual restore without wiring the CMS yet.
+Goal: the public pages look pixel-identical, but the repeatable content (services, portfolio items, testimonials, team, FAQs, blog posts, footer contact info, site meta) is read from the existing CMS tables and edited from `/admin/*`.
 
 ## Approach
 
-The legacy pages are served as raw HTML from `src/legacy/*.html` and reference images with relative paths like `assets/images/hero-bg.jpg`. These resolve to `/assets/images/...` at the site root. Rather than committing binary files into `public/`, we serve them out of the existing private `admin-uploads` Supabase Storage bucket under a `legacy/` prefix and add a tiny server route that proxies `/assets/images/*` to those objects. This keeps the migration reversible and requires no build step per upload.
+Each public route currently returns the raw legacy HTML string verbatim. We introduce a **server-side hydration step**: on every request, the route handler loads the relevant rows from the database and rewrites specific marked regions of the HTML, then returns the result. Markup, classes, scripts, and CSS stay byte-identical — only the inner content of a few known blocks changes.
 
-### 1. New admin route: `/admin/legacy-images`
+Two mechanisms, used together:
 
-- New file `src/routes/_authenticated/admin.legacy-images.tsx`.
-- Add a "Legacy images" link to `AdminShell.tsx` nav (flagged as temporary).
-- UI:
-  - Dropzone accepting multiple files + whole-folder selection (`<input webkitdirectory multiple>`).
-  - A pre-populated checklist of the 34 expected paths (derived from the grep of `src/legacy/` + CSS). Each row shows: expected filename, target path, status (missing / uploaded / mismatch).
-  - Auto-match strategy: for each dropped file, resolve its target path by
-    1. exact relative path if the folder upload preserved `assets/images/...`,
-    2. otherwise match by basename against the expected list,
-    3. otherwise show it in an "Unmatched — assign manually" list with a dropdown of remaining expected paths.
-  - "Upload all" button uploads each file to `admin-uploads` at key `legacy/assets/images/<same subpath>` with `upsert: true`.
-  - Re-upload overwrites. A "Delete" per row removes the object.
-- Live status is fetched from `supabase.storage.from('admin-uploads').list('legacy/assets/images', { limit: 1000, recursive... })` (recursive listing via subfolder calls).
+1. **List regions** (services grid, portfolio grid, testimonials, team, FAQs, blog posts) — the first existing card in each list is treated as a template. We clone/replace that card's inner text/image/link with each DB row, keeping identical wrapper classes so existing CSS + JS filters/sliders keep working.
+2. **Singleton fields** (footer contact block, topbar phone/email, footer social links, footer "about" blurb, page `<title>` / meta description) — replaced by matching a stable selector once.
 
-### 2. Serve uploaded files at their original URLs
+Parsing is done with `node-html-parser` (Worker-safe, no native deps). One shared helper module owns all transforms so each route file stays a thin wrapper.
 
-The legacy HTML uses relative `assets/images/...`, which resolves under each page URL. Two lightweight server routes handle this so the same file works for `/assets/images/x.jpg` and `/portfolio/assets/images/x.jpg`:
+If a DB table is empty for a section, the original hardcoded markup is left untouched — so the site never goes blank while content is being migrated.
 
-- `src/routes/api/legacy-image.$.tsx` — server route matching `/assets/images/*` and `/portfolio/assets/images/*` etc. Actually cleanest: one catch-all `src/routes/assets.images.$.tsx` with a `server.handlers.GET` that:
-  1. Reads the splat path.
-  2. Calls `supabaseAdmin.storage.from('admin-uploads').download('legacy/assets/images/' + splat)` (loaded via `await import('@/integrations/supabase/client.server')`).
-  3. Returns the bytes with proper `Content-Type` (inferred from extension) and a `Cache-Control: public, max-age=300` header.
-  4. 404s cleanly when the object doesn't exist.
+## What maps where
 
-Because the legacy HTML routes (`/about`, `/portfolio`, etc.) are top-level page paths, browser-relative `assets/images/...` resolves to `/assets/images/...`, which this route serves. No changes to legacy HTML.
+| Legacy region | Source table | Editable at |
+| --- | --- | --- |
+| Services grid on `/` and `/services` | `services` (published, sorted) | `/admin/services` |
+| Portfolio grid + filter chips on `/portfolio` and previews on `/` | `portfolio_projects` | `/admin/portfolio` |
+| Testimonials slider on `/`, `/portfolio`, `/services` | `testimonials` (published) | `/admin/testimonials` |
+| Team grid on `/about` | `team_members` (published) | `/admin/team` |
+| FAQ accordion (where present) | `faqs` (published) | `/admin/faqs` |
+| Blog list on `/blog` and "latest" on `/` | `page_sections` of type `blog_post` (see below) | `/admin/pages` sections |
+| Footer contact block + topbar phone/email + social links (every page) | `site_settings` keys already defined | `/admin/settings` |
+| `<title>` and `<meta name="description">` per page | `pages` row matched by slug | `/admin/pages` |
 
-### 3. Expected-paths manifest
+Blog posts are not in the current schema. In this phase we reuse the `page_sections` table (already present) with a `section_type = 'blog_post'` convention to avoid a schema change; a proper `blog_posts` table can come in a follow-up.
 
-`src/lib/legacy-images.ts` exports the exact list grepped from `src/legacy/` and CSS (34 files). The admin page imports it to drive the checklist and the "still missing" counter.
+## Seeding (one-time)
 
-### 4. Temporary flag
+To avoid the empty-DB "site looks blank" case, we insert the values currently hardcoded in the legacy HTML into the corresponding tables the first time each region is migrated. This is a data insert, not a schema change, and is done through the insert tool so it is reviewable.
 
-- Route file header comment marks this as temporary Phase-1 tooling to be removed once images are moved into the CMS media library / portfolio records in Phase 2.
-- Nav item labelled "Legacy images (temp)".
+## Data grants
 
-## Out of scope
+The public routes render server-side without a signed-in user. Add narrow `TO anon` `SELECT` policies (published rows only, safe columns) on `services`, `portfolio_projects`, `testimonials`, `team_members`, `faqs`, `site_settings`, `pages`, and `page_sections` if they are not already present. Everything read on the public site is already meant to be public.
 
-- No changes to legacy HTML.
-- No CMS wiring of these images (that's Phase 2).
-- No public `public/` binary commits.
+## Files
+
+- `src/lib/legacy-hydrate.server.ts` (new) — loads CMS data with the server publishable client and exposes one `hydrate<Page>(html)` per page.
+- `src/lib/legacy-templating.ts` (new) — small helpers: `renderListRegion(root, selector, rows, mapRow)`, `setText(root, selector, value)`, `setAttr(...)`, `setMeta(...)`.
+- `src/routes/index.tsx`, `about.tsx`, `services.tsx`, `portfolio.tsx`, `contact.tsx`, `blog.tsx`, `shop.tsx` — call the matching hydrate function before returning `Response`. No markup changes.
+- Migration: add `TO anon` SELECT policies (only for tables missing them) filtered to `is_published = true`.
+- Insert tool call: seed the tables with the current hardcoded values so the live site is unchanged after switching.
+
+## Non-goals
+
+- No visual redesign, no CSS changes, no new admin pages (the existing CMS screens already cover every table).
+- No new `blog_posts` schema in this pass — reuses `page_sections`.
+- Contact form submission wiring is out of scope for this change (only the displayed contact info moves to DB).
 
 ## Technical notes
 
-- Bucket `admin-uploads` already exists and is private; the server route uses `supabaseAdmin` so RLS/private status is fine. If a future page allows-listing, we can tighten by adding an allow-list check against the manifest before download.
-- Content-Type map: `.jpg/.jpeg → image/jpeg`, `.png → image/png`, `.webp → image/webp`, `.svg → image/svg+xml`, `.gif → image/gif`; default `application/octet-stream`.
-- The route uses `await import('@/integrations/supabase/client.server')` inside the handler to keep the admin client out of the client bundle.
+- `node-html-parser` is added via `bun add node-html-parser`; it works in the Cloudflare Worker runtime.
+- Hydration runs per-request; a short in-memory cache (30s) keyed by page slug avoids hammering the DB.
+- Reads use a server-local `createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)` — no service role, no browser client on the server.
