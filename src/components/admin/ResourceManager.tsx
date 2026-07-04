@@ -156,6 +156,12 @@ export function ResourceManager({
       }
       if (f.type === "number") payload[f.key] = v === "" || v == null ? null : Number(v);
       else if (f.type === "boolean") payload[f.key] = !!v;
+      else if (f.type === "stringlist") {
+        if (Array.isArray(v)) payload[f.key] = v;
+        else if (typeof v === "string") {
+          payload[f.key] = v.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+        } else payload[f.key] = [];
+      }
       else payload[f.key] = v ?? null;
     }
     saveMutation.mutate(payload);
