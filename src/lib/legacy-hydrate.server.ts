@@ -419,7 +419,7 @@ function renderProductCards(
                         <h3>${escapeHtml(r.title)}</h3>
                         <p class="product-desc">${escapeHtml(r.description ?? "")}</p>
                         ${price ? `<p class="product-price">${price}</p>` : ""}
-                        <a href="https://wa.me/254721499606?text=${encodeURIComponent(`Hello, I'm interested in ${r.title}`)}" target="_blank" class="btn btn-primary">Enquire on WhatsApp</a>
+                        <a href="https://wa.me/254721499606?text=${encodeURIComponent(`Hello, I'm interested in ${r.title}`)}" target="_blank" class="quote-btn"><i class="fab fa-whatsapp"></i> Request Quote</a>
                     </div>
                 </div>`;
     })
