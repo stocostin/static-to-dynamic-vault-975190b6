@@ -1085,13 +1085,14 @@ function postProcess(html: string): string {
     )
     .replace(/url\((['"]?)assets\//g, "url($1/assets/")
     .replace(/assets\/images\/placeholder\.jpg/g, PLACEHOLDER_IMG);
-  if (rewritten.includes('class="auto-rotate"')) {
-    if (rewritten.includes("</body>")) {
-      return rewritten.replace("</body>", AUTO_ROTATE_SCRIPT + "</body>");
-    }
-    return rewritten + AUTO_ROTATE_SCRIPT;
+  const needsRotate = rewritten.includes('class="auto-rotate"');
+  const needsShop = rewritten.includes('id="productsContainer"');
+  const inject = (needsRotate ? AUTO_ROTATE_SCRIPT : "") + (needsShop ? SHOP_CONTROLS_SCRIPT : "");
+  if (!inject) return rewritten;
+  if (rewritten.includes("</body>")) {
+    return rewritten.replace("</body>", inject + "</body>");
   }
-  return rewritten;
+  return rewritten + inject;
 }
 
 async function safe(fn: () => Promise<HTMLElement>, fallback: string): Promise<string> {
