@@ -143,8 +143,7 @@ export function ResourceManager({
       toast.error(error.message);
       return;
     }
-    const { data } = supabase.storage.from("admin-uploads").getPublicUrl(path);
-    setForm((f) => ({ ...f, [key]: data.publicUrl }));
+    setForm((f) => ({ ...f, [key]: `/uploads/${path}` }));
   };
 
   const submit = () => {
