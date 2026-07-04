@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_posts: {
+        Row: {
+          author: string | null
+          body_html: string
+          category: string | null
+          cover_image_url: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          is_published: boolean
+          meta_description: string | null
+          published_at: string | null
+          seo_title: string | null
+          slug: string
+          sort_order: number
+          tags: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          body_html?: string
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          published_at?: string | null
+          seo_title?: string | null
+          slug: string
+          sort_order?: number
+          tags?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          body_html?: string
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          published_at?: string | null
+          seo_title?: string | null
+          slug?: string
+          sort_order?: number
+          tags?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           created_at: string
@@ -309,6 +366,7 @@ export type Database = {
           id: string
           is_featured: boolean
           is_published: boolean
+          location: string | null
           meta_description: string | null
           price_cents: number | null
           seo_title: string | null
@@ -330,6 +388,7 @@ export type Database = {
           id?: string
           is_featured?: boolean
           is_published?: boolean
+          location?: string | null
           meta_description?: string | null
           price_cents?: number | null
           seo_title?: string | null
@@ -351,6 +410,7 @@ export type Database = {
           id?: string
           is_featured?: boolean
           is_published?: boolean
+          location?: string | null
           meta_description?: string | null
           price_cents?: number | null
           seo_title?: string | null
@@ -365,12 +425,16 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string
+          cta_label: string | null
+          cta_url: string | null
           description: string | null
+          features: Json
           icon: string | null
           id: string
           image_url: string | null
           is_featured: boolean
           is_published: boolean
+          long_description: string | null
           short_description: string | null
           slug: string
           sort_order: number
@@ -380,12 +444,16 @@ export type Database = {
         Insert: {
           category?: string | null
           created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
           description?: string | null
+          features?: Json
           icon?: string | null
           id?: string
           image_url?: string | null
           is_featured?: boolean
           is_published?: boolean
+          long_description?: string | null
           short_description?: string | null
           slug: string
           sort_order?: number
@@ -395,13 +463,71 @@ export type Database = {
         Update: {
           category?: string | null
           created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
           description?: string | null
+          features?: Json
           icon?: string | null
           id?: string
           image_url?: string | null
           is_featured?: boolean
           is_published?: boolean
+          long_description?: string | null
           short_description?: string | null
+          slug?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shop_products: {
+        Row: {
+          category: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          gallery: Json
+          id: string
+          image_url: string | null
+          in_stock: boolean
+          is_featured: boolean
+          is_published: boolean
+          price_cents: number | null
+          slug: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          gallery?: Json
+          id?: string
+          image_url?: string | null
+          in_stock?: boolean
+          is_featured?: boolean
+          is_published?: boolean
+          price_cents?: number | null
+          slug: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          gallery?: Json
+          id?: string
+          image_url?: string | null
+          in_stock?: boolean
+          is_featured?: boolean
+          is_published?: boolean
+          price_cents?: number | null
           slug?: string
           sort_order?: number
           title?: string
