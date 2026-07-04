@@ -641,6 +641,282 @@ function applySectionOverrides(root: HTMLElement, overrides: SectionOverride[]) 
   }
 }
 
+// --- named page section handlers -------------------------------------------
+// Structured content maps to specific slots on the live HTML.
+// Content shape is per-section (see PageEditor specs).
+
+type NamedContent = Record<string, unknown>;
+const str = (v: unknown) => (typeof v === "string" ? v : "");
+
+function applyHeroBlock(el: HTMLElement | null, c: NamedContent) {
+  if (!el) return;
+  const h1 = el.querySelector("h1, h2");
+  if (h1 && str(c.title)) h1.set_content(escapeHtml(str(c.title)));
+  const subs = el.querySelectorAll("p");
+  if (subs[0] && str(c.subtitle)) subs[0].set_content(escapeHtml(str(c.subtitle)));
+  if (str(c.image_url)) {
+    const existing = el.getAttribute("style") ?? "";
+    el.setAttribute(
+      "style",
+      `${existing};background-image:linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),url('${str(c.image_url)}');background-size:cover;background-position:center;`,
+    );
+  }
+}
+
+function applyTitleBodyBlock(el: HTMLElement | null, c: NamedContent) {
+  if (!el) return;
+  const h = el.querySelector("h1, h2, h3");
+  if (h && str(c.title)) h.set_content(escapeHtml(str(c.title)));
+  const p = el.querySelector("p");
+  if (p && str(c.body)) p.set_content(escapeHtml(str(c.body)));
+}
+
+function applyNamedSection(root: HTMLElement, slug: string, key: string, content: NamedContent) {
+  const k = `${slug}:${key}`;
+  switch (k) {
+    // --- ABOUT ---
+    case "about:hero":
+      applyHeroBlock(root.querySelector(".page-header"), content);
+      break;
+    case "about:our_story": {
+      const wrap = root.querySelector(".about-section .about-text");
+      if (wrap) {
+        const h2 = wrap.querySelector("h2");
+        if (h2 && str(content.title)) h2.set_content(escapeHtml(str(content.title)));
+        if (str(content.body)) {
+          const paras = str(content.body).split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+          const existingPs = wrap.querySelectorAll("p");
+          for (let i = 0; i < Math.min(paras.length, existingPs.length); i++) {
+            existingPs[i].set_content(escapeHtml(paras[i]));
+          }
+        }
+      }
+      if (str(content.image_url)) {
+        const img = root.querySelector(".about-section .about-image img");
+        if (img) img.setAttribute("src", str(content.image_url));
+      }
+      if (str(content.badge_number) || str(content.badge_text)) {
+        const badge = root.querySelector(".experience-badge");
+        if (badge) {
+          const span = badge.querySelector("span");
+          const p = badge.querySelector("p");
+          if (span && str(content.badge_number)) span.set_content(escapeHtml(str(content.badge_number)));
+          if (p && str(content.badge_text)) p.set_content(escapeHtml(str(content.badge_text)));
+        }
+      }
+      break;
+    }
+    case "about:mission_vision": {
+      const wrap = root.querySelector(".mission-vision-values");
+      if (!wrap) break;
+      const title = wrap.querySelector("h2");
+      if (title && str(content.title)) title.set_content(escapeHtml(str(content.title)));
+      const mission = wrap.querySelector(".mission");
+      if (mission) {
+        const h = mission.querySelector("h3");
+        const p = mission.querySelector("p");
+        if (h && str(content.mission_title)) h.set_content(escapeHtml(str(content.mission_title)));
+        if (p && str(content.mission_body)) p.set_content(escapeHtml(str(content.mission_body)));
+      }
+      const visions = wrap.querySelectorAll(".vision");
+      const groups = [
+        [str(content.vision_title), str(content.vision_body)],
+        [str(content.objective_title), str(content.objective_body)],
+      ];
+      for (let i = 0; i < Math.min(visions.length, groups.length); i++) {
+        const [t, b] = groups[i];
+        const h = visions[i].querySelector("h3");
+        const p = visions[i].querySelector("p");
+        if (h && t) h.set_content(escapeHtml(t));
+        if (p && b) p.set_content(escapeHtml(b));
+      }
+      break;
+    }
+    case "about:process": {
+      const wrap = root.querySelector(".process-section");
+      if (!wrap) break;
+      const title = wrap.querySelector("h2");
+      if (title && str(content.title)) title.set_content(escapeHtml(str(content.title)));
+      const intro = wrap.querySelector("p:not(.process-summary)");
+      if (intro && str(content.intro)) intro.set_content(escapeHtml(str(content.intro)));
+      const summary = wrap.querySelector(".process-summary");
+      if (summary && str(content.summary)) summary.set_content(escapeHtml(str(content.summary)));
+      const steps = Array.isArray(content.steps) ? (content.steps as { title: string; body: string }[]) : [];
+      if (steps.length) {
+        const stepsWrap = wrap.querySelector(".process-steps");
+        if (stepsWrap) {
+          stepsWrap.set_content(
+            steps.map((s) => `
+              <div class="process-step">
+                <span class="step-number"></span>
+                <h3>${escapeHtml(s.title ?? "")}</h3>
+                <p>${escapeHtml(s.body ?? "")}</p>
+              </div>`).join(""),
+          );
+        }
+      }
+      break;
+    }
+    case "about:team_intro": {
+      const wrap = root.querySelector(".team-section .container");
+      if (wrap) {
+        const h = wrap.querySelector("h2");
+        const p = wrap.querySelector("p");
+        if (h && str(content.title)) h.set_content(escapeHtml(str(content.title)));
+        if (p && str(content.body)) p.set_content(escapeHtml(str(content.body)));
+      }
+      break;
+    }
+
+    // --- SERVICES ---
+    case "services:hero":
+      applyTitleBodyBlock(root.querySelector(".services-intro1 .container1"), content);
+      if (str(content.image_url)) {
+        applyHeroBlock(root.querySelector(".page-header"), { image_url: content.image_url });
+      }
+      break;
+    case "services:what_we_offer":
+      applyTitleBodyBlock(root.querySelector(".services-overview2 .container2"), content);
+      break;
+    case "services:cta_footer": {
+      const wrap = root.querySelector("section.cta-section .container");
+      if (wrap) {
+        const h = wrap.querySelector("h2");
+        const p = wrap.querySelector("p");
+        if (h && str(content.title)) h.set_content(escapeHtml(str(content.title)));
+        if (p && str(content.body)) p.set_content(escapeHtml(str(content.body)));
+        const btn = wrap.querySelector(".cta-buttons a, .btn");
+        if (btn) {
+          if (str(content.cta_label)) btn.set_content(escapeHtml(str(content.cta_label)));
+          if (str(content.cta_url)) btn.setAttribute("href", str(content.cta_url));
+        }
+      }
+      break;
+    }
+
+    // --- PORTFOLIO ---
+    case "portfolio:hero":
+      applyHeroBlock(root.querySelector(".page-header"), content);
+      break;
+    case "portfolio:filters_intro": {
+      // Optional intro text above filters — inject if placeholder missing
+      break;
+    }
+    case "portfolio:cta_footer": {
+      const wrap = root.querySelector("section.cta-section .container");
+      if (wrap) {
+        const h = wrap.querySelector("h2");
+        const p = wrap.querySelector("p");
+        if (h && str(content.title)) h.set_content(escapeHtml(str(content.title)));
+        if (p && str(content.body)) p.set_content(escapeHtml(str(content.body)));
+      }
+      break;
+    }
+
+    // --- SHOP ---
+    case "shop:hero":
+      applyHeroBlock(root.querySelector(".page-header"), content);
+      break;
+    case "shop:featured":
+      applyTitleBodyBlock(root.querySelector(".featured-products .container"), content);
+      break;
+    case "shop:all_products":
+      applyTitleBodyBlock(root.querySelector(".introduction .container"), content);
+      break;
+
+    // --- BLOG ---
+    case "blog:hero":
+      applyHeroBlock(root.querySelector(".page-header"), content);
+      break;
+    case "blog:intro":
+      applyTitleBodyBlock(root.querySelector(".blog-intro .container"), content);
+      break;
+
+    // --- CONTACT ---
+    case "contact:hero":
+      applyHeroBlock(root.querySelector(".page-header"), content);
+      break;
+    case "contact:intro":
+      // Intro block — no explicit slot in default HTML; skip if none
+      break;
+    case "contact:details": {
+      const info = root.querySelector(".contact-info");
+      if (!info) break;
+      const items = info.querySelectorAll(".info-item");
+      // items[0] = Location, [1] = Phone, [2] = WhatsApp, [3] = Email, [4] = Hours
+      if (items[0] && str(content.address)) {
+        const div = items[0].querySelector("div");
+        if (div) {
+          const paras = div.querySelectorAll("p");
+          const lines = str(content.address).split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+          for (let i = 0; i < Math.min(paras.length, lines.length); i++) {
+            paras[i].set_content(escapeHtml(lines[i]));
+          }
+        }
+      }
+      if (items[1]) {
+        const div = items[1].querySelector("div");
+        if (div) {
+          const paras = div.querySelectorAll("p");
+          const phones = [str(content.phone), str(content.phone_2)].filter(Boolean);
+          for (let i = 0; i < Math.min(paras.length, phones.length); i++) {
+            paras[i].set_content(`<a href="tel:${escapeHtml(phones[i].replace(/\s+/g, ""))}">${escapeHtml(phones[i])}</a>`);
+          }
+        }
+      }
+      if (items[3]) {
+        const div = items[3].querySelector("div");
+        if (div) {
+          const paras = div.querySelectorAll("p");
+          const emails = [str(content.email), str(content.email_2)].filter(Boolean);
+          for (let i = 0; i < Math.min(paras.length, emails.length); i++) {
+            paras[i].set_content(`<a href="mailto:${escapeHtml(emails[i])}">${escapeHtml(emails[i])}</a>`);
+          }
+        }
+      }
+      if (str(content.map_embed_url)) {
+        const iframe = root.querySelector(".map-container iframe");
+        if (iframe) iframe.setAttribute("src", str(content.map_embed_url));
+      }
+      break;
+    }
+    case "contact:hours": {
+      const info = root.querySelector(".contact-info");
+      const items = info?.querySelectorAll(".info-item");
+      const last = items && items[items.length - 1];
+      if (last) {
+        const div = last.querySelector("div");
+        if (div) {
+          const h3 = div.querySelector("h3");
+          if (h3 && str(content.title)) h3.set_content(escapeHtml(str(content.title)));
+          const rows = Array.isArray(content.items) ? (content.items as { day: string; hours: string }[]) : [];
+          if (rows.length) {
+            const oldP = div.querySelectorAll("p");
+            for (const p of oldP) p.remove();
+            for (const r of rows) {
+              div.insertAdjacentHTML(
+                "beforeend",
+                `<p>${escapeHtml(r.day ?? "")}: ${escapeHtml(r.hours ?? "")}</p>`,
+              );
+            }
+          }
+        }
+      }
+      break;
+    }
+    case "contact:form": {
+      const wrap = root.querySelector(".contact-form-section");
+      if (wrap) {
+        const h = wrap.querySelector("h2");
+        const p = wrap.querySelector("p");
+        if (h && str(content.title)) h.set_content(escapeHtml(str(content.title)));
+        if (p && str(content.subtitle)) p.set_content(escapeHtml(str(content.subtitle)));
+      }
+      break;
+    }
+  }
+}
+
 async function applyCommon(root: HTMLElement, slug: string, activePath: string) {
   const version = await getContentVersion();
   const ctx = await loadSiteContext(version);
@@ -651,14 +927,18 @@ async function applyCommon(root: HTMLElement, slug: string, activePath: string) 
   applyGoogleReview(root, ctx);
   applyHero(root, ctx);
   applyGlobalWhatsApp(root, ctx);
-  // Footer last so the credit URL is not overwritten by the generic WhatsApp
-  // link rewrite above (the credit points to a different wa.me contact).
   applyFooter(root, ctx);
 
   const pageMeta = ctx.pages.get(slug);
   if (pageMeta) {
     const overrides = await loadPageSections(version, pageMeta.id);
-    if (overrides.length) applySectionOverrides(root, overrides);
+    if (overrides.length) {
+      // Named sections first (structured), then generic selector overrides.
+      for (const ov of overrides) {
+        applyNamedSection(root, slug, ov.section_key, ov.content ?? {});
+      }
+      applySectionOverrides(root, overrides);
+    }
   }
   return { ctx, version };
 }
