@@ -1070,8 +1070,10 @@ const PLACEHOLDER_IMG =
 //   - `assets/foo.png` -> `/assets/foo.png` (legacy relative paths 404 on subpages)
 //   - Supabase storage public URL for `admin-uploads` -> `/uploads/<path>` proxy
 //   - Missing placeholder -> inline SVG
+const AUTO_ROTATE_SCRIPT = `<script>(function(){function bind(el){if(el.dataset.rotateBound)return;el.dataset.rotateBound="1";var imgs;try{imgs=JSON.parse(el.getAttribute("data-images")||"[]")}catch(e){return}if(!imgs||imgs.length<2)return;var img=el.querySelector("img");if(!img)return;var i=0;setInterval(function(){i=(i+1)%imgs.length;img.style.opacity="0";setTimeout(function(){img.src=imgs[i];img.style.opacity="1"},350)},3500)}function run(){document.querySelectorAll(".auto-rotate").forEach(bind)}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",run)}else{run()}})();</script>`;
+
 function postProcess(html: string): string {
-  return html
+  const rewritten = html
     .replace(
       /https?:\/\/[^"'\s)]+\/storage\/v1\/object\/public\/admin-uploads\/([^"'\s)]+)/g,
       "/uploads/$1",
@@ -1082,6 +1084,13 @@ function postProcess(html: string): string {
     )
     .replace(/url\((['"]?)assets\//g, "url($1/assets/")
     .replace(/assets\/images\/placeholder\.jpg/g, PLACEHOLDER_IMG);
+  if (rewritten.includes('class="auto-rotate"')) {
+    if (rewritten.includes("</body>")) {
+      return rewritten.replace("</body>", AUTO_ROTATE_SCRIPT + "</body>");
+    }
+    return rewritten + AUTO_ROTATE_SCRIPT;
+  }
+  return rewritten;
 }
 
 async function safe(fn: () => Promise<HTMLElement>, fallback: string): Promise<string> {
