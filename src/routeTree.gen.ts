@@ -38,6 +38,7 @@ import { Route as AuthenticatedAdminFaqsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminPagesShopRouteImport } from './routes/_authenticated/admin.pages.shop'
 import { Route as AuthenticatedAdminPagesServicesRouteImport } from './routes/_authenticated/admin.pages.services'
 import { Route as AuthenticatedAdminPagesPortfolioRouteImport } from './routes/_authenticated/admin.pages.portfolio'
+import { Route as AuthenticatedAdminPagesBlogRouteImport } from './routes/_authenticated/admin.pages.blog'
 import { Route as AuthenticatedAdminPagesAboutRouteImport } from './routes/_authenticated/admin.pages.about'
 
 const ShopRoute = ShopRouteImport.update({
@@ -195,6 +196,12 @@ const AuthenticatedAdminPagesPortfolioRoute =
     path: '/portfolio',
     getParentRoute: () => AuthenticatedAdminPagesRoute,
   } as any)
+const AuthenticatedAdminPagesBlogRoute =
+  AuthenticatedAdminPagesBlogRouteImport.update({
+    id: '/blog',
+    path: '/blog',
+    getParentRoute: () => AuthenticatedAdminPagesRoute,
+  } as any)
 const AuthenticatedAdminPagesAboutRoute =
   AuthenticatedAdminPagesAboutRouteImport.update({
     id: '/about',
@@ -229,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
+  '/admin/pages/blog': typeof AuthenticatedAdminPagesBlogRoute
   '/admin/pages/portfolio': typeof AuthenticatedAdminPagesPortfolioRoute
   '/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
   '/admin/pages/shop': typeof AuthenticatedAdminPagesShopRoute
@@ -259,6 +267,7 @@ export interface FileRoutesByTo {
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
+  '/admin/pages/blog': typeof AuthenticatedAdminPagesBlogRoute
   '/admin/pages/portfolio': typeof AuthenticatedAdminPagesPortfolioRoute
   '/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
   '/admin/pages/shop': typeof AuthenticatedAdminPagesShopRoute
@@ -292,6 +301,7 @@ export interface FileRoutesById {
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
+  '/_authenticated/admin/pages/blog': typeof AuthenticatedAdminPagesBlogRoute
   '/_authenticated/admin/pages/portfolio': typeof AuthenticatedAdminPagesPortfolioRoute
   '/_authenticated/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
   '/_authenticated/admin/pages/shop': typeof AuthenticatedAdminPagesShopRoute
@@ -325,6 +335,7 @@ export interface FileRouteTypes {
     | '/assets/images/$'
     | '/admin/'
     | '/admin/pages/about'
+    | '/admin/pages/blog'
     | '/admin/pages/portfolio'
     | '/admin/pages/services'
     | '/admin/pages/shop'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/assets/images/$'
     | '/admin'
     | '/admin/pages/about'
+    | '/admin/pages/blog'
     | '/admin/pages/portfolio'
     | '/admin/pages/services'
     | '/admin/pages/shop'
@@ -387,6 +399,7 @@ export interface FileRouteTypes {
     | '/assets/images/$'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/pages/about'
+    | '/_authenticated/admin/pages/blog'
     | '/_authenticated/admin/pages/portfolio'
     | '/_authenticated/admin/pages/services'
     | '/_authenticated/admin/pages/shop'
@@ -611,6 +624,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPagesPortfolioRouteImport
       parentRoute: typeof AuthenticatedAdminPagesRoute
     }
+    '/_authenticated/admin/pages/blog': {
+      id: '/_authenticated/admin/pages/blog'
+      path: '/blog'
+      fullPath: '/admin/pages/blog'
+      preLoaderRoute: typeof AuthenticatedAdminPagesBlogRouteImport
+      parentRoute: typeof AuthenticatedAdminPagesRoute
+    }
     '/_authenticated/admin/pages/about': {
       id: '/_authenticated/admin/pages/about'
       path: '/about'
@@ -623,6 +643,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminPagesRouteChildren {
   AuthenticatedAdminPagesAboutRoute: typeof AuthenticatedAdminPagesAboutRoute
+  AuthenticatedAdminPagesBlogRoute: typeof AuthenticatedAdminPagesBlogRoute
   AuthenticatedAdminPagesPortfolioRoute: typeof AuthenticatedAdminPagesPortfolioRoute
   AuthenticatedAdminPagesServicesRoute: typeof AuthenticatedAdminPagesServicesRoute
   AuthenticatedAdminPagesShopRoute: typeof AuthenticatedAdminPagesShopRoute
@@ -631,6 +652,7 @@ interface AuthenticatedAdminPagesRouteChildren {
 const AuthenticatedAdminPagesRouteChildren: AuthenticatedAdminPagesRouteChildren =
   {
     AuthenticatedAdminPagesAboutRoute: AuthenticatedAdminPagesAboutRoute,
+    AuthenticatedAdminPagesBlogRoute: AuthenticatedAdminPagesBlogRoute,
     AuthenticatedAdminPagesPortfolioRoute:
       AuthenticatedAdminPagesPortfolioRoute,
     AuthenticatedAdminPagesServicesRoute: AuthenticatedAdminPagesServicesRoute,
