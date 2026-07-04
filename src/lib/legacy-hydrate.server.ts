@@ -641,14 +641,6 @@ async function applyCommon(root: HTMLElement, slug: string, activePath: string) 
   return { ctx, version };
 }
 
-  const pageMeta = ctx.pages.get(slug);
-  if (pageMeta) {
-    const overrides = await loadPageSections(version, pageMeta.id);
-    if (overrides.length) applySectionOverrides(root, overrides);
-  }
-  return { ctx, version };
-}
-
 // --- per-page hydrators -----------------------------------------------------
 
 async function safe(fn: () => Promise<HTMLElement>, fallback: string): Promise<string> {
