@@ -292,21 +292,117 @@ function renderProjectCards(
 }
 
 function renderPortfolioItems(
-  rows: Array<{ title: string; client: string | null; category: string | null; cover_image_url: string | null }>,
+  rows: Array<{ title: string; client: string | null; location?: string | null; category: string | null; cover_image_url: string | null }>,
 ): string {
   return rows
     .map((r) => {
       const cat = (r.category ?? "other").toLowerCase();
       const img = r.cover_image_url ?? "assets/images/placeholder.jpg";
+      const meta = [r.client, r.location].filter(Boolean).join(" · ");
       return `
                 <div class="portfolio-item" data-category="${escapeHtml(cat)}">
                     <a href="${escapeHtml(img)}" data-lightbox="portfolio" data-title="${escapeHtml(r.title)}">
                         <img src="${escapeHtml(img)}" alt="${escapeHtml(r.title)}">
                         <div class="portfolio-overlay">
                             <h3>${escapeHtml(r.title)}</h3>
-                            <p>${escapeHtml(r.client ?? "")}</p>
+                            <p>${escapeHtml(meta)}</p>
                         </div>
                     </a>
+                </div>`;
+    })
+    .join("");
+}
+
+function renderServiceDetailBlock(
+  s: { slug: string; title: string; long_description: string | null; short_description: string | null; features: unknown; image_url: string | null; cta_label: string | null; cta_url: string | null },
+  imageLeft: boolean,
+): string {
+  const desc = s.long_description ?? s.short_description ?? "";
+  const feats = Array.isArray(s.features) ? (s.features as unknown[]).map(String) : [];
+  const featuresHtml = feats
+    .map((f) => `<li><i class="fas fa-check-circle"></i> ${escapeHtml(f)}</li>`)
+    .join("");
+  const img = s.image_url ?? "assets/images/placeholder.jpg";
+  const ctaLabel = s.cta_label ?? "Learn More";
+  const ctaUrl = s.cta_url ?? `/portfolio?filter=${encodeURIComponent(s.slug)}`;
+  const shopUrl = `/shop?filter=${encodeURIComponent(s.slug)}`;
+  const content = `
+                <div class="service-content">
+                    <h2>${escapeHtml(s.title)}</h2>
+                    <p>${escapeHtml(desc)}</p>
+                    ${featuresHtml ? `<ul class="service-features">${featuresHtml}</ul>` : ""}
+                    <a href="${escapeHtml(ctaUrl)}" class="btn btn-primary">${escapeHtml(ctaLabel)}</a>
+                    <a href="${escapeHtml(shopUrl)}" class="btn btn-secondary">Shop ${escapeHtml(s.title)}</a>
+                </div>`;
+  const image = `
+                <div class="service-image">
+                    <img src="${escapeHtml(img)}" alt="${escapeHtml(s.title)}">
+                </div>`;
+  const inner = imageLeft ? image + content : content + image;
+  return `
+            <div class="service" id="${escapeHtml(s.slug)}">${inner}
+            </div>`;
+}
+
+function renderBlogCards(
+  rows: Array<{ slug: string; title: string; excerpt: string | null; cover_image_url: string | null; category: string | null; published_at: string | null }>,
+): string {
+  if (!rows.length) return "";
+  return rows
+    .map((r, i) => {
+      const featured = i === 0 ? " featured" : "";
+      const badge = i === 0 ? `<div class="featured-badge">Featured</div>` : "";
+      const date = r.published_at
+        ? new Date(r.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+        : "";
+      const img = r.cover_image_url ?? "assets/images/placeholder.jpg";
+      return `
+                <article class="blog-card${featured}">
+                    <div class="blog-image">
+                        <img src="${escapeHtml(img)}" alt="${escapeHtml(r.title)}">
+                        ${badge}
+                    </div>
+                    <div class="blog-content">
+                        <div class="blog-meta">
+                            <span class="category">${escapeHtml(r.category ?? "")}</span>
+                            <span class="date">${escapeHtml(date)}</span>
+                        </div>
+                        <h3><a href="/blog/${escapeHtml(r.slug)}">${escapeHtml(r.title)}</a></h3>
+                        <p>${escapeHtml(r.excerpt ?? "")}</p>
+                        <a href="/blog/${escapeHtml(r.slug)}" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </article>`;
+    })
+    .join("");
+}
+
+function formatPrice(cents: number | null, currency: string): string {
+  if (cents == null) return "";
+  const amount = (cents / 100).toLocaleString("en-KE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return `${escapeHtml(currency)} ${amount}`;
+}
+
+function renderProductCards(
+  rows: Array<{ slug: string; title: string; description: string | null; image_url: string | null; price_cents: number | null; currency: string; category: string | null; in_stock: boolean }>,
+): string {
+  if (!rows.length) return `<div style="grid-column:1/-1;text-align:center;padding:2rem;color:#666;">No products yet.</div>`;
+  return rows
+    .map((r) => {
+      const img = r.image_url ?? "assets/images/placeholder.jpg";
+      const cat = (r.category ?? "").toLowerCase();
+      const price = formatPrice(r.price_cents, r.currency);
+      return `
+                <div class="product-card" data-category="${escapeHtml(cat)}">
+                    <div class="product-image">
+                        <img src="${escapeHtml(img)}" alt="${escapeHtml(r.title)}">
+                        ${r.in_stock ? "" : `<span class="out-of-stock">Out of stock</span>`}
+                    </div>
+                    <div class="product-info">
+                        <h3>${escapeHtml(r.title)}</h3>
+                        <p class="product-desc">${escapeHtml(r.description ?? "")}</p>
+                        ${price ? `<p class="product-price">${price}</p>` : ""}
+                        <a href="https://wa.me/254721499606?text=${encodeURIComponent(`Hello, I'm interested in ${r.title}`)}" target="_blank" class="btn btn-primary">Enquire on WhatsApp</a>
+                    </div>
                 </div>`;
     })
     .join("");
