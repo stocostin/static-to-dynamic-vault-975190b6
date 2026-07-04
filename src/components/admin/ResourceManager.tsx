@@ -237,8 +237,8 @@ export function ResourceManager({
               {listQuery.data!.map((row) => (
                 <TableRow key={row.id}>
                   {listColumns.map((c) => (
-                    <TableCell key={c.key} className="max-w-xs truncate">
-                      {renderCell(row[c.key])}
+                    <TableCell key={c.key} className="max-w-xs">
+                      {renderCell(row[c.key], c.key)}
                     </TableCell>
                   ))}
                   <TableCell className="text-right">
