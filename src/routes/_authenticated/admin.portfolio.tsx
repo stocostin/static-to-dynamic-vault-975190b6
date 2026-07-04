@@ -20,6 +20,7 @@ export const Route = createFileRoute("/_authenticated/admin/portfolio")({
         { key: "slug", label: "Slug", type: "slug", required: true },
         { key: "category", label: "Category", type: "text" },
         { key: "client", label: "Client", type: "text" },
+        { key: "location", label: "Location", type: "text", placeholder: "e.g. Karen, Nairobi" },
         { key: "completion_date", label: "Completion date", type: "text", placeholder: "YYYY-MM-DD" },
         { key: "description", label: "Description", type: "longtext" },
         { key: "cover_image_url", label: "Cover image", type: "image" },
