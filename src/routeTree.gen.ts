@@ -35,6 +35,7 @@ import { Route as AuthenticatedAdminMenuItemsRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminMediaRouteImport } from './routes/_authenticated/admin.media'
 import { Route as AuthenticatedAdminLegacyImagesRouteImport } from './routes/_authenticated/admin.legacy-images'
 import { Route as AuthenticatedAdminFaqsRouteImport } from './routes/_authenticated/admin.faqs'
+import { Route as AuthenticatedAdminBlogPostsRouteImport } from './routes/_authenticated/admin.blog-posts'
 import { Route as AuthenticatedAdminPagesShopRouteImport } from './routes/_authenticated/admin.pages.shop'
 import { Route as AuthenticatedAdminPagesServicesRouteImport } from './routes/_authenticated/admin.pages.services'
 import { Route as AuthenticatedAdminPagesPortfolioRouteImport } from './routes/_authenticated/admin.pages.portfolio'
@@ -179,6 +180,12 @@ const AuthenticatedAdminFaqsRoute = AuthenticatedAdminFaqsRouteImport.update({
   path: '/faqs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminBlogPostsRoute =
+  AuthenticatedAdminBlogPostsRouteImport.update({
+    id: '/blog-posts',
+    path: '/blog-posts',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminPagesShopRoute =
   AuthenticatedAdminPagesShopRouteImport.update({
     id: '/shop',
@@ -226,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/services': typeof ServicesRoute
   '/shop': typeof ShopRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRoute
   '/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/admin/media': typeof AuthenticatedAdminMediaRoute
@@ -258,6 +266,7 @@ export interface FileRoutesByTo {
   '/portfolio': typeof PortfolioRoute
   '/services': typeof ServicesRoute
   '/shop': typeof ShopRoute
+  '/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRoute
   '/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/admin/media': typeof AuthenticatedAdminMediaRoute
@@ -293,6 +302,7 @@ export interface FileRoutesById {
   '/services': typeof ServicesRoute
   '/shop': typeof ShopRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRoute
   '/_authenticated/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/_authenticated/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/_authenticated/admin/media': typeof AuthenticatedAdminMediaRoute
@@ -328,6 +338,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/shop'
     | '/admin'
+    | '/admin/blog-posts'
     | '/admin/faqs'
     | '/admin/legacy-images'
     | '/admin/media'
@@ -360,6 +371,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/services'
     | '/shop'
+    | '/admin/blog-posts'
     | '/admin/faqs'
     | '/admin/legacy-images'
     | '/admin/media'
@@ -394,6 +406,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/shop'
     | '/_authenticated/admin'
+    | '/_authenticated/admin/blog-posts'
     | '/_authenticated/admin/faqs'
     | '/_authenticated/admin/legacy-images'
     | '/_authenticated/admin/media'
@@ -616,6 +629,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminFaqsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/blog-posts': {
+      id: '/_authenticated/admin/blog-posts'
+      path: '/blog-posts'
+      fullPath: '/admin/blog-posts'
+      preLoaderRoute: typeof AuthenticatedAdminBlogPostsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/pages/shop': {
       id: '/_authenticated/admin/pages/shop'
       path: '/shop'
@@ -687,6 +707,7 @@ const AuthenticatedAdminPagesRouteWithChildren =
   )
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminBlogPostsRoute: typeof AuthenticatedAdminBlogPostsRoute
   AuthenticatedAdminFaqsRoute: typeof AuthenticatedAdminFaqsRoute
   AuthenticatedAdminLegacyImagesRoute: typeof AuthenticatedAdminLegacyImagesRoute
   AuthenticatedAdminMediaRoute: typeof AuthenticatedAdminMediaRoute
@@ -704,6 +725,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminBlogPostsRoute: AuthenticatedAdminBlogPostsRoute,
   AuthenticatedAdminFaqsRoute: AuthenticatedAdminFaqsRoute,
   AuthenticatedAdminLegacyImagesRoute: AuthenticatedAdminLegacyImagesRoute,
   AuthenticatedAdminMediaRoute: AuthenticatedAdminMediaRoute,
