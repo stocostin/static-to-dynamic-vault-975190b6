@@ -401,18 +401,18 @@ function formatPrice(cents: number | null, currency: string): string {
 }
 
 function renderProductCards(
-  rows: Array<{ slug: string; title: string; description: string | null; image_url: string | null; price_cents: number | null; currency: string; category: string | null; in_stock: boolean }>,
+  rows: Array<{ slug: string; title: string; description: string | null; image_url: string | null; images?: unknown; price_cents: number | null; currency: string; category: string | null; in_stock: boolean }>,
 ): string {
   if (!rows.length) return `<div style="grid-column:1/-1;text-align:center;padding:2rem;color:#666;">No products yet.</div>`;
   return rows
     .map((r) => {
-      const img = r.image_url ?? "assets/images/placeholder.jpg";
+      const imgs = pickImages(r.image_url, r.images);
       const cat = (r.category ?? "").toLowerCase();
       const price = formatPrice(r.price_cents, r.currency);
       return `
                 <div class="product-card" data-category="${escapeHtml(cat)}">
                     <div class="product-image">
-                        <img src="${escapeHtml(img)}" alt="${escapeHtml(r.title)}">
+                        ${rotatingImg(imgs, "assets/images/placeholder.jpg", r.title)}
                         ${r.in_stock ? "" : `<span class="out-of-stock">Out of stock</span>`}
                     </div>
                     <div class="product-info">
