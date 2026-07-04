@@ -35,6 +35,7 @@ import { Route as AuthenticatedAdminMenuItemsRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminMediaRouteImport } from './routes/_authenticated/admin.media'
 import { Route as AuthenticatedAdminLegacyImagesRouteImport } from './routes/_authenticated/admin.legacy-images'
 import { Route as AuthenticatedAdminFaqsRouteImport } from './routes/_authenticated/admin.faqs'
+import { Route as AuthenticatedAdminPagesServicesRouteImport } from './routes/_authenticated/admin.pages.services'
 import { Route as AuthenticatedAdminPagesAboutRouteImport } from './routes/_authenticated/admin.pages.about'
 
 const ShopRoute = ShopRouteImport.update({
@@ -174,6 +175,12 @@ const AuthenticatedAdminFaqsRoute = AuthenticatedAdminFaqsRouteImport.update({
   path: '/faqs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminPagesServicesRoute =
+  AuthenticatedAdminPagesServicesRouteImport.update({
+    id: '/services',
+    path: '/services',
+    getParentRoute: () => AuthenticatedAdminPagesRoute,
+  } as any)
 const AuthenticatedAdminPagesAboutRoute =
   AuthenticatedAdminPagesAboutRouteImport.update({
     id: '/about',
@@ -208,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
+  '/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -235,6 +243,7 @@ export interface FileRoutesByTo {
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
+  '/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -265,6 +274,7 @@ export interface FileRoutesById {
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
+  '/_authenticated/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
     | '/assets/images/$'
     | '/admin/'
     | '/admin/pages/about'
+    | '/admin/pages/services'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/assets/images/$'
     | '/admin'
     | '/admin/pages/about'
+    | '/admin/pages/services'
   id:
     | '__root__'
     | '/'
@@ -351,6 +363,7 @@ export interface FileRouteTypes {
     | '/assets/images/$'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/pages/about'
+    | '/_authenticated/admin/pages/services'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -551,6 +564,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminFaqsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/pages/services': {
+      id: '/_authenticated/admin/pages/services'
+      path: '/services'
+      fullPath: '/admin/pages/services'
+      preLoaderRoute: typeof AuthenticatedAdminPagesServicesRouteImport
+      parentRoute: typeof AuthenticatedAdminPagesRoute
+    }
     '/_authenticated/admin/pages/about': {
       id: '/_authenticated/admin/pages/about'
       path: '/about'
@@ -563,11 +583,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminPagesRouteChildren {
   AuthenticatedAdminPagesAboutRoute: typeof AuthenticatedAdminPagesAboutRoute
+  AuthenticatedAdminPagesServicesRoute: typeof AuthenticatedAdminPagesServicesRoute
 }
 
 const AuthenticatedAdminPagesRouteChildren: AuthenticatedAdminPagesRouteChildren =
   {
     AuthenticatedAdminPagesAboutRoute: AuthenticatedAdminPagesAboutRoute,
+    AuthenticatedAdminPagesServicesRoute: AuthenticatedAdminPagesServicesRoute,
   }
 
 const AuthenticatedAdminPagesRouteWithChildren =
