@@ -33,7 +33,9 @@ export type FieldType =
   | "boolean"
   | "slug"
   | "image"
-  | "url";
+  | "url"
+  | "stringlist"
+  | "richtext";
 
 export interface FieldDef {
   key: string;
