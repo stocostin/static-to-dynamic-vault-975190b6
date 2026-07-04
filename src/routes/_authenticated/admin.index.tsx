@@ -1,84 +1,71 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Briefcase,
+  Image as ImageIcon,
+  Star,
+  Users,
+  HelpCircle,
+  FileText,
+  Inbox,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
-  head: () => ({
-    meta: [
-      { title: "Admin — Shachavir Timber CMS" },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
-  }),
-  component: AdminHome,
+  component: AdminDashboard,
 });
 
-function AdminHome() {
-  const { user } = Route.useRouteContext() as { user: { email?: string; id: string } };
-  const [roles, setRoles] = useState<string[]>([]);
-  const [messageCount, setMessageCount] = useState<number | null>(null);
+const stats = [
+  { key: "pages", label: "Pages", icon: FileText },
+  { key: "services", label: "Services", icon: Briefcase },
+  { key: "portfolio_projects", label: "Portfolio", icon: ImageIcon },
+  { key: "testimonials", label: "Testimonials", icon: Star },
+  { key: "team_members", label: "Team", icon: Users },
+  { key: "faqs", label: "FAQs", icon: HelpCircle },
+  { key: "contact_messages", label: "Messages", icon: Inbox },
+] as const;
 
-  useEffect(() => {
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .then(({ data }) => setRoles((data ?? []).map((r) => r.role)));
-    supabase
-      .from("contact_messages")
-      .select("*", { count: "exact", head: true })
-      .then(({ count }) => setMessageCount(count ?? 0));
-  }, [user.id]);
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/auth";
-  };
+function AdminDashboard() {
+  const counts = useQuery({
+    queryKey: ["admin", "counts"],
+    queryFn: async () => {
+      const results: Record<string, number> = {};
+      await Promise.all(
+        stats.map(async (s) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { count } = await supabase.from(s.key as any).select("*", { count: "exact", head: true });
+          results[s.key] = count ?? 0;
+        }),
+      );
+      return results;
+    },
+  });
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-xl font-semibold">CMS Admin</h1>
-            <p className="text-sm text-muted-foreground">
-              Signed in as {user.email} · roles: {roles.join(", ") || "user"}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button asChild variant="outline"><a href="/">View site</a></Button>
-            <Button onClick={signOut}>Sign out</Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-6xl px-6 py-8 space-y-6">
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold">Phase 1 complete</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Your original site is live at every route (/, /about, /services, /portfolio, /blog, /shop, /contact).
-            The CMS database, storage, auth, and admin gate are in place. Content-editing screens ship in Phase 2.
-          </p>
-          <ul className="mt-4 list-disc pl-6 text-sm space-y-1">
-            <li>Contact messages: <strong>{messageCount ?? "…"}</strong></li>
-            <li>Tables ready: pages, page_sections, services, portfolio_projects, testimonials, team_members, faqs, menus, menu_items, site_settings, media_assets.</li>
-            <li>First user to sign in was automatically made admin.</li>
-          </ul>
-        </Card>
-
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold">Next: Phase 2</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Ask me to <em>"start Phase 2"</em> and I'll build the CRUD screens for every content type, media library, and rich text editor.
-          </p>
-          <div className="mt-4">
-            <Button asChild variant="outline">
-              <Link to="/">Back to site</Link>
-            </Button>
-          </div>
-        </Card>
-      </main>
+    <div className="p-6 max-w-6xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Overview of your content. Use the sidebar to manage each section.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {stats.map((s) => {
+          const Icon = s.icon;
+          return (
+            <Card key={s.key} className="p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{s.label}</span>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="text-2xl font-semibold mt-2">
+                {counts.data?.[s.key] ?? "—"}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
