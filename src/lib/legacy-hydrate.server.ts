@@ -1249,8 +1249,14 @@ export async function hydrateBlog(html: string): Promise<string> {
 }
 
 export async function hydrateShop(html: string): Promise<string> {
+  // Strip the legacy hardcoded shop.js — it overwrites CMS-rendered products
+  // with static demo items on DOMContentLoaded.
+  const cleaned = html.replace(
+    /<script[^>]*src=["'][^"']*assets\/js\/shop\.js["'][^>]*><\/script>\s*/gi,
+    "",
+  );
   return safe(async () => {
-    const root = parseDoc(html);
+    const root = parseDoc(cleaned);
     const { version } = await applyCommon(root, "shop", "/shop");
     const products = await loadShopProducts(version);
     if (products.length) {
