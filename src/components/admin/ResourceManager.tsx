@@ -142,9 +142,31 @@ export function ResourceManager({
     const { error } = await supabase.storage.from("admin-uploads").upload(path, file);
     if (error) {
       toast.error(error.message);
-      return;
+      return null;
     }
-    setForm((f) => ({ ...f, [key]: `/uploads/${path}` }));
+    const url = `/uploads/${path}`;
+    setForm((f) => ({ ...f, [key]: url }));
+    return url;
+  };
+
+  const uploadImages = async (files: FileList, key: string) => {
+    const uploaded: string[] = [];
+    for (const file of Array.from(files)) {
+      const ext = file.name.split(".").pop();
+      const path = `${table}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("admin-uploads").upload(path, file);
+      if (error) {
+        toast.error(error.message);
+        continue;
+      }
+      uploaded.push(`/uploads/${path}`);
+    }
+    if (uploaded.length) {
+      setForm((f) => {
+        const cur = Array.isArray(f[key]) ? (f[key] as string[]) : [];
+        return { ...f, [key]: [...cur, ...uploaded] };
+      });
+    }
   };
 
   const submit = () => {
@@ -157,6 +179,9 @@ export function ResourceManager({
       }
       if (f.type === "number") payload[f.key] = v === "" || v == null ? null : Number(v);
       else if (f.type === "boolean") payload[f.key] = !!v;
+      else if (f.type === "images") {
+        payload[f.key] = Array.isArray(v) ? v.filter(Boolean) : [];
+      }
       else if (f.type === "stringlist") {
         if (Array.isArray(v)) payload[f.key] = v;
         else if (typeof v === "string") {
