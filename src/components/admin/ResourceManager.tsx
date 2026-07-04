@@ -196,7 +196,9 @@ export function ResourceManager({
             No items yet. Click "New" to add one.
           </div>
         ) : (
+          <div className="w-full overflow-x-auto">
           <Table>
+
             <TableHeader>
               <TableRow>
                 {listColumns.map((c) => (
