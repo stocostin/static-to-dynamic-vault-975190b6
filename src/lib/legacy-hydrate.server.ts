@@ -1111,7 +1111,7 @@ var msgsEl=document.getElementById("sv-msgs");
 var form=document.getElementById("sv-form");
 var input=document.getElementById("sv-input");
 var sendBtn=document.getElementById("sv-send");
-var history=[];var sending=false;
+var history=[];var sending=false;var sessionId="";try{sessionId=sessionStorage.getItem("sv-chat-session")||"";if(!sessionId){sessionId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():("sv-"+Date.now()+"-"+Math.random().toString(36).slice(2,10));sessionStorage.setItem("sv-chat-session",sessionId)}}catch(e){}
 function addMsg(role,text){var d=document.createElement("div");d.className="sv-msg "+(role==="user"?"sv-user":"sv-bot");d.textContent=text;msgsEl.appendChild(d);msgsEl.scrollTop=msgsEl.scrollHeight;return d}
 function addTyping(){var d=document.createElement("div");d.className="sv-typing";d.id="sv-typing";d.textContent="Assistant is typing…";msgsEl.appendChild(d);msgsEl.scrollTop=msgsEl.scrollHeight}
 function rmTyping(){var d=document.getElementById("sv-typing");if(d)d.remove()}
