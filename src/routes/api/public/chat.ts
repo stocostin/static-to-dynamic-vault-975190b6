@@ -136,7 +136,7 @@ export const Route = createFileRoute("/api/public/chat")({
             messages: messages.slice(-20).map((m) => ({ role: m.role, content: m.content })),
           });
 
-          return Response.json({ reply: result.text });
+          return Response.json({ reply: sanitizeReply(result.text) });
         } catch (e: unknown) {
           const err = e as { statusCode?: number; message?: string };
           const status = err?.statusCode === 429 ? 429 : err?.statusCode === 402 ? 402 : 500;
