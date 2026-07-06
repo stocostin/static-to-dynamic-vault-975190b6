@@ -8,7 +8,7 @@ type Msg = { role: "user" | "assistant"; content: string };
 const WELCOME: Msg = {
   role: "assistant",
   content:
-    "Hi! I'm **Shachavir Assistant** 👋 — ask me about our doors, frames, staircases, furniture, prices, or how to request a quote.",
+    "Hi, I'm Shachavir from Shachavir Timber 👋 How can I help you today?",
 };
 
 export function ShachavirAssistant() {
@@ -162,7 +162,7 @@ export function ShachavirAssistant() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={onKey}
-                placeholder="Ask about our doors, prices, projects…"
+                placeholder="Type your message…"
                 disabled={sending}
                 className="max-h-32 min-h-[40px] flex-1 resize-none rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
               />

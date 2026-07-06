@@ -1,26 +1,40 @@
-### Goal
-Restructure the portfolio project cards so the project name and description appear **below** the image as a static caption, instead of the current hover overlay.
+## Goal
+Make the chatbot sound like a real person from Shachavir Timber — warm, natural, no robotic phrasing, no markdown asterisks/bullets cluttering replies.
 
-### Changes
+## Changes
 
-#### 1. HTML structure (`src/legacy/portfolio.html`)
-Move the `.portfolio-overlay` divs (containing `<h3>` and `<p>`) outside the lightbox `<a>` tag so they sit as a sibling below the image. Change `.portfolio-overlay` to a static info block (e.g., `.portfolio-info`) inside `.portfolio-item`.
+### 1. Welcome message (both React + legacy widgets)
+Replace the current greeting in:
+- `src/components/ShachavirAssistant.tsx` (WELCOME constant)
+- `src/lib/legacy-hydrate.server.ts` (ASSISTANT_WIDGET initial message)
 
-#### 2. Server-side rendering (`src/lib/legacy-hydrate.server.ts`)
-Update `renderPortfolioItems()` to emit the same restructured markup: the image/rotating image inside the lightbox `<a>`, and the title + meta text in a separate `<div class="portfolio-info">` below the `<a>`.
+New greeting:
+> "Hi, I'm Shachavir from Shachavir Timber 👋 How can I help you today?"
 
-#### 3. CSS (`public/assets/css/style.css`)
-- Remove absolute positioning and hover-transform rules from `.portfolio-overlay` / `.portfolio-info`.
-- Convert `.portfolio-item` from a fixed-height container to a card-style layout where the image is at the top and the info block sits naturally below it.
-- Keep the image at a consistent aspect ratio (e.g., `height: 220px`, `object-fit: cover`).
-- Style `.portfolio-info` with padding, background, and readable text color.
-- Ensure the existing `.portfolio-filter` JS logic (in `public/assets/js/main.js`) continues to work by keeping `data-category` on `.portfolio-item` and `display: none` behavior unchanged.
+Also update input placeholder to something conversational like "Type your message…" instead of "Ask about our doors, prices, projects…".
 
-#### 4. Verification
-Check that:
-- Filter buttons still hide/show items correctly.
-- Lightbox clicks still open from the image.
-- Layout is responsive and text is clearly visible without hovering.
+### 2. System prompt rewrite (`src/routes/api/public/chat.ts`)
+Rewrite `buildSystemPrompt` so the assistant:
+- Speaks in first person as "Shachavir", a friendly team member (not "an AI assistant").
+- Uses short, warm, conversational sentences — like a WhatsApp chat with a customer.
+- Never uses markdown bold/italics (`**`, `*`, `_`) or bullet lists with `-`/`*`. Plain sentences only. Line breaks are fine.
+- Avoids robotic phrases ("I'm an AI", "As an assistant", "I can help you with the following:", "Here are…").
+- Asks a natural follow-up question when useful (e.g. "What kind of door are you thinking about — interior or main entrance?").
+- Shares prices/details naturally in prose, not tables/lists.
+- Suggests contacting the team by phone/WhatsApp/contact form only when it actually fits the flow.
 
-### Out of scope
-No changes to the filter buttons, lightbox library, or other sections of the page.
+### 3. Strip stray markdown from responses (safety net)
+In the chat API handler, after `generateText`, run a small sanitizer on `result.text`:
+- Remove `**`, `__`, and standalone `*`/`_` used for emphasis.
+- Convert leading `- ` / `* ` bullet markers at line start to plain text (drop the marker).
+- Trim excess blank lines.
+
+This guarantees no asterisks reach the user even if the model slips.
+
+### 4. Keep everything else unchanged
+No changes to placement, storage, endpoints, auth, or context loading.
+
+## Technical notes
+- Both widget copies (React + legacy vanilla JS) must be updated together so the greeting matches site-wide.
+- Sanitizer is a plain regex pass — no new dependencies.
+- Model + context loading stay as-is.

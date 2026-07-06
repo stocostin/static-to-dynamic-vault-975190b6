@@ -1115,7 +1115,7 @@ var history=[];var sending=false;
 function addMsg(role,text){var d=document.createElement("div");d.className="sv-msg "+(role==="user"?"sv-user":"sv-bot");d.textContent=text;msgsEl.appendChild(d);msgsEl.scrollTop=msgsEl.scrollHeight;return d}
 function addTyping(){var d=document.createElement("div");d.className="sv-typing";d.id="sv-typing";d.textContent="Assistant is typing…";msgsEl.appendChild(d);msgsEl.scrollTop=msgsEl.scrollHeight}
 function rmTyping(){var d=document.getElementById("sv-typing");if(d)d.remove()}
-addMsg("assistant","Hi! I'm Shachavir Assistant. Ask me about our doors, frames, staircases, furniture, prices, or how to request a quote.");
+addMsg("assistant","Hi, I'm Shachavir from Shachavir Timber 👋 How can I help you today?");
 toggle.addEventListener("click",function(){panel.classList.add("open");setTimeout(function(){input.focus()},50)});
 closeBtn.addEventListener("click",function(){panel.classList.remove("open")});
 form.addEventListener("submit",function(e){e.preventDefault();var text=(input.value||"").trim();if(!text||sending)return;sending=true;sendBtn.disabled=true;addMsg("user",text);history.push({role:"user",content:text});input.value="";addTyping();
