@@ -26,6 +26,7 @@ import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AssetsImagesSplatRouteImport } from './routes/assets.images.$'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
+import { Route as ApiPublicChatRouteImport } from './routes/api/public/chat'
 import { Route as AuthenticatedAdminTestimonialsRouteImport } from './routes/_authenticated/admin.testimonials'
 import { Route as AuthenticatedAdminTeamRouteImport } from './routes/_authenticated/admin.team'
 import { Route as AuthenticatedAdminShopProductsRouteImport } from './routes/_authenticated/admin.shop-products'
@@ -134,6 +135,11 @@ const AssetsImagesSplatRoute = AssetsImagesSplatRouteImport.update({
 const ApiPublicContactRoute = ApiPublicContactRouteImport.update({
   id: '/api/public/contact',
   path: '/api/public/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicChatRoute = ApiPublicChatRouteImport.update({
+  id: '/api/public/chat',
+  path: '/api/public/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminTestimonialsRoute =
@@ -300,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/admin/shop-products': typeof AuthenticatedAdminShopProductsRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
+  '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -340,6 +347,7 @@ export interface FileRoutesByTo {
   '/admin/shop-products': typeof AuthenticatedAdminShopProductsRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
+  '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -383,6 +391,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/shop-products': typeof AuthenticatedAdminShopProductsRoute
   '/_authenticated/admin/team': typeof AuthenticatedAdminTeamRoute
   '/_authenticated/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
+  '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -426,6 +435,7 @@ export interface FileRouteTypes {
     | '/admin/shop-products'
     | '/admin/team'
     | '/admin/testimonials'
+    | '/api/public/chat'
     | '/api/public/contact'
     | '/assets/images/$'
     | '/admin/'
@@ -466,6 +476,7 @@ export interface FileRouteTypes {
     | '/admin/shop-products'
     | '/admin/team'
     | '/admin/testimonials'
+    | '/api/public/chat'
     | '/api/public/contact'
     | '/assets/images/$'
     | '/admin'
@@ -508,6 +519,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/shop-products'
     | '/_authenticated/admin/team'
     | '/_authenticated/admin/testimonials'
+    | '/api/public/chat'
     | '/api/public/contact'
     | '/assets/images/$'
     | '/_authenticated/admin/'
@@ -535,6 +547,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   UploadsSplatRoute: typeof UploadsSplatRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicChatRoute: typeof ApiPublicChatRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
   AssetsImagesSplatRoute: typeof AssetsImagesSplatRoute
 }
@@ -658,6 +671,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/contact'
       fullPath: '/api/public/contact'
       preLoaderRoute: typeof ApiPublicContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/chat': {
+      id: '/api/public/chat'
+      path: '/api/public/chat'
+      fullPath: '/api/public/chat'
+      preLoaderRoute: typeof ApiPublicChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/testimonials': {
@@ -932,6 +952,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   UploadsSplatRoute: UploadsSplatRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicChatRoute: ApiPublicChatRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
   AssetsImagesSplatRoute: AssetsImagesSplatRoute,
 }
