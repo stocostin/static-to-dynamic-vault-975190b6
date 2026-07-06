@@ -98,7 +98,7 @@ ${faqText || "(no FAQs)"}
 If the visitor asks something outside woodwork/the business, gently steer back to how you can help with Shachavir Timber's offerings.`;
 }
 
-export const Route = createFileRoute("/api/chat")({
+export const Route = createFileRoute("/api/public/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
