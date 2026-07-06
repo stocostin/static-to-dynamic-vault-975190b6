@@ -78,8 +78,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Shachavir Timber CMS" },
-      { name: "description", content: "Admin CMS for Shachavir Timber Limited." },
+      { title: "Shachavir Timber Limited — Premium Woodwork in Kenya" },
+      {
+        name: "description",
+        content:
+          "Shachavir Timber Limited crafts custom doors, frames, staircases and bespoke furniture in Kenya using premium hardwoods and expert joinery.",
+      },
+      { property: "og:site_name", content: "Shachavir Timber Limited" },
+      { property: "og:type", content: "website" },
+      { property: "og:title", content: "Shachavir Timber Limited — Premium Woodwork in Kenya" },
+      {
+        property: "og:description",
+        content:
+          "Custom doors, frames, staircases and bespoke furniture crafted in Kenya from premium hardwoods.",
+      },
+      { property: "og:url", content: "/" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Shachavir Timber Limited — Premium Woodwork in Kenya" },
+      {
+        name: "twitter:description",
+        content:
+          "Custom doors, frames, staircases and bespoke furniture crafted in Kenya from premium hardwoods.",
+      },
     ],
     links: [
       {

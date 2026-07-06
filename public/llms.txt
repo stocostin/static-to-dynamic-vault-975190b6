@@ -1,0 +1,13 @@
+# Shachavir Timber Limited
+
+> Custom doors, frames, staircases and bespoke furniture crafted in Kenya using premium hardwoods and expert joinery.
+
+## Pages
+
+- [Home](/): Overview of Shachavir Timber's craftsmanship and services.
+- [About](/about): Company story, values, and team.
+- [Services](/services): Doors, frames, staircases, and custom furniture offerings.
+- [Portfolio](/portfolio): Completed woodwork projects and installations.
+- [Shop](/shop): Ready-made timber products available for purchase.
+- [Blog](/blog): Articles on woodwork, design trends, and care.
+- [Contact](/contact): How to reach us and request a quote.
