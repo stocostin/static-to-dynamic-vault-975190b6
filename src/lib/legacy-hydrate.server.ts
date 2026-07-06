@@ -1087,8 +1087,7 @@ function postProcess(html: string): string {
     .replace(/assets\/images\/placeholder\.jpg/g, PLACEHOLDER_IMG);
   const needsRotate = rewritten.includes('class="auto-rotate"');
   const needsShop = rewritten.includes('id="productsContainer"');
-  const inject = (needsRotate ? AUTO_ROTATE_SCRIPT : "") + (needsShop ? SHOP_CONTROLS_SCRIPT : "");
-  if (!inject) return rewritten;
+  const inject = (needsRotate ? AUTO_ROTATE_SCRIPT : "") + (needsShop ? SHOP_CONTROLS_SCRIPT : "") + ASSISTANT_WIDGET;
   if (rewritten.includes("</body>")) {
     return rewritten.replace("</body>", inject + "</body>");
   }
