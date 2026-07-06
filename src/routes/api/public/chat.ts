@@ -113,7 +113,11 @@ export const Route = createFileRoute("/api/public/chat")({
     handlers: {
       POST: async ({ request }) => {
         try {
-          const body = (await request.json()) as { messages?: ChatMessage[] };
+          const body = (await request.json()) as {
+            messages?: ChatMessage[];
+            sessionId?: string;
+            sourcePage?: string;
+          };
           const messages = Array.isArray(body.messages) ? body.messages : [];
           if (messages.length === 0) {
             return Response.json({ error: "messages required" }, { status: 400 });
@@ -136,7 +140,73 @@ export const Route = createFileRoute("/api/public/chat")({
             messages: messages.slice(-20).map((m) => ({ role: m.role, content: m.content })),
           });
 
-          return Response.json({ reply: sanitizeReply(result.text) });
+          const reply = sanitizeReply(result.text);
+
+          // Best-effort logging — never fail the chat reply because of it.
+          const sessionId =
+            typeof body.sessionId === "string" && body.sessionId.length > 0
+              ? body.sessionId.slice(0, 100)
+              : null;
+          if (sessionId) {
+            try {
+              const supabase = createClient(
+                process.env.SUPABASE_URL!,
+                process.env.SUPABASE_PUBLISHABLE_KEY!,
+                { auth: { persistSession: false, autoRefreshToken: false } },
+              );
+              const lastUser = [...messages].reverse().find((m) => m.role === "user");
+              const userAgent = request.headers.get("user-agent")?.slice(0, 500) ?? null;
+              const sourcePage =
+                typeof body.sourcePage === "string" ? body.sourcePage.slice(0, 300) : null;
+
+              const { data: existing } = await supabase
+                .from("chat_conversations")
+                .select("id, message_count, first_message")
+                .eq("session_id", sessionId)
+                .maybeSingle();
+
+              let conversationId = existing?.id as string | undefined;
+
+              if (!conversationId) {
+                const { data: inserted } = await supabase
+                  .from("chat_conversations")
+                  .insert({
+                    session_id: sessionId,
+                    first_message: lastUser?.content?.slice(0, 500) ?? null,
+                    last_message: lastUser?.content?.slice(0, 500) ?? null,
+                    message_count: 2,
+                    source_page: sourcePage,
+                    user_agent: userAgent,
+                  })
+                  .select("id")
+                  .single();
+                conversationId = inserted?.id as string | undefined;
+              } else {
+                await supabase
+                  .from("chat_conversations")
+                  .update({
+                    last_message: lastUser?.content?.slice(0, 500) ?? null,
+                    message_count: (existing?.message_count ?? 0) + 2,
+                    is_read: false,
+                    ...(existing?.first_message
+                      ? {}
+                      : { first_message: lastUser?.content?.slice(0, 500) ?? null }),
+                  })
+                  .eq("id", conversationId);
+              }
+
+              if (conversationId && lastUser) {
+                await supabase.from("chat_messages").insert([
+                  { conversation_id: conversationId, role: "user", content: lastUser.content },
+                  { conversation_id: conversationId, role: "assistant", content: reply },
+                ]);
+              }
+            } catch (logErr) {
+              console.error("[chat] log failed", logErr);
+            }
+          }
+
+          return Response.json({ reply, sessionId });
         } catch (e: unknown) {
           const err = e as { statusCode?: number; message?: string };
           const status = err?.statusCode === 429 ? 429 : err?.statusCode === 402 ? 402 : 500;

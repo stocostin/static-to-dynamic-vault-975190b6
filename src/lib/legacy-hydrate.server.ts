@@ -1111,7 +1111,7 @@ var msgsEl=document.getElementById("sv-msgs");
 var form=document.getElementById("sv-form");
 var input=document.getElementById("sv-input");
 var sendBtn=document.getElementById("sv-send");
-var history=[];var sending=false;
+var history=[];var sending=false;var sessionId="";try{sessionId=sessionStorage.getItem("sv-chat-session")||"";if(!sessionId){sessionId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():("sv-"+Date.now()+"-"+Math.random().toString(36).slice(2,10));sessionStorage.setItem("sv-chat-session",sessionId)}}catch(e){}
 function addMsg(role,text){var d=document.createElement("div");d.className="sv-msg "+(role==="user"?"sv-user":"sv-bot");d.textContent=text;msgsEl.appendChild(d);msgsEl.scrollTop=msgsEl.scrollHeight;return d}
 function addTyping(){var d=document.createElement("div");d.className="sv-typing";d.id="sv-typing";d.textContent="Assistant is typing…";msgsEl.appendChild(d);msgsEl.scrollTop=msgsEl.scrollHeight}
 function rmTyping(){var d=document.getElementById("sv-typing");if(d)d.remove()}
@@ -1119,7 +1119,7 @@ addMsg("assistant","Hi, I'm Shachavir from Shachavir Timber 👋 How can I help 
 toggle.addEventListener("click",function(){panel.classList.add("open");setTimeout(function(){input.focus()},50)});
 closeBtn.addEventListener("click",function(){panel.classList.remove("open")});
 form.addEventListener("submit",function(e){e.preventDefault();var text=(input.value||"").trim();if(!text||sending)return;sending=true;sendBtn.disabled=true;addMsg("user",text);history.push({role:"user",content:text});input.value="";addTyping();
-fetch("/api/public/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:history})}).then(function(r){return r.json().then(function(d){return {status:r.status,data:d}})}).then(function(res){rmTyping();var reply;if(res.status===200&&res.data.reply){reply=res.data.reply;history.push({role:"assistant",content:reply})}else if(res.status===429){reply="I'm getting a lot of questions right now. Please try again in a moment."}else if(res.status===402){reply="Chat is temporarily unavailable. Please use the Contact page to reach us."}else{reply=(res.data&&res.data.error)||"Something went wrong. Please try again."}addMsg("assistant",reply)}).catch(function(){rmTyping();addMsg("assistant","Network error. Please check your connection and try again.")}).finally(function(){sending=false;sendBtn.disabled=false;input.focus()})});
+fetch("/api/public/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:history,sessionId:sessionId,sourcePage:location.pathname})}).then(function(r){return r.json().then(function(d){return {status:r.status,data:d}})}).then(function(res){rmTyping();var reply;if(res.status===200&&res.data.reply){reply=res.data.reply;history.push({role:"assistant",content:reply})}else if(res.status===429){reply="I'm getting a lot of questions right now. Please try again in a moment."}else if(res.status===402){reply="Chat is temporarily unavailable. Please use the Contact page to reach us."}else{reply=(res.data&&res.data.error)||"Something went wrong. Please try again."}addMsg("assistant",reply)}).catch(function(){rmTyping();addMsg("assistant","Network error. Please check your connection and try again.")}).finally(function(){sending=false;sendBtn.disabled=false;input.focus()})});
 })();</script>`;
 
 function postProcess(html: string): string {
