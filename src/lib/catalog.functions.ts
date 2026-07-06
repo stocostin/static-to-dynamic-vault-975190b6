@@ -45,7 +45,7 @@ export const getShopProduct = createServerFn({ method: "GET" })
     const { data: row } = await sb()
       .from("shop_products")
       .select(
-        "slug,title,description,image_url,images,price_cents,currency,category,in_stock,is_featured,seo_title,meta_description",
+        "slug,title,description,image_url,images,price_cents,currency,category,in_stock,is_featured",
       )
       .eq("slug", data.slug)
       .eq("is_published", true)
