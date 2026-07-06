@@ -8,7 +8,7 @@ type Msg = { role: "user" | "assistant"; content: string };
 const WELCOME: Msg = {
   role: "assistant",
   content:
-    "Hi! I'm **Shachavir Assistant** 👋 — ask me about our doors, frames, staircases, furniture, prices, or how to request a quote.",
+    "Hi, I'm Shachavir from Shachavir Timber 👋 How can I help you today?",
 };
 
 export function ShachavirAssistant() {
