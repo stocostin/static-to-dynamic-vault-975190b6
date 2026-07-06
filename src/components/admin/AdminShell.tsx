@@ -22,6 +22,7 @@ import {
   Wrench,
   Layers,
   Phone,
+  MessageCircle,
 } from "lucide-react";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
