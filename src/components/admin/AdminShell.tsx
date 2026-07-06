@@ -58,6 +58,7 @@ const groups: NavGroup[] = [
       { to: "/admin/menus", label: "Menus", icon: MenuIcon },
       { to: "/admin/menu-items", label: "Menu items", icon: MenuIcon },
       { to: "/admin/messages", label: "Messages", icon: Inbox },
+      { to: "/admin/chats", label: "Chat inquiries", icon: MessageCircle },
       { to: "/admin/media", label: "Media", icon: ImageIcon },
     ],
   },
