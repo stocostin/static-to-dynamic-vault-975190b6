@@ -26,7 +26,7 @@
           "type": "object",
           "properties": {
             "limit": {
-              "description": "Max number of services to return (default 50).",
+              "description": "Max services to return (default 50).",
               "type": "integer",
               "minimum": 1,
               "maximum": 100
@@ -49,7 +49,7 @@
           "type": "object",
           "properties": {
             "query": {
-              "description": "Optional search term matched against product name.",
+              "description": "Optional search term matched against product title.",
               "type": "string"
             },
             "limit": {
@@ -76,7 +76,7 @@
           "type": "object",
           "properties": {
             "category": {
-              "description": "Optional category slug to filter by.",
+              "description": "Optional category to filter by.",
               "type": "string"
             },
             "limit": {

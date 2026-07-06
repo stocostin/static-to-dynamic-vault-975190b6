@@ -6,7 +6,7 @@ export default defineTool({
   title: "List shop products",
   description: "List published shop products with optional search query.",
   inputSchema: {
-    query: z.string().optional().describe("Optional search term matched against product name."),
+    query: z.string().optional().describe("Optional search term matched against product title."),
     limit: z.number().int().min(1).max(100).optional().describe("Max products to return (default 25)."),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
@@ -17,10 +17,10 @@ export default defineTool({
     });
     let q = supabase
       .from("shop_products")
-      .select("name, slug, price, category, short_description, is_published")
+      .select("title, slug, price_cents, currency, category, description, in_stock")
       .eq("is_published", true)
       .limit(limit ?? 25);
-    if (query && query.trim()) q = q.ilike("name", `%${query.trim()}%`);
+    if (query && query.trim()) q = q.ilike("title", `%${query.trim()}%`);
     const { data, error } = await q;
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {

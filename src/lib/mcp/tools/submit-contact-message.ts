@@ -18,12 +18,13 @@ export default defineTool({
     const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
-    const { error } = await supabase.from("messages").insert({
+    const { error } = await supabase.from("contact_messages").insert({
       name,
       email,
       phone: phone ?? null,
       subject: subject ?? null,
       message,
+      source_page: "mcp",
     });
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return { content: [{ type: "text", text: "Message submitted successfully." }] };

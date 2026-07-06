@@ -6,7 +6,7 @@ export default defineTool({
   title: "List portfolio projects",
   description: "List published portfolio projects, optionally filtered by category.",
   inputSchema: {
-    category: z.string().optional().describe("Optional category slug to filter by."),
+    category: z.string().optional().describe("Optional category to filter by."),
     limit: z.number().int().min(1).max(100).optional(),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
@@ -17,7 +17,7 @@ export default defineTool({
     });
     let q = supabase
       .from("portfolio_projects")
-      .select("title, slug, category, description, location, completed_at, is_published")
+      .select("title, slug, category, description, location, client, completion_date")
       .eq("is_published", true)
       .limit(limit ?? 25);
     if (category && category.trim()) q = q.eq("category", category.trim());

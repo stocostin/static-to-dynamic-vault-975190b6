@@ -6,7 +6,7 @@ export default defineTool({
   title: "List services",
   description: "List published services offered by Shachavir Timber.",
   inputSchema: {
-    limit: z.number().int().min(1).max(100).optional().describe("Max number of services to return (default 50)."),
+    limit: z.number().int().min(1).max(100).optional().describe("Max services to return (default 50)."),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ limit }) => {
@@ -16,8 +16,9 @@ export default defineTool({
     });
     const { data, error } = await supabase
       .from("services")
-      .select("title, slug, short_description, price, is_published")
+      .select("title, slug, short_description, category, is_featured")
       .eq("is_published", true)
+      .order("sort_order", { ascending: true })
       .limit(limit ?? 50);
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
