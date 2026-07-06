@@ -44,10 +44,28 @@ export function ShachavirAssistant() {
     setSending(true);
 
     try {
+      let sessionId = "";
+      try {
+        sessionId = sessionStorage.getItem("sv-chat-session") || "";
+        if (!sessionId) {
+          sessionId =
+            typeof crypto !== "undefined" && "randomUUID" in crypto
+              ? crypto.randomUUID()
+              : `sv-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+          sessionStorage.setItem("sv-chat-session", sessionId);
+        }
+      } catch {
+        /* sessionStorage may be unavailable */
+      }
+
       const res = await fetch("/api/public/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next.filter((m) => m !== WELCOME) }),
+        body: JSON.stringify({
+          messages: next.filter((m) => m !== WELCOME),
+          sessionId,
+          sourcePage: typeof window !== "undefined" ? window.location.pathname : undefined,
+        }),
       });
       const data = (await res.json()) as { reply?: string; error?: string };
       if (!res.ok) {
