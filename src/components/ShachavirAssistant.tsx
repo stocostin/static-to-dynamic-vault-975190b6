@@ -162,7 +162,7 @@ export function ShachavirAssistant() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={onKey}
-                placeholder="Ask about our doors, prices, projects…"
+                placeholder="Type your message…"
                 disabled={sending}
                 className="max-h-32 min-h-[40px] flex-1 resize-none rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
               />
