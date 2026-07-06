@@ -1073,6 +1073,55 @@ const PLACEHOLDER_IMG =
 const AUTO_ROTATE_SCRIPT = `<script>(function(){function bind(img){if(img.dataset.rotateBound)return;img.dataset.rotateBound="1";var list;try{list=JSON.parse(img.getAttribute("data-images")||"[]")}catch(e){return}if(!list||list.length<2)return;var i=0;setInterval(function(){i=(i+1)%list.length;img.style.opacity="0";setTimeout(function(){img.src=list[i];img.style.opacity="1"},350)},3500)}function run(){document.querySelectorAll("img.auto-rotate").forEach(bind)}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",run)}else{run()}})();</script>`;
 const SHOP_CONTROLS_SCRIPT = `<script>(function(){function init(){var grid=document.getElementById("productsContainer");var pag=document.getElementById("paginationContainer");var search=document.getElementById("searchInput");var sbtn=document.getElementById("searchBtn");var cat=document.getElementById("categoryFilter");if(!grid||!pag)return;var all=Array.prototype.slice.call(grid.querySelectorAll(".product-card"));if(!all.length)return;var PER=15;var page=1;var q="";var c="all";function match(card){var okC=(c==="all"||(card.getAttribute("data-category")||"")===c);if(!okC)return false;if(!q)return true;var t=card.getAttribute("data-title")||"";var d=card.getAttribute("data-desc")||"";return t.indexOf(q)>-1||d.indexOf(q)>-1}function render(){var filtered=all.filter(match);var total=filtered.length;var pages=Math.max(1,Math.ceil(total/PER));if(page>pages)page=pages;var start=(page-1)*PER;var end=start+PER;grid.innerHTML="";if(!total){var e=document.createElement("div");e.style.cssText="grid-column:1/-1;text-align:center;padding:2rem;color:#666;";e.textContent="No products match your search.";grid.appendChild(e)}else{filtered.slice(start,end).forEach(function(el){grid.appendChild(el)})}pag.innerHTML="";if(pages<=1){pag.style.display="none";return}pag.style.display="";function btn(label,p,dis,active){var b=document.createElement("button");b.type="button";b.className="page-btn"+(active?" active":"");b.textContent=label;b.disabled=!!dis;if(!dis){b.addEventListener("click",function(){page=p;render();grid.scrollIntoView({behavior:"smooth",block:"start"})})}pag.appendChild(b)}btn("‹ Prev",page-1,page<=1,false);var win=2;for(var i=1;i<=pages;i++){if(i===1||i===pages||(i>=page-win&&i<=page+win)){btn(String(i),i,false,i===page)}else if(i===page-win-1||i===page+win+1){var s=document.createElement("span");s.className="page-ellipsis";s.textContent="…";pag.appendChild(s)}}btn("Next ›",page+1,page>=pages,false);document.querySelectorAll("img.auto-rotate").forEach(function(img){if(!img.dataset.rotateBound&&window.__bindRotate)window.__bindRotate(img)})}function reset(){page=1;render()}if(search){search.addEventListener("input",function(){q=(search.value||"").toLowerCase().trim();reset()})}if(sbtn){sbtn.addEventListener("click",function(){q=(search?(search.value||""):"").toLowerCase().trim();reset()})}if(cat){cat.addEventListener("change",function(){c=cat.value||"all";reset()})}render()}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",init)}else{init()}})();</script>`;
 
+const ASSISTANT_WIDGET = `<style>
+#sv-assistant-root{position:fixed;bottom:20px;right:20px;z-index:99999;font-family:system-ui,-apple-system,sans-serif}
+#sv-assistant-toggle{width:60px;height:60px;border-radius:50%;background:#8B4513;color:#fff;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:26px;transition:transform .2s}
+#sv-assistant-toggle:hover{transform:scale(1.08)}
+#sv-assistant-panel{position:absolute;bottom:74px;right:0;width:360px;max-width:calc(100vw - 32px);height:520px;max-height:calc(100vh - 100px);background:#fff;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.3);display:none;flex-direction:column;overflow:hidden}
+#sv-assistant-panel.open{display:flex}
+.sv-head{background:#8B4513;color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center}
+.sv-head h4{margin:0;font-size:16px;font-weight:600;color:#fff}
+.sv-head small{opacity:.85;font-size:11px;color:#fff}
+.sv-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;padding:0 4px}
+#sv-msgs{flex:1;overflow-y:auto;padding:14px;background:#f8f6f3;display:flex;flex-direction:column;gap:10px}
+.sv-msg{max-width:82%;padding:10px 12px;border-radius:14px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+.sv-user{align-self:flex-end;background:#8B4513;color:#fff;border-bottom-right-radius:4px}
+.sv-bot{align-self:flex-start;background:#fff;color:#222;border:1px solid #e5e0d8;border-bottom-left-radius:4px}
+.sv-typing{align-self:flex-start;color:#888;font-size:13px;font-style:italic}
+.sv-form{display:flex;gap:8px;padding:10px;border-top:1px solid #e5e0d8;background:#fff}
+#sv-input{flex:1;border:1px solid #d8d0c4;border-radius:20px;padding:9px 14px;font-size:14px;outline:none;font-family:inherit;color:#222;background:#fff}
+#sv-input:focus{border-color:#8B4513}
+#sv-send{background:#8B4513;color:#fff;border:none;border-radius:50%;width:38px;height:38px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+#sv-send:disabled{opacity:.5;cursor:not-allowed}
+</style>
+<div id="sv-assistant-root">
+<button id="sv-assistant-toggle" aria-label="Open chat assistant">💬</button>
+<div id="sv-assistant-panel" role="dialog" aria-label="Shachavir Assistant">
+<div class="sv-head"><div><h4>Shachavir Assistant</h4><small>Ask about our woodwork</small></div><button class="sv-close" aria-label="Close">×</button></div>
+<div id="sv-msgs"></div>
+<form class="sv-form" id="sv-form"><input id="sv-input" type="text" placeholder="Type your question…" autocomplete="off" /><button id="sv-send" type="submit" aria-label="Send">➤</button></form>
+</div></div>
+<script>(function(){
+var root=document.getElementById("sv-assistant-root");if(!root)return;
+if(window.__svAssistantInit)return;window.__svAssistantInit=true;
+var panel=document.getElementById("sv-assistant-panel");
+var toggle=document.getElementById("sv-assistant-toggle");
+var closeBtn=root.querySelector(".sv-close");
+var msgsEl=document.getElementById("sv-msgs");
+var form=document.getElementById("sv-form");
+var input=document.getElementById("sv-input");
+var sendBtn=document.getElementById("sv-send");
+var history=[];var sending=false;
+function addMsg(role,text){var d=document.createElement("div");d.className="sv-msg "+(role==="user"?"sv-user":"sv-bot");d.textContent=text;msgsEl.appendChild(d);msgsEl.scrollTop=msgsEl.scrollHeight;return d}
+function addTyping(){var d=document.createElement("div");d.className="sv-typing";d.id="sv-typing";d.textContent="Assistant is typing…";msgsEl.appendChild(d);msgsEl.scrollTop=msgsEl.scrollHeight}
+function rmTyping(){var d=document.getElementById("sv-typing");if(d)d.remove()}
+addMsg("assistant","Hi! I'm Shachavir Assistant. Ask me about our doors, frames, staircases, furniture, prices, or how to request a quote.");
+toggle.addEventListener("click",function(){panel.classList.add("open");setTimeout(function(){input.focus()},50)});
+closeBtn.addEventListener("click",function(){panel.classList.remove("open")});
+form.addEventListener("submit",function(e){e.preventDefault();var text=(input.value||"").trim();if(!text||sending)return;sending=true;sendBtn.disabled=true;addMsg("user",text);history.push({role:"user",content:text});input.value="";addTyping();
+fetch("/api/public/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:history})}).then(function(r){return r.json().then(function(d){return {status:r.status,data:d}})}).then(function(res){rmTyping();var reply;if(res.status===200&&res.data.reply){reply=res.data.reply;history.push({role:"assistant",content:reply})}else if(res.status===429){reply="I'm getting a lot of questions right now. Please try again in a moment."}else if(res.status===402){reply="Chat is temporarily unavailable. Please use the Contact page to reach us."}else{reply=(res.data&&res.data.error)||"Something went wrong. Please try again."}addMsg("assistant",reply)}).catch(function(){rmTyping();addMsg("assistant","Network error. Please check your connection and try again.")}).finally(function(){sending=false;sendBtn.disabled=false;input.focus()})});
+})();</script>`;
+
 function postProcess(html: string): string {
   const rewritten = html
     .replace(
@@ -1087,8 +1136,7 @@ function postProcess(html: string): string {
     .replace(/assets\/images\/placeholder\.jpg/g, PLACEHOLDER_IMG);
   const needsRotate = rewritten.includes('class="auto-rotate"');
   const needsShop = rewritten.includes('id="productsContainer"');
-  const inject = (needsRotate ? AUTO_ROTATE_SCRIPT : "") + (needsShop ? SHOP_CONTROLS_SCRIPT : "");
-  if (!inject) return rewritten;
+  const inject = (needsRotate ? AUTO_ROTATE_SCRIPT : "") + (needsShop ? SHOP_CONTROLS_SCRIPT : "") + ASSISTANT_WIDGET;
   if (rewritten.includes("</body>")) {
     return rewritten.replace("</body>", inject + "</body>");
   }
