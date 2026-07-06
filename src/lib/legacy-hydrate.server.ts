@@ -410,16 +410,18 @@ function renderProductCards(
       const imgs = pickImages(r.image_url, r.images);
       const cat = (r.category ?? "").toLowerCase();
       const price = formatPrice(r.price_cents, r.currency);
+      const href = `/shop/${encodeURIComponent(r.slug)}`;
       return `
                 <div class="product-card" data-category="${escapeHtml(cat)}" data-title="${escapeHtml((r.title || "").toLowerCase())}" data-desc="${escapeHtml((r.description || "").toLowerCase())}">
                     <div class="product-image">
-                        ${rotatingImg(imgs, "assets/images/placeholder.jpg", r.title)}
+                        <a href="${escapeHtml(href)}">${rotatingImg(imgs, "assets/images/placeholder.jpg", r.title)}</a>
                         ${r.in_stock ? "" : `<span class="out-of-stock">Out of stock</span>`}
                     </div>
                     <div class="product-info">
-                        <h3>${escapeHtml(r.title)}</h3>
+                        <h3><a href="${escapeHtml(href)}" style="color:inherit;text-decoration:none;">${escapeHtml(r.title)}</a></h3>
                         <p class="product-desc">${escapeHtml(r.description ?? "")}</p>
                         ${price ? `<p class="product-price">${price}</p>` : ""}
+                        <a href="${escapeHtml(href)}" class="btn-link">View details</a>
                         <a href="https://wa.me/254721499606?text=${encodeURIComponent(`Hello, I'm interested in ${r.title}`)}" target="_blank" class="quote-btn"><i class="fab fa-whatsapp"></i> Request Quote</a>
                     </div>
                 </div>`;
