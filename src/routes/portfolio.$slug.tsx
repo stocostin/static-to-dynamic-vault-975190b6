@@ -1,5 +1,6 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { getPortfolioProject } from "@/lib/catalog.functions";
+import { absoluteUrl } from "@/lib/site";
 
 export const Route = createFileRoute("/portfolio/$slug")({
   loader: async ({ params }) => {
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/portfolio/$slug")({
     const desc =
       baseDesc.slice(0, 200) ||
       `${p.title}${p.location ? ` in ${p.location}` : ""} — a Shachavir Timber project.`;
-    const url = `/portfolio/${params.slug}`;
+    const url = absoluteUrl(`/portfolio/${params.slug}`);
     const img = p.image_absolute;
 
     const meta: Array<Record<string, string>> = [

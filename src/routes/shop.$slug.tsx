@@ -1,5 +1,7 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { getShopProduct } from "@/lib/catalog.functions";
+import { absoluteUrl } from "@/lib/site";
+import { ShareButtons } from "@/components/ShareButtons";
 
 export const Route = createFileRoute("/shop/$slug")({
   loader: async ({ params }) => {
@@ -24,7 +26,7 @@ export const Route = createFileRoute("/shop/$slug")({
         : `${p.title} — ${priceLabel}`
       : baseDesc || `${p.title} by Shachavir Timber Limited.`;
     const title = `${p.title} — Shachavir Timber Limited`;
-    const url = `/shop/${params.slug}`;
+    const url = absoluteUrl(`/shop/${params.slug}`);
     const img = p.image_absolute;
 
     const meta: Array<Record<string, string>> = [
@@ -159,6 +161,11 @@ function ShopProductPage() {
               <span className="text-red-700">Out of stock</span>
             )}
           </p>
+          <ShareButtons
+            className="mt-5"
+            url={absoluteUrl(`/shop/${product.slug}`)}
+            title={product.title}
+          />
           {product.description && (
             <p className="mt-6 whitespace-pre-line leading-relaxed text-foreground">
               {product.description}
