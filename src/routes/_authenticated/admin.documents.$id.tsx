@@ -7,5 +7,5 @@ export const Route = createFileRoute("/_authenticated/admin/documents/$id")({
 
 function EditDoc() {
   const { id } = Route.useParams();
-  return <DocumentEditor id={id} />;
+  return <DocumentEditor key={id} id={id} />;
 }
