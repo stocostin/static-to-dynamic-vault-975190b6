@@ -1,29 +1,21 @@
-## Changes
+## Plan: Verify PDF layout & confirm empty-row exclusion
 
-### 1. PDF line item columns (`src/lib/pdf/renderDocument.ts`)
-Replace current 7-column table (No, Description, Size, Unit, Qty, Rate, Amount) with the requested 5 columns:
-- **No.** | **Description** | **Qty** | **Price/Item** | **Amount**
+### Verification steps (build mode)
+1. Read current `src/lib/pdf/renderDocument.ts` and `src/components/admin/DocumentEditor.tsx` to confirm:
+   - Column order in PDF: **No. | Description | Qty | Price/Item | Amount** (all 4 doc types share the same renderer, so verifying once covers Invoice, Quotation, Receipt, Estimate — only the title string changes).
+   - Header tagline default `DOORS & WINDOWS | FRAMES | STAIRCASE | FURNITURES` is used when `brand.document_footer_tagline` is empty.
+   - `compactItems()` is called in both `buildRow` (save) and `handleDownload` (PDF) paths.
+   - `renderItems` filter in `renderDocument.ts` also drops empty rows as a second safety net.
 
-Size and Unit are dropped from the PDF output (kept in editor data model, just not rendered). Description column widens to absorb the freed space.
+2. Drive Playwright against `localhost:8080`:
+   - Sign in (managed Supabase session), create one document of each type (Invoice, Quotation, Receipt, Estimate) with 2 real rows + 1 auto-appended empty row.
+   - Trigger PDF download, save to `/tmp/browser/`, convert with `pdftoppm`, and visually inspect each PDF:
+     - Confirm 5 columns in the correct order.
+     - Confirm only 2 item rows render (empty trailing row absent).
+     - Confirm header shows logo + site name without overlap and the new tagline string.
+     - Confirm document title matches type (INVOICE / QUOTATION / RECEIPT / ESTIMATE).
 
-### 2. Auto-add next item row (`src/components/admin/DocumentEditor.tsx`)
-When the user types into the last row's description (or edits any field on the last row so it becomes non-empty), append a new empty item row automatically. On PDF download and save, filter out trailing empty rows (rows with empty description AND qty 0 / rate 0) so blank rows never reach the PDF or database.
+3. If any check fails, patch the specific offending code path (renderer columns, compact filter, or tagline fallback) and re-run the Playwright verification for the affected type.
 
-### 3. Skip empty client fields in PDF (`src/lib/pdf/renderDocument.ts`)
-The `lbl()` helper already skips falsy values, but empty strings from the form still render blank labels in some paths. Tighten the check to treat whitespace-only values as empty, and skip the CONTACT line entirely if both phone and email are empty. Same for project/location/reg no/KRA PIN.
-
-### 4. Fix PDF header display (`src/lib/pdf/renderDocument.ts`)
-The current header overlaps the logo with the site name (logo drawn at `x: margin`, text at `margin + 80` — with a wide logo they collide, matching the uploaded screenshot).
-- Measure the drawn logo width and place the site name to the right of it with a fixed gap.
-- Vertically center the site name against the logo.
-- Change the tagline from `SAWN TIMBER | TREATED TIMBER | PLYWOOD | HARDWARE | DELIVERY` to **`DOORS & WINDOWS | FRAMES | STAIRCASE | FURNITURES`**.
-  - Source it from `brand.document_footer_tagline` when set; otherwise use the new default string above (so the old hardcoded-looking tagline in settings is overridden even if the DB still has the old value, we fall back to the new default only when empty — actual change is: if the current stored tagline equals the old timber string, override to the new one at render time; simpler: always use the new string as the default and let admins edit via Settings).
-- Also update the default in `admin.settings.tsx` so a fresh install seeds the new tagline.
-
-### 5. Verification
-- Create a sample invoice with 2 filled item rows + auto-appended empty row → download PDF → confirm: 5 columns, no empty row rendered, empty client fields hidden, header shows logo + site name side by side without overlap, tagline reads "DOORS & WINDOWS | FRAMES | STAIRCASE | FURNITURES".
-
-## Files
-- `src/lib/pdf/renderDocument.ts` — columns, header layout, tagline default, empty-field skipping
-- `src/components/admin/DocumentEditor.tsx` — auto-append row, strip empty rows on save/download
-- `src/routes/_authenticated/admin.settings.tsx` — update default tagline text
+### Deliverable
+Screenshot evidence per document type plus a short pass/fail summary. No feature changes unless a verification step fails.
