@@ -39,7 +39,7 @@ const groups: NavGroup[] = [
   {
     label: "Documents",
     items: [
-      { to: "/admin/documents", label: "Invoices & quotations", icon: FileSpreadsheet },
+      { to: "/admin/documents", label: "Documents", icon: FileSpreadsheet },
     ],
   },
   {

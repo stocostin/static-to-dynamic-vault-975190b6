@@ -14,5 +14,6 @@ export const Route = createFileRoute("/_authenticated/admin/documents/new")({
 
 function NewDoc() {
   const { type } = Route.useSearch();
-  return <DocumentEditor initialType={type || "quotation"} />;
+  const docType = type || "quotation";
+  return <DocumentEditor key={docType} initialType={docType} />;
 }

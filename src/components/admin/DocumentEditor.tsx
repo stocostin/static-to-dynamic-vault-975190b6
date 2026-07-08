@@ -108,11 +108,12 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
   });
 
   const [form, setForm] = useState<FormState>(() => defaultState(initialType || "quotation"));
-  const [loaded, setLoaded] = useState(false);
+  const [defaultsLoaded, setDefaultsLoaded] = useState(false);
+  const [loadedDocId, setLoadedDocId] = useState<string | null>(null);
 
   // Load defaults from settings on first load (create only)
   useEffect(() => {
-    if (id || loaded || !settingsQuery.data) return;
+    if (id || defaultsLoaded || !settingsQuery.data) return;
     const s = settingsQuery.data;
     setForm((f) => ({
       ...f,
@@ -121,12 +122,12 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
       tax_rate: parseFloat(readSetting(s, "tax_rate") || "16") || 16,
       tax_label: readSetting(s, "tax_label") || "VAT",
     }));
-    setLoaded(true);
-  }, [id, loaded, settingsQuery.data]);
+    setDefaultsLoaded(true);
+  }, [id, defaultsLoaded, settingsQuery.data]);
 
   // Load existing doc
   useEffect(() => {
-    if (!docQuery.data || loaded) return;
+    if (!id || !docQuery.data || loadedDocId === id) return;
     const d = docQuery.data;
     setForm({
       doc_type: d.doc_type as DocType,
@@ -149,8 +150,8 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
       tax_rate: Number(d.tax_rate) || 0,
       tax_label: d.tax_label || "VAT",
     });
-    setLoaded(true);
-  }, [docQuery.data, loaded]);
+    setLoadedDocId(id);
+  }, [docQuery.data, id, loadedDocId]);
 
   const totals = useMemo(() => {
     const subtotal = form.line_items.reduce(
