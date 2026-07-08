@@ -1,21 +1,27 @@
-## Plan: Verify PDF layout & confirm empty-row exclusion
+## Problem
 
-### Verification steps (build mode)
-1. Read current `src/lib/pdf/renderDocument.ts` and `src/components/admin/DocumentEditor.tsx` to confirm:
-   - Column order in PDF: **No. | Description | Qty | Price/Item | Amount** (all 4 doc types share the same renderer, so verifying once covers Invoice, Quotation, Receipt, Estimate — only the title string changes).
-   - Header tagline default `DOORS & WINDOWS | FRAMES | STAIRCASE | FURNITURES` is used when `brand.document_footer_tagline` is empty.
-   - `compactItems()` is called in both `buildRow` (save) and `handleDownload` (PDF) paths.
-   - `renderItems` filter in `renderDocument.ts` also drops empty rows as a second safety net.
+The PDF renderer already defaults to `DOORS & WINDOWS | FRAMES | STAIRCASE | FURNITURES`, but the initial DB seed stored the old value `SAWN TIMBER | TREATED TIMBER | PLYWOOD | HARDWARE | DELIVERY` in `site_settings.document_footer_tagline`. Because that setting is non-empty, the PDF (header sub-tagline + footer band) uses the stale value instead of the new default.
 
-2. Drive Playwright against `localhost:8080`:
-   - Sign in (managed Supabase session), create one document of each type (Invoice, Quotation, Receipt, Estimate) with 2 real rows + 1 auto-appended empty row.
-   - Trigger PDF download, save to `/tmp/browser/`, convert with `pdftoppm`, and visually inspect each PDF:
-     - Confirm 5 columns in the correct order.
-     - Confirm only 2 item rows render (empty trailing row absent).
-     - Confirm header shows logo + site name without overlap and the new tagline string.
-     - Confirm document title matches type (INVOICE / QUOTATION / RECEIPT / ESTIMATE).
+Also the brand block in `DocumentEditor.tsx` passes `website_url: window.location.host` (the app host), not the real site URL from settings, so the branded footer contact bar shows the admin/preview host.
 
-3. If any check fails, patch the specific offending code path (renderer columns, compact filter, or tagline fallback) and re-run the Playwright verification for the affected type.
+## Changes
 
-### Deliverable
-Screenshot evidence per document type plus a short pass/fail summary. No feature changes unless a verification step fails.
+1. New migration `supabase/migrations/<timestamp>_update_document_tagline.sql` that overwrites the stale tagline:
+   ```sql
+   UPDATE public.site_settings
+   SET value = to_jsonb('DOORS & WINDOWS | FRAMES | STAIRCASE | FURNITURES'::text)
+   WHERE key = 'document_footer_tagline'
+     AND value = to_jsonb('SAWN TIMBER | TREATED TIMBER | PLYWOOD | HARDWARE | DELIVERY'::text);
+   ```
+   (Guarded so a user-edited value is preserved.)
+
+2. `src/components/admin/DocumentEditor.tsx` — build `brandSettings.website_url` from `readSetting(s, "contact_website")` / `site_url` if present, falling back to `window.location.host`, so the branded footer shows the public site, not the admin host.
+
+3. `src/routes/_authenticated/admin.settings.tsx` — add a `help` note under `document_footer_tagline` pointing to the new default so future edits are obvious.
+
+No changes to `renderDocument.ts` (default is already correct).
+
+## Verification
+
+- Run the migration, reload admin → Settings → Documents: tagline field shows the new value.
+- Download an Invoice / Quotation / Receipt / Estimate PDF: header sub-tagline and footer band both read `DOORS & WINDOWS | FRAMES | STAIRCASE | FURNITURES`, logo + site name + contact bar render.
