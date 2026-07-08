@@ -191,7 +191,7 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
     client_phone: form.client_phone || null,
     project_name: form.project_name || null,
     location: form.location || null,
-    line_items: form.line_items as unknown as never,
+    line_items: compactItems(form.line_items) as unknown as never,
     currency: form.currency,
     subtotal_cents: totals.subtotal,
     tax_enabled: form.tax_enabled,
@@ -254,6 +254,7 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
       const data: DocumentData = {
         ...form,
         due_date: form.due_date || null,
+        line_items: compactItems(form.line_items),
         subtotal_cents: totals.subtotal,
         tax_cents: totals.tax,
         total_cents: totals.total,
@@ -270,11 +271,22 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
     }
   }
 
+  const isRowEmpty = (it: LineItem) =>
+    !it.description.trim() && (!it.qty || Number(it.qty) === 0) && (!it.rate_cents || Number(it.rate_cents) === 0);
+
   const setItem = (i: number, patch: Partial<LineItem>) => {
-    setForm((f) => ({
-      ...f,
-      line_items: f.line_items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)),
-    }));
+    setForm((f) => {
+      const next = f.line_items.map((it, idx) => (idx === i ? { ...it, ...patch } : it));
+      if (i === next.length - 1 && !isRowEmpty(next[i])) {
+        next.push(emptyItem());
+      }
+      return { ...f, line_items: next };
+    });
+  };
+
+  const compactItems = (items: LineItem[]) => {
+    const filtered = items.filter((it) => !isRowEmpty(it));
+    return filtered.length ? filtered : [items[0] ?? emptyItem()];
   };
 
   if (id && docQuery.isLoading) {

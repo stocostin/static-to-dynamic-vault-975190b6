@@ -162,7 +162,9 @@ export async function renderDocumentPdf(
     color: GREEN,
   });
 
-  // Logo
+  // Logo (measure so text can sit beside it without overlap)
+  let logoW = 0;
+  const logoMaxH = 60;
   if (brand.logo_url) {
     const bytes = await fetchImageBytes(brand.logo_url);
     if (bytes) {
@@ -177,20 +179,20 @@ export async function renderDocumentPdf(
         }
       }
       if (img) {
-        const maxH = 60;
-        const scale = maxH / img.height;
-        const w = img.width * scale;
-        page.drawImage(img, { x: margin, y: y - maxH, width: w, height: maxH });
+        const scale = logoMaxH / img.height;
+        logoW = img.width * scale;
+        page.drawImage(img, { x: margin, y: y - logoMaxH, width: logoW, height: logoMaxH });
       }
     }
   }
 
-  // Site name & tagline
-  drawText(page, brand.site_name.toUpperCase(), margin + 80, y - 22, 18, bold, BROWN);
-  const subTagline = brand.document_footer_tagline || "";
-  if (subTagline) {
-    drawText(page, subTagline.toUpperCase(), margin + 80, y - 40, 8, font, GREY);
-  }
+  // Site name & tagline placed to the right of the logo, vertically centered
+  const textX = margin + (logoW ? logoW + 16 : 0);
+  const centerY = y - logoMaxH / 2;
+  drawText(page, brand.site_name.toUpperCase(), textX, centerY + 4, 18, bold, BROWN);
+  const DEFAULT_TAGLINE = "DOORS & WINDOWS | FRAMES | STAIRCASE | FURNITURES";
+  const subTagline = (brand.document_footer_tagline || "").trim() || DEFAULT_TAGLINE;
+  drawText(page, subTagline.toUpperCase(), textX, centerY - 12, 8, font, GREY);
 
   y -= headerH + 10;
 
@@ -202,6 +204,7 @@ export async function renderDocumentPdf(
     color: GREEN,
   });
   y -= 20;
+
 
   // === TITLE ===
   const title = TITLES[doc.doc_type];
@@ -225,11 +228,16 @@ export async function renderDocumentPdf(
   }
   y -= 22;
 
-  // === Client block ===
+  // === Client block === (skip empty / whitespace-only fields)
+  const clean = (v?: string | null) => {
+    const s = (v ?? "").trim();
+    return s.length ? s : "";
+  };
   const lbl = (l: string, v?: string | null) => {
-    if (!v) return;
+    const val = clean(v);
+    if (!val) return;
     drawText(page, `${l}: `, margin, y, 10, bold);
-    drawText(page, v, margin + bold.widthOfTextAtSize(`${l}: `, 10), y, 10, font);
+    drawText(page, val, margin + bold.widthOfTextAtSize(`${l}: `, 10), y, 10, font);
     y -= 14;
   };
   lbl("CLIENT", doc.client_name);
@@ -237,21 +245,18 @@ export async function renderDocumentPdf(
   lbl("PROJECT", doc.project_name);
   lbl("LOCATION", doc.location);
   lbl("KRA PIN", doc.client_kra_pin);
-  if (doc.client_email || doc.client_phone) {
-    const parts = [doc.client_phone, doc.client_email].filter(Boolean).join("  |  ");
-    lbl("CONTACT", parts);
-  }
+  lbl("ADDRESS", doc.client_address);
+  const contactParts = [clean(doc.client_phone), clean(doc.client_email)].filter(Boolean);
+  if (contactParts.length) lbl("CONTACT", contactParts.join("  |  "));
   y -= 6;
 
   // === Line items table ===
   const cols = [
-    { label: "No", w: 30, align: "center" as const },
-    { label: "Description", w: 170, align: "left" as const },
-    { label: "Size", w: 80, align: "left" as const },
-    { label: "Unit", w: 40, align: "center" as const },
-    { label: "Qty", w: 40, align: "center" as const },
-    { label: "Rate", w: 70, align: "right" as const },
-    { label: "Amount", w: 85, align: "right" as const },
+    { label: "No.", w: 40, align: "center" as const },
+    { label: "Description", w: 205, align: "left" as const },
+    { label: "Qty", w: 60, align: "center" as const },
+    { label: "Price/Item", w: 100, align: "right" as const },
+    { label: "Amount", w: 110, align: "right" as const },
   ];
   const tableX = margin;
   const tableW = cols.reduce((a, c) => a + c.w, 0);
@@ -281,8 +286,14 @@ export async function renderDocumentPdf(
   }
   y -= rowH;
 
-  // Rows
-  doc.line_items.forEach((item, idx) => {
+  // Rows (skip empty rows so blank auto-appended rows never render)
+  const renderItems = doc.line_items.filter(
+    (it) =>
+      (it.description && it.description.trim()) ||
+      (Number(it.qty) || 0) > 0 ||
+      (Number(it.rate_cents) || 0) > 0,
+  );
+  renderItems.forEach((item, idx) => {
     const rowY = y - rowH + 4;
     if (idx % 2 === 0) {
       page.drawRectangle({
@@ -293,19 +304,17 @@ export async function renderDocumentPdf(
         color: LIGHT,
       });
     }
-    const amount = item.qty * item.rate_cents;
+    const amount = (Number(item.qty) || 0) * (Number(item.rate_cents) || 0);
     const vals = [
       String(idx + 1).padStart(2, "0"),
       item.description || "",
-      item.size || "",
-      item.unit || "",
       String(item.qty || 0),
       (item.rate_cents / 100).toFixed(2),
       (amount / 100).toFixed(2),
     ];
     let cx = tableX;
     cols.forEach((c, i) => {
-      const f = i >= 4 ? mono : font;
+      const f = i >= 2 ? mono : font;
       const s = 9.5;
       const text = vals[i];
       const tw = f.widthOfTextAtSize(text, s);
