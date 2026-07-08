@@ -264,15 +264,17 @@ export async function renderDocumentPdf(
   const tableW = cols.reduce((a, c) => a + c.w, 0);
   const rowH = 22;
 
-  // Header row
-  page.drawRectangle({
-    x: tableX,
-    y: y - rowH + 4,
-    width: tableW,
-    height: rowH,
-    color: BROWN,
-  });
-  {
+  // Space reserved at page bottom for signatures + footer bar (only drawn on last page)
+  const MIN_Y = 180;
+
+  const drawTableHeader = () => {
+    page.drawRectangle({
+      x: tableX,
+      y: y - rowH + 4,
+      width: tableW,
+      height: rowH,
+      color: BROWN,
+    });
     let cx = tableX;
     for (const c of cols) {
       const tw = bold.widthOfTextAtSize(c.label, 10);
@@ -285,17 +287,31 @@ export async function renderDocumentPdf(
       drawText(page, c.label, tx, y - 10, 10, bold, rgb(1, 1, 1));
       cx += c.w;
     }
-  }
-  y -= rowH;
+    y -= rowH;
+  };
 
-  // Rows (skip empty rows so blank auto-appended rows never render)
+  const newPage = (withTableHeader: boolean) => {
+    page = pdf.addPage([PAGE_W, PAGE_H]);
+    y = PAGE_H - margin;
+    if (withTableHeader) drawTableHeader();
+  };
+
+  const ensureRowSpace = () => {
+    if (y - rowH < MIN_Y) newPage(true);
+  };
+  const ensurePlainSpace = (needed: number) => {
+    if (y - needed < MIN_Y) newPage(false);
+  };
+
+  // Header row
+  drawTableHeader();
+
+  // Rows — a row is considered empty if it has no description (per spec).
   const renderItems = doc.line_items.filter(
-    (it) =>
-      (it.description && it.description.trim()) ||
-      (Number(it.qty) || 0) > 0 ||
-      (Number(it.rate_cents) || 0) > 0,
+    (it) => (it.description ?? "").trim().length > 0,
   );
   renderItems.forEach((item, idx) => {
+    ensureRowSpace();
     const rowY = y - rowH + 4;
     if (idx % 2 === 0) {
       page.drawRectangle({
@@ -351,6 +367,7 @@ export async function renderDocumentPdf(
   // === Totals ===
   const totalsX = tableX + tableW - 260;
   const drawTotal = (label: string, value: string, boldRow = false) => {
+    ensurePlainSpace(16);
     const f = boldRow ? bold : font;
     const s = boldRow ? 12 : 10;
     drawText(page, label, totalsX, y, s, bold, boldRow ? DARK : GREY);
@@ -378,11 +395,12 @@ export async function renderDocumentPdf(
 
   // === Notes ===
   if (doc.notes) {
+    ensurePlainSpace(28);
     drawText(page, "NOTES:", margin, y, 10, bold, GREEN);
     y -= 14;
     const lines = wrapLines(doc.notes, font, 9, width - margin * 2);
     for (const line of lines) {
-      if (y < 140) break;
+      ensurePlainSpace(12);
       drawText(page, `• ${line}`, margin + 8, y, 9, font);
       y -= 12;
     }
@@ -391,15 +409,17 @@ export async function renderDocumentPdf(
   // === Bank details ===
   if (brand.document_bank_details) {
     y -= 6;
+    ensurePlainSpace(28);
     drawText(page, "BANK DETAILS:", margin, y, 10, bold, GREEN);
     y -= 14;
     const lines = wrapLines(brand.document_bank_details, font, 9, width - margin * 2);
     for (const line of lines) {
-      if (y < 130) break;
+      ensurePlainSpace(12);
       drawText(page, line, margin + 8, y, 9, font);
       y -= 12;
     }
   }
+
 
   // === Signatures ===
   const sigY = 110;
