@@ -162,7 +162,9 @@ export async function renderDocumentPdf(
     color: GREEN,
   });
 
-  // Logo
+  // Logo (measure so text can sit beside it without overlap)
+  let logoW = 0;
+  const logoMaxH = 60;
   if (brand.logo_url) {
     const bytes = await fetchImageBytes(brand.logo_url);
     if (bytes) {
@@ -177,20 +179,20 @@ export async function renderDocumentPdf(
         }
       }
       if (img) {
-        const maxH = 60;
-        const scale = maxH / img.height;
-        const w = img.width * scale;
-        page.drawImage(img, { x: margin, y: y - maxH, width: w, height: maxH });
+        const scale = logoMaxH / img.height;
+        logoW = img.width * scale;
+        page.drawImage(img, { x: margin, y: y - logoMaxH, width: logoW, height: logoMaxH });
       }
     }
   }
 
-  // Site name & tagline
-  drawText(page, brand.site_name.toUpperCase(), margin + 80, y - 22, 18, bold, BROWN);
-  const subTagline = brand.document_footer_tagline || "";
-  if (subTagline) {
-    drawText(page, subTagline.toUpperCase(), margin + 80, y - 40, 8, font, GREY);
-  }
+  // Site name & tagline placed to the right of the logo, vertically centered
+  const textX = margin + (logoW ? logoW + 16 : 0);
+  const centerY = y - logoMaxH / 2;
+  drawText(page, brand.site_name.toUpperCase(), textX, centerY + 4, 18, bold, BROWN);
+  const DEFAULT_TAGLINE = "DOORS & WINDOWS | FRAMES | STAIRCASE | FURNITURES";
+  const subTagline = (brand.document_footer_tagline || "").trim() || DEFAULT_TAGLINE;
+  drawText(page, subTagline.toUpperCase(), textX, centerY - 12, 8, font, GREY);
 
   y -= headerH + 10;
 
@@ -202,6 +204,7 @@ export async function renderDocumentPdf(
     color: GREEN,
   });
   y -= 20;
+
 
   // === TITLE ===
   const title = TITLES[doc.doc_type];
