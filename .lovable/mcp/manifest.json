@@ -3,7 +3,12 @@
   "sdk_version": "0.20.0",
   "path": "/mcp",
   "auth": {
-    "type": "none"
+    "type": "oauth",
+    "issuer": "https://c--c521e136-d3b2-4105-9573-35dd64eda750-prod.lovable.cloud/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ],
+    "jwks_uri": "https://c--c521e136-d3b2-4105-9573-35dd64eda750-prod.lovable.cloud/auth/v1/.well-known/jwks.json"
   },
   "mcp": {
     "server": {
