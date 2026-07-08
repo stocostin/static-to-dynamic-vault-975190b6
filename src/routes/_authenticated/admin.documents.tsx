@@ -58,12 +58,6 @@ function DocumentsList() {
         </div>
       </div>
 
-      {["quotation", "invoice", "receipt", "estimate"].map((t) => (
-        <Button key={t} asChild variant="outline" size="sm" className="mr-2">
-          <Link to="/admin/documents/new" search={{ type: t as DocType }}>+ New {t}</Link>
-        </Button>
-      ))}
-
       <Card className="p-0 overflow-hidden">
         {q.isLoading ? (
           <div className="p-6"><Loader2 className="h-5 w-5 animate-spin" /></div>
