@@ -254,6 +254,7 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
       const data: DocumentData = {
         ...form,
         due_date: form.due_date || null,
+        line_items: compactItems(form.line_items),
         subtotal_cents: totals.subtotal,
         tax_cents: totals.tax,
         total_cents: totals.total,
