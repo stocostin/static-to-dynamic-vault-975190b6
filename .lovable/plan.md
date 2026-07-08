@@ -1,27 +1,25 @@
-## Problem
+## Fix PDF pagination + empty-row filtering
 
-The PDF renderer already defaults to `DOORS & WINDOWS | FRAMES | STAIRCASE | FURNITURES`, but the initial DB seed stored the old value `SAWN TIMBER | TREATED TIMBER | PLYWOOD | HARDWARE | DELIVERY` in `site_settings.document_footer_tagline`. Because that setting is non-empty, the PDF (header sub-tagline + footer band) uses the stale value instead of the new default.
+Scope: `src/lib/pdf/renderDocument.ts` only. No other files touched.
 
-Also the brand block in `DocumentEditor.tsx` passes `website_url: window.location.host` (the app host), not the real site URL from settings, so the branded footer contact bar shows the admin/preview host.
+### 1. Pagination (multi-page support)
 
-## Changes
+Currently the renderer writes to a single A4 page; when items exceed available space they overlap. Fix:
 
-1. New migration `supabase/migrations/<timestamp>_update_document_tagline.sql` that overwrites the stale tagline:
-   ```sql
-   UPDATE public.site_settings
-   SET value = to_jsonb('DOORS & WINDOWS | FRAMES | STAIRCASE | FURNITURES'::text)
-   WHERE key = 'document_footer_tagline'
-     AND value = to_jsonb('SAWN TIMBER | TREATED TIMBER | PLYWOOD | HARDWARE | DELIVERY'::text);
-   ```
-   (Guarded so a user-edited value is preserved.)
+- Introduce a `MIN_Y` threshold (e.g. `170`, above the footer/signature band).
+- Before drawing each row (header, item row, totals row, notes line, bank line), check `if (y < MIN_Y) { page = pdf.addPage([595.28, 841.89]); y = height - margin; /* redraw table header on the new page */ }`.
+- Extract the current table-header-drawing block into a small local helper so it can be called on page break.
+- Only the footer contact bar + signature block are drawn on the final page (after all content is placed), so they don't repeat mid-document. Simplest approach: track pages in an array, then after content loop, draw footer/signatures only on the last page.
 
-2. `src/components/admin/DocumentEditor.tsx` — build `brandSettings.website_url` from `readSetting(s, "contact_website")` / `site_url` if present, falling back to `window.location.host`, so the branded footer shows the public site, not the admin host.
+### 2. Skip empty trailing/interspersed rows
 
-3. `src/routes/_authenticated/admin.settings.tsx` — add a `help` note under `document_footer_tagline` pointing to the new default so future edits are obvious.
+The existing filter:
+```ts
+(it.description && it.description.trim()) || (Number(it.qty) || 0) > 0 || (Number(it.rate_cents) || 0) > 0
+```
+treats a row as non-empty if qty or rate is set even without a description. Per the request, a row with **no description** must be considered empty regardless of qty/rate. Change filter to:
+```ts
+renderItems = doc.line_items.filter((it) => (it.description ?? "").trim().length > 0);
+```
 
-No changes to `renderDocument.ts` (default is already correct).
-
-## Verification
-
-- Run the migration, reload admin → Settings → Documents: tagline field shows the new value.
-- Download an Invoice / Quotation / Receipt / Estimate PDF: header sub-tagline and footer band both read `DOORS & WINDOWS | FRAMES | STAIRCASE | FURNITURES`, logo + site name + contact bar render.
+That's it — no other files, no schema, no UI changes.
