@@ -204,6 +204,9 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
   const save = useMutation({
     mutationFn: async (opts: { issue: boolean }) => {
       if (!form.client_name.trim()) throw new Error("Client name is required.");
+      if (!form.line_items.some((it) => it.description.trim())) {
+        throw new Error("Add at least one line item with a description.");
+      }
       const willIssue = opts.issue;
       let number = form.doc_number;
       const newStatus: DocStatus = willIssue && !number ? "issued" : form.status;
@@ -237,7 +240,10 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
       qc.invalidateQueries({ queryKey: ["business_document", newId] });
       if (!id) navigate({ to: "/admin/documents/$id", params: { id: newId } });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      console.error("[documents] save failed", e);
+      toast.error(e.message || "Save failed");
+    },
   });
 
   const [downloading, setDownloading] = useState(false);
@@ -256,6 +262,7 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
       const num = form.doc_number || "DRAFT";
       downloadPdf(bytes, `${num}-${client}.pdf`);
     } catch (e) {
+      console.error("[documents] pdf failed", e);
       toast.error(e instanceof Error ? e.message : "PDF failed");
     } finally {
       setDownloading(false);

@@ -1,39 +1,31 @@
-## Goal
+## Root causes
 
-1. Rename the Settings tab "Documents & Tax" → "Documents".
-2. Make the Documents module actually usable end-to-end: create, edit, save drafts, issue, and download.
+1. **PDF download crashes silently.** The letterhead footer uses Unicode emoji (`☎ ✉ 📍 🌐`) but the PDF embeds `StandardFonts.Helvetica`, which only supports WinAnsi. `pdf-lib` throws `WinAnsi cannot encode "☎"` and the download aborts — user sees nothing happen.
+2. **Hardcoded tagline** (`"QUALITY TIMBER. STRONGER FUTURES."`) ignores `brand.document_footer_tagline` from settings, so the "brand" isn't really coming from CMS.
+3. **Silent creation failures.** `save.mutate` errors are toasted but Supabase returns technical messages (`Not authorized`, RLS strings). Without a console.error and without validating "at least one line item with a description" the user gets a mysterious empty draft or an unclear toast.
+4. **Logo may not embed** if it's served without CORS. `fetch(logo_url)` in the browser can fail on cross-origin CMS URLs — we currently swallow the error without telling the user.
+
+DB is confirmed healthy: table, RLS (`can_edit`), grants, and `next_document_number()` RPC all exist and the signed-in admin has the right role.
 
 ## Changes
 
-### 1. Settings tab rename
-In `src/routes/_authenticated/admin.settings.tsx`, change the group label from `"Documents & Tax"` to `"Documents"`. Update the matching helper text in `DocumentEditor.tsx` that reads "Site settings → Documents & Tax" → "Site settings → Documents".
+### `src/lib/pdf/renderDocument.ts`
+- Remove all Unicode emoji from the footer; use ASCII labels: `Tel: … | Email: … | Address: … | Web: …`.
+- Use `brand.document_footer_tagline` (falls back to `brand.site_name`) instead of the hardcoded string on both header subtitle and footer tagline.
+- Sanitize any text going into `drawText` by stripping/replacing characters outside WinAnsi (safety net so a stray emoji in notes/client fields can't crash the whole PDF).
+- Add `mode: "cors"` and `cache: "no-store"` to the logo fetch so cross-origin CMS logos work; keep silent fallback but surface a console warning.
+- Add a page footer with document number + "Page 1 of 1".
 
-### 2. Documents list (`admin.documents.tsx`)
-- Add an explicit **Edit** action column (pencil icon → `/admin/documents/$id`) so drafts and issued docs are obviously clickable, not only via the number cell.
-- Make the whole row clickable/hover state clearer.
-- Fix the duplicated "New quotation/invoice/receipt/estimate" button strip: keep a single clean "New document" split control with a type dropdown (removes the noisy row of four buttons above the table).
-- Ensure the empty state shows a working "Create your first document" CTA.
+### `src/components/admin/DocumentEditor.tsx`
+- Validate before save: at least one line item with a non-empty description (toast otherwise).
+- `console.error` the raw error in the save mutation so the exact Supabase message shows up in devtools.
+- Wrap `handleDownload` with `console.error` and show the PDF error message verbatim in the toast (instead of the generic "PDF failed").
+- Ensure `total_cents` never NaN when `qty`/`rate` are empty strings.
 
-### 3. Document editor (`DocumentEditor.tsx`)
-- Guard the Save button: block save when `client_name` is empty and show a toast (currently silently inserts an empty client which then looks broken).
-- Ensure the "Save draft" path works even before any line item has a rate (currently accepted, just confirm).
-- After a successful **insert**, the code already navigates to `/admin/documents/$id` — verify the navigation params typing works (small type fix if needed).
-- When editing an existing issued doc, the primary button label should read "Save changes" instead of "Save" for clarity.
-- Line-items rate input: initialize display value cleanly when `rate_cents` is 0 (avoid the "0" prefix quirk).
-- Confirm the settings query, the `next_document_number` RPC call, and the insert payload all match the DB schema (spot-checked in DB: RPC exists, RLS policies allow editors/admins, current user has admin role and INSERT/SELECT privileges — so the flow should work once the small UX guards above are in).
+### Verification
+- Run typecheck.
+- Create a quotation with 2 line items → Save draft → the row appears in the list.
+- Click "Issue" → number `QUO-00001` assigned.
+- Click "Download PDF" → file downloads, opens showing logo, brown/green letterhead, client block, table, totals, notes, bank details, signatures, and ASCII contact footer (no black boxes).
 
-### 4. Verification
-- Load `/admin/documents` — list renders, "New document" opens editor.
-- Create quotation with 2 line items → Save draft → row appears with "— draft".
-- Open draft → Issue → number `QUO-00001` assigned, status flips to Issued.
-- Download PDF → file downloads with letterhead.
-- Edit issued doc, change a line item → Save changes → totals update.
-- Rename verified in Settings UI.
-
-## Files touched
-
-- `src/routes/_authenticated/admin.settings.tsx` (label rename)
-- `src/routes/_authenticated/admin.documents.tsx` (list UX + edit column)
-- `src/components/admin/DocumentEditor.tsx` (validation, button label, helper text, rate input)
-
-No DB migration needed — schema, RPC, policies, and grants are already in place.
+No DB migration needed.
