@@ -43,6 +43,7 @@ import { Route as AuthenticatedAdminMenuItemsRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminMediaRouteImport } from './routes/_authenticated/admin.media'
 import { Route as AuthenticatedAdminLegacyImagesRouteImport } from './routes/_authenticated/admin.legacy-images'
 import { Route as AuthenticatedAdminFaqsRouteImport } from './routes/_authenticated/admin.faqs'
+import { Route as AuthenticatedAdminDocumentsRouteImport } from './routes/_authenticated/admin.documents'
 import { Route as AuthenticatedAdminChatsRouteImport } from './routes/_authenticated/admin.chats'
 import { Route as AuthenticatedAdminBlogPostsRouteImport } from './routes/_authenticated/admin.blog-posts'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -52,6 +53,8 @@ import { Route as AuthenticatedAdminPagesPortfolioRouteImport } from './routes/_
 import { Route as AuthenticatedAdminPagesContactRouteImport } from './routes/_authenticated/admin.pages.contact'
 import { Route as AuthenticatedAdminPagesBlogRouteImport } from './routes/_authenticated/admin.pages.blog'
 import { Route as AuthenticatedAdminPagesAboutRouteImport } from './routes/_authenticated/admin.pages.about'
+import { Route as AuthenticatedAdminDocumentsNewRouteImport } from './routes/_authenticated/admin.documents.new'
+import { Route as AuthenticatedAdminDocumentsIdRouteImport } from './routes/_authenticated/admin.documents.$id'
 import { Route as AuthenticatedAdminBlogPostsIdRouteImport } from './routes/_authenticated/admin.blog-posts.$id'
 
 const ShopRoute = ShopRouteImport.update({
@@ -234,6 +237,12 @@ const AuthenticatedAdminFaqsRoute = AuthenticatedAdminFaqsRouteImport.update({
   path: '/faqs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminDocumentsRoute =
+  AuthenticatedAdminDocumentsRouteImport.update({
+    id: '/documents',
+    path: '/documents',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminChatsRoute = AuthenticatedAdminChatsRouteImport.update({
   id: '/chats',
   path: '/chats',
@@ -287,6 +296,18 @@ const AuthenticatedAdminPagesAboutRoute =
     path: '/about',
     getParentRoute: () => AuthenticatedAdminPagesRoute,
   } as any)
+const AuthenticatedAdminDocumentsNewRoute =
+  AuthenticatedAdminDocumentsNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedAdminDocumentsRoute,
+  } as any)
+const AuthenticatedAdminDocumentsIdRoute =
+  AuthenticatedAdminDocumentsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedAdminDocumentsRoute,
+  } as any)
 const AuthenticatedAdminBlogPostsIdRoute =
   AuthenticatedAdminBlogPostsIdRouteImport.update({
     id: '/$id',
@@ -313,6 +334,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRouteWithChildren
   '/admin/chats': typeof AuthenticatedAdminChatsRoute
+  '/admin/documents': typeof AuthenticatedAdminDocumentsRouteWithChildren
   '/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/admin/media': typeof AuthenticatedAdminMediaRoute
@@ -332,6 +354,8 @@ export interface FileRoutesByFullPath {
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/blog-posts/$id': typeof AuthenticatedAdminBlogPostsIdRoute
+  '/admin/documents/$id': typeof AuthenticatedAdminDocumentsIdRoute
+  '/admin/documents/new': typeof AuthenticatedAdminDocumentsNewRoute
   '/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
   '/admin/pages/blog': typeof AuthenticatedAdminPagesBlogRoute
   '/admin/pages/contact': typeof AuthenticatedAdminPagesContactRoute
@@ -357,6 +381,7 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRouteWithChildren
   '/admin/chats': typeof AuthenticatedAdminChatsRoute
+  '/admin/documents': typeof AuthenticatedAdminDocumentsRouteWithChildren
   '/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/admin/media': typeof AuthenticatedAdminMediaRoute
@@ -376,6 +401,8 @@ export interface FileRoutesByTo {
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/blog-posts/$id': typeof AuthenticatedAdminBlogPostsIdRoute
+  '/admin/documents/$id': typeof AuthenticatedAdminDocumentsIdRoute
+  '/admin/documents/new': typeof AuthenticatedAdminDocumentsNewRoute
   '/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
   '/admin/pages/blog': typeof AuthenticatedAdminPagesBlogRoute
   '/admin/pages/contact': typeof AuthenticatedAdminPagesContactRoute
@@ -404,6 +431,7 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRouteWithChildren
   '/_authenticated/admin/chats': typeof AuthenticatedAdminChatsRoute
+  '/_authenticated/admin/documents': typeof AuthenticatedAdminDocumentsRouteWithChildren
   '/_authenticated/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/_authenticated/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/_authenticated/admin/media': typeof AuthenticatedAdminMediaRoute
@@ -423,6 +451,8 @@ export interface FileRoutesById {
   '/assets/images/$': typeof AssetsImagesSplatRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/blog-posts/$id': typeof AuthenticatedAdminBlogPostsIdRoute
+  '/_authenticated/admin/documents/$id': typeof AuthenticatedAdminDocumentsIdRoute
+  '/_authenticated/admin/documents/new': typeof AuthenticatedAdminDocumentsNewRoute
   '/_authenticated/admin/pages/about': typeof AuthenticatedAdminPagesAboutRoute
   '/_authenticated/admin/pages/blog': typeof AuthenticatedAdminPagesBlogRoute
   '/_authenticated/admin/pages/contact': typeof AuthenticatedAdminPagesContactRoute
@@ -451,6 +481,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/admin/blog-posts'
     | '/admin/chats'
+    | '/admin/documents'
     | '/admin/faqs'
     | '/admin/legacy-images'
     | '/admin/media'
@@ -470,6 +501,8 @@ export interface FileRouteTypes {
     | '/assets/images/$'
     | '/admin/'
     | '/admin/blog-posts/$id'
+    | '/admin/documents/$id'
+    | '/admin/documents/new'
     | '/admin/pages/about'
     | '/admin/pages/blog'
     | '/admin/pages/contact'
@@ -495,6 +528,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/admin/blog-posts'
     | '/admin/chats'
+    | '/admin/documents'
     | '/admin/faqs'
     | '/admin/legacy-images'
     | '/admin/media'
@@ -514,6 +548,8 @@ export interface FileRouteTypes {
     | '/assets/images/$'
     | '/admin'
     | '/admin/blog-posts/$id'
+    | '/admin/documents/$id'
+    | '/admin/documents/new'
     | '/admin/pages/about'
     | '/admin/pages/blog'
     | '/admin/pages/contact'
@@ -541,6 +577,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/admin/blog-posts'
     | '/_authenticated/admin/chats'
+    | '/_authenticated/admin/documents'
     | '/_authenticated/admin/faqs'
     | '/_authenticated/admin/legacy-images'
     | '/_authenticated/admin/media'
@@ -560,6 +597,8 @@ export interface FileRouteTypes {
     | '/assets/images/$'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/blog-posts/$id'
+    | '/_authenticated/admin/documents/$id'
+    | '/_authenticated/admin/documents/new'
     | '/_authenticated/admin/pages/about'
     | '/_authenticated/admin/pages/blog'
     | '/_authenticated/admin/pages/contact'
@@ -828,6 +867,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminFaqsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/documents': {
+      id: '/_authenticated/admin/documents'
+      path: '/documents'
+      fullPath: '/admin/documents'
+      preLoaderRoute: typeof AuthenticatedAdminDocumentsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/chats': {
       id: '/_authenticated/admin/chats'
       path: '/chats'
@@ -891,6 +937,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPagesAboutRouteImport
       parentRoute: typeof AuthenticatedAdminPagesRoute
     }
+    '/_authenticated/admin/documents/new': {
+      id: '/_authenticated/admin/documents/new'
+      path: '/new'
+      fullPath: '/admin/documents/new'
+      preLoaderRoute: typeof AuthenticatedAdminDocumentsNewRouteImport
+      parentRoute: typeof AuthenticatedAdminDocumentsRoute
+    }
+    '/_authenticated/admin/documents/$id': {
+      id: '/_authenticated/admin/documents/$id'
+      path: '/$id'
+      fullPath: '/admin/documents/$id'
+      preLoaderRoute: typeof AuthenticatedAdminDocumentsIdRouteImport
+      parentRoute: typeof AuthenticatedAdminDocumentsRoute
+    }
     '/_authenticated/admin/blog-posts/$id': {
       id: '/_authenticated/admin/blog-posts/$id'
       path: '/$id'
@@ -913,6 +973,22 @@ const AuthenticatedAdminBlogPostsRouteChildren: AuthenticatedAdminBlogPostsRoute
 const AuthenticatedAdminBlogPostsRouteWithChildren =
   AuthenticatedAdminBlogPostsRoute._addFileChildren(
     AuthenticatedAdminBlogPostsRouteChildren,
+  )
+
+interface AuthenticatedAdminDocumentsRouteChildren {
+  AuthenticatedAdminDocumentsIdRoute: typeof AuthenticatedAdminDocumentsIdRoute
+  AuthenticatedAdminDocumentsNewRoute: typeof AuthenticatedAdminDocumentsNewRoute
+}
+
+const AuthenticatedAdminDocumentsRouteChildren: AuthenticatedAdminDocumentsRouteChildren =
+  {
+    AuthenticatedAdminDocumentsIdRoute: AuthenticatedAdminDocumentsIdRoute,
+    AuthenticatedAdminDocumentsNewRoute: AuthenticatedAdminDocumentsNewRoute,
+  }
+
+const AuthenticatedAdminDocumentsRouteWithChildren =
+  AuthenticatedAdminDocumentsRoute._addFileChildren(
+    AuthenticatedAdminDocumentsRouteChildren,
   )
 
 interface AuthenticatedAdminPagesRouteChildren {
@@ -943,6 +1019,7 @@ const AuthenticatedAdminPagesRouteWithChildren =
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminBlogPostsRoute: typeof AuthenticatedAdminBlogPostsRouteWithChildren
   AuthenticatedAdminChatsRoute: typeof AuthenticatedAdminChatsRoute
+  AuthenticatedAdminDocumentsRoute: typeof AuthenticatedAdminDocumentsRouteWithChildren
   AuthenticatedAdminFaqsRoute: typeof AuthenticatedAdminFaqsRoute
   AuthenticatedAdminLegacyImagesRoute: typeof AuthenticatedAdminLegacyImagesRoute
   AuthenticatedAdminMediaRoute: typeof AuthenticatedAdminMediaRoute
@@ -964,6 +1041,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminBlogPostsRoute:
     AuthenticatedAdminBlogPostsRouteWithChildren,
   AuthenticatedAdminChatsRoute: AuthenticatedAdminChatsRoute,
+  AuthenticatedAdminDocumentsRoute:
+    AuthenticatedAdminDocumentsRouteWithChildren,
   AuthenticatedAdminFaqsRoute: AuthenticatedAdminFaqsRoute,
   AuthenticatedAdminLegacyImagesRoute: AuthenticatedAdminLegacyImagesRoute,
   AuthenticatedAdminMediaRoute: AuthenticatedAdminMediaRoute,

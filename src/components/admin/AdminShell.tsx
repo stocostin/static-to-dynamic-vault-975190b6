@@ -23,6 +23,7 @@ import {
   Layers,
   Phone,
   MessageCircle,
+  FileSpreadsheet,
 } from "lucide-react";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
@@ -33,6 +34,12 @@ const groups: NavGroup[] = [
     label: "Overview",
     items: [
       { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+    ],
+  },
+  {
+    label: "Documents",
+    items: [
+      { to: "/admin/documents", label: "Invoices & quotations", icon: FileSpreadsheet },
     ],
   },
   {

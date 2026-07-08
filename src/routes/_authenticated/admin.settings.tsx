@@ -85,6 +85,19 @@ const GROUPS: { id: string; label: string; keys: Key[] }[] = [
     ],
   },
   {
+    id: "documents",
+    label: "Documents & Tax",
+    keys: [
+      { key: "tax_enabled", label: "Enable tax by default", help: "Set to 'true' or 'false'. Controls whether new documents apply tax." },
+      { key: "tax_rate", label: "Default tax rate (%)", help: "e.g. 16" },
+      { key: "tax_label", label: "Tax label", help: "e.g. VAT" },
+      { key: "document_notes_default", label: "Default document notes", type: "textarea" },
+      { key: "document_footer_tagline", label: "Document footer tagline" },
+      { key: "document_prepared_by", label: "Prepared-by name" },
+      { key: "document_bank_details", label: "Bank details (optional)", type: "textarea" },
+    ],
+  },
+  {
     id: "seo",
     label: "SEO defaults",
     keys: [
