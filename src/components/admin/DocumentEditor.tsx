@@ -270,11 +270,22 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
     }
   }
 
+  const isRowEmpty = (it: LineItem) =>
+    !it.description.trim() && (!it.qty || Number(it.qty) === 0) && (!it.rate_cents || Number(it.rate_cents) === 0);
+
   const setItem = (i: number, patch: Partial<LineItem>) => {
-    setForm((f) => ({
-      ...f,
-      line_items: f.line_items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)),
-    }));
+    setForm((f) => {
+      const next = f.line_items.map((it, idx) => (idx === i ? { ...it, ...patch } : it));
+      if (i === next.length - 1 && !isRowEmpty(next[i])) {
+        next.push(emptyItem());
+      }
+      return { ...f, line_items: next };
+    });
+  };
+
+  const compactItems = (items: LineItem[]) => {
+    const filtered = items.filter((it) => !isRowEmpty(it));
+    return filtered.length ? filtered : [items[0] ?? emptyItem()];
   };
 
   if (id && docQuery.isLoading) {
