@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Pencil } from "lucide-react";
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -78,14 +78,20 @@ function DocumentsList() {
                   <th className="px-3 py-2">Date</th>
                   <th className="px-3 py-2 text-right">Total</th>
                   <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2 w-16"></th>
                 </tr>
               </thead>
               <tbody>
                 {(q.data ?? []).length === 0 && (
-                  <tr><td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">No documents yet.</td></tr>
+                  <tr><td colSpan={7} className="px-3 py-10 text-center text-muted-foreground">
+                    No documents yet.{" "}
+                    <Link to="/admin/documents/new" search={{ type: "quotation" }} className="text-primary hover:underline">
+                      Create your first document
+                    </Link>
+                  </td></tr>
                 )}
                 {q.data?.map((d) => (
-                  <tr key={d.id} className="border-t hover:bg-muted/30">
+                  <tr key={d.id} className="border-t hover:bg-muted/30 cursor-pointer">
                     <td className="px-3 py-2 font-mono">
                       <Link to="/admin/documents/$id" params={{ id: d.id }} className="hover:underline">
                         {d.doc_number || "— draft"}
@@ -96,6 +102,13 @@ function DocumentsList() {
                     <td className="px-3 py-2">{d.issue_date}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{(Number(d.total_cents) / 100).toLocaleString("en-KE", { minimumFractionDigits: 2 })} {d.currency}</td>
                     <td className="px-3 py-2 capitalize">{d.status}</td>
+                    <td className="px-3 py-2 text-right">
+                      <Button asChild variant="ghost" size="icon" aria-label="Edit">
+                        <Link to="/admin/documents/$id" params={{ id: d.id }}>
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -106,3 +119,4 @@ function DocumentsList() {
     </div>
   );
 }
+
