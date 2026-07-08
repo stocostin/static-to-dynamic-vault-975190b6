@@ -92,7 +92,7 @@ const GROUPS: { id: string; label: string; keys: Key[] }[] = [
       { key: "tax_rate", label: "Default tax rate (%)", help: "e.g. 16" },
       { key: "tax_label", label: "Tax label", help: "e.g. VAT" },
       { key: "document_notes_default", label: "Default document notes", type: "textarea" },
-      { key: "document_footer_tagline", label: "Document footer tagline" },
+      { key: "document_footer_tagline", label: "Document footer tagline", help: "Shown in the PDF header and footer. Default: DOORS & WINDOWS | FRAMES | STAIRCASE | FURNITURES" },
       { key: "document_prepared_by", label: "Prepared-by name" },
       { key: "document_bank_details", label: "Bank details (optional)", type: "textarea" },
     ],
