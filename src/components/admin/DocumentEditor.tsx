@@ -191,7 +191,7 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
     client_phone: form.client_phone || null,
     project_name: form.project_name || null,
     location: form.location || null,
-    line_items: form.line_items as unknown as never,
+    line_items: compactItems(form.line_items) as unknown as never,
     currency: form.currency,
     subtotal_cents: totals.subtotal,
     tax_enabled: form.tax_enabled,
