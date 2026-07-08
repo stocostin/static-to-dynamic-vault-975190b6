@@ -86,7 +86,7 @@ const GROUPS: { id: string; label: string; keys: Key[] }[] = [
   },
   {
     id: "documents",
-    label: "Documents & Tax",
+    label: "Documents",
     keys: [
       { key: "tax_enabled", label: "Enable tax by default", help: "Set to 'true' or 'false'. Controls whether new documents apply tax." },
       { key: "tax_rate", label: "Default tax rate (%)", help: "e.g. 16" },

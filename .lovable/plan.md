@@ -1,105 +1,39 @@
-## Business documents module (Invoice / Quotation / Receipt / Estimate)
+## Goal
 
-Add an admin-only module for creating and downloading branded business documents with a letterhead built from the site's logo and contact details. Design borrows from the uploaded Timber Solutions quotation reference.
+1. Rename the Settings tab "Documents & Tax" → "Documents".
+2. Make the Documents module actually usable end-to-end: create, edit, save drafts, issue, and download.
 
-### 1. Database — `business_documents` table
+## Changes
 
-Single table storing all four document types.
+### 1. Settings tab rename
+In `src/routes/_authenticated/admin.settings.tsx`, change the group label from `"Documents & Tax"` to `"Documents"`. Update the matching helper text in `DocumentEditor.tsx` that reads "Site settings → Documents & Tax" → "Site settings → Documents".
 
-Columns (domain):
-- `doc_type` — one of `invoice`, `quotation`, `receipt`, `estimate`
-- `doc_number` — auto-generated per type (e.g. `QUO-00047`, `INV-00012`)
-- `issue_date`, `due_date` (nullable)
-- `client_name`, `client_reg_no`, `client_kra_pin`, `client_address`, `client_email`, `client_phone`
-- `project_name`, `location`
-- `line_items` (jsonb array: `{ description, size, unit, qty, rate_cents }`)
-- `subtotal_cents`, `tax_rate` (snapshot at time of issue), `tax_label`, `tax_cents`, `total_cents`, `currency` (default `KES`)
-- `notes` (text — defaults from site settings)
-- `status` — `draft` / `issued` / `paid` / `void`
-- `created_by` (uuid → auth.users)
+### 2. Documents list (`admin.documents.tsx`)
+- Add an explicit **Edit** action column (pencil icon → `/admin/documents/$id`) so drafts and issued docs are obviously clickable, not only via the number cell.
+- Make the whole row clickable/hover state clearer.
+- Fix the duplicated "New quotation/invoice/receipt/estimate" button strip: keep a single clean "New document" split control with a type dropdown (removes the noisy row of four buttons above the table).
+- Ensure the empty state shows a working "Create your first document" CTA.
 
-Also add:
-- `document_counters` table: `{ doc_type text primary key, last_number int }` for atomic sequential numbering via a `SECURITY DEFINER` function `next_document_number(_type)`.
-- Site settings keys (into existing `site_settings`): `tax_enabled` (bool), `tax_rate` (numeric, e.g. 16), `tax_label` (text, e.g. "VAT"), `document_notes_default` (text), `document_footer_tagline` (text), `bank_details` (text, optional).
+### 3. Document editor (`DocumentEditor.tsx`)
+- Guard the Save button: block save when `client_name` is empty and show a toast (currently silently inserts an empty client which then looks broken).
+- Ensure the "Save draft" path works even before any line item has a rate (currently accepted, just confirm).
+- After a successful **insert**, the code already navigates to `/admin/documents/$id` — verify the navigation params typing works (small type fix if needed).
+- When editing an existing issued doc, the primary button label should read "Save changes" instead of "Save" for clarity.
+- Line-items rate input: initialize display value cleanly when `rate_cents` is 0 (avoid the "0" prefix quirk).
+- Confirm the settings query, the `next_document_number` RPC call, and the insert payload all match the DB schema (spot-checked in DB: RPC exists, RLS policies allow editors/admins, current user has admin role and INSERT/SELECT privileges — so the flow should work once the small UX guards above are in).
 
-RLS: only users with `admin` or `editor` role (via existing `can_edit`) can select/insert/update/delete both tables. GRANTs to `authenticated` + `service_role`.
+### 4. Verification
+- Load `/admin/documents` — list renders, "New document" opens editor.
+- Create quotation with 2 line items → Save draft → row appears with "— draft".
+- Open draft → Issue → number `QUO-00001` assigned, status flips to Issued.
+- Download PDF → file downloads with letterhead.
+- Edit issued doc, change a line item → Save changes → totals update.
+- Rename verified in Settings UI.
 
-### 2. Admin UI
+## Files touched
 
-New sidebar group "Documents":
-- `/admin/documents` — list of all documents with filters by type/status, columns: number, type, client, date, total, status. Actions: view, edit, download PDF, duplicate, void.
-- `/admin/documents/new?type=quotation` — create form.
-- `/admin/documents/$id` — edit form (same component).
+- `src/routes/_authenticated/admin.settings.tsx` (label rename)
+- `src/routes/_authenticated/admin.documents.tsx` (list UX + edit column)
+- `src/components/admin/DocumentEditor.tsx` (validation, button label, helper text, rate input)
 
-Form sections:
-- Type + status (type locked after first save so number stays stable).
-- Client details (name, reg no, KRA PIN, project, location, contact).
-- Line items table (add/remove rows: description, size, unit, qty, rate; live subtotal per row).
-- Notes (prefilled from settings, editable).
-- Live totals panel: subtotal, tax row (shown only when `tax_enabled=true`, using settings' rate + label), grand total. When tax is globally off the row is hidden and total = subtotal.
-- Save draft / Issue / Download PDF buttons.
-
-Tax settings live in **Site settings → Documents** (existing settings page gets a new "Documents & Tax" section): global toggle, rate, label, default notes, footer tagline, bank details. Rate + label are snapshotted onto each document at issue time so past documents don't change when settings change.
-
-### 3. Letterhead + PDF generation
-
-Client-side PDF via `pdf-lib` (already Worker-compatible; small, no native deps). One reusable `renderDocumentPdf({ doc, settings, logoBytes })` module producing an A4 page:
-
-```text
-┌──────────────────────────────────────────────────┐
-│ [LOGO]  SITE NAME              [wood banner img] │
-│         tagline                                  │
-├──────────────────────────────────────────────────┤
-│              QUOTATION / INVOICE / …             │
-│ DOC-00047                                        │
-│ Date: dd/mm/yyyy                                 │
-│                                                  │
-│ CLIENT: …    REG NO: …                           │
-│ PROJECT: …   LOCATION: …                         │
-│ KRA PIN: …                                       │
-│                                                  │
-│ ┌──┬─────────┬────┬────┬───┬──────┬────────┐    │
-│ │No│Descrip. │Size│Unit│Qty│ Rate │ Amount │    │
-│ ├──┼─────────┼────┼────┼───┼──────┼────────┤    │
-│ │01│…        │…   │Pcs │50 │450.00│22,500  │    │
-│ └──┴─────────┴────┴────┴───┴──────┴────────┘    │
-│                              Subtotal:  …        │
-│                              VAT (16%): …        │
-│                              TOTAL:     …        │
-│                                                  │
-│ NOTES: …                                         │
-│                                                  │
-│ Prepared By ______   Approved By ______          │
-│                                                  │
-│ [contact bar: phone | email | address | site]    │
-└──────────────────────────────────────────────────┘
-```
-
-Colors/typography borrowed from the reference: deep brown header band, green accent lines, dark section labels, tabular monospaced amounts. Logo pulled from `site_settings.logo_url`; contact block from existing `site_settings` (`contact_phone`, `contact_email`, `contact_address`, `website_url`).
-
-Download filename: `<DOC-NUMBER>-<client-slug>.pdf`.
-
-### 4. Files touched
-
-**New**
-- `supabase/migrations/<ts>_business_documents.sql` — tables, GRANTs, RLS, `next_document_number()` fn, seed rows in `site_settings`.
-- `src/lib/documents.functions.ts` — `listDocuments`, `getDocument`, `saveDocument` (assigns number on first issue via RPC), `voidDocument`. All `requireSupabaseAuth` + role check.
-- `src/lib/pdf/renderDocument.ts` — `pdf-lib` renderer.
-- `src/lib/pdf/letterhead.ts` — shared header/footer drawing.
-- `src/routes/_authenticated/admin.documents.tsx` — list.
-- `src/routes/_authenticated/admin.documents.new.tsx` — create.
-- `src/routes/_authenticated/admin.documents.$id.tsx` — edit.
-- `src/components/admin/DocumentEditor.tsx` — the form + live totals + download button.
-
-**Edited**
-- `src/components/admin/AdminShell.tsx` — new "Documents" nav group.
-- `src/routes/_authenticated/admin.settings.tsx` — add Documents & Tax section (toggle + rate + label + defaults).
-- `package.json` — add `pdf-lib`.
-
-### 5. Verification
-
-- Migration passes linter; new tables have RLS + GRANTs.
-- Create one document of each type; confirm sequential numbering per type.
-- Toggle `tax_enabled` off → editor hides tax row, PDF omits it, total = subtotal.
-- Change tax rate after issuing a document → existing PDF still uses snapshotted rate.
-- Download PDF; open and visually confirm letterhead, table, totals, notes, signature area, contact bar all render cleanly on A4.
+No DB migration needed — schema, RPC, policies, and grants are already in place.

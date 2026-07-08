@@ -401,7 +401,7 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
                 <div className="space-y-1.5"><Label>Rate %</Label><Input type="number" step={0.1} value={form.tax_rate} onChange={(e) => setForm({ ...form, tax_rate: Number(e.target.value) })} /></div>
               </div>
             )}
-            <p className="text-xs text-muted-foreground">Default is controlled globally in Site settings → Documents & Tax.</p>
+            <p className="text-xs text-muted-foreground">Default is controlled globally in Site settings → Documents.</p>
           </div>
           <div className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Totals</h2>
