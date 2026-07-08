@@ -135,7 +135,9 @@ export async function renderDocumentPdf(
   brand: BrandSettings,
 ): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
-  const page = pdf.addPage([595.28, 841.89]); // A4
+  const PAGE_W = 595.28;
+  const PAGE_H = 841.89;
+  let page = pdf.addPage([PAGE_W, PAGE_H]); // A4
   const { width, height } = page.getSize();
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
