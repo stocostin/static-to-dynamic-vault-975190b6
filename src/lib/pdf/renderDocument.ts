@@ -73,17 +73,30 @@ function fmtDate(iso: string) {
 
 async function fetchImageBytes(url: string): Promise<Uint8Array | null> {
   try {
-    // Normalize URL — support relative assets from CMS
     const abs = /^https?:/i.test(url)
       ? url
       : `${window.location.origin}/${url.replace(/^\//, "")}`;
-    const res = await fetch(abs);
-    if (!res.ok) return null;
+    const res = await fetch(abs, { mode: "cors", cache: "no-store" });
+    if (!res.ok) {
+      console.warn("[pdf] logo fetch failed", abs, res.status);
+      return null;
+    }
     const buf = await res.arrayBuffer();
     return new Uint8Array(buf);
-  } catch {
+  } catch (e) {
+    console.warn("[pdf] logo fetch error", e);
     return null;
   }
+}
+
+// pdf-lib StandardFonts only support WinAnsi. Strip characters outside it so a
+// stray emoji anywhere in the payload can't crash the whole render.
+function safe(s: string | null | undefined): string {
+  if (!s) return "";
+  return s
+    .replace(/[\u2700-\u27BF\u2600-\u26FF\uE000-\uF8FF\u{1F000}-\u{1FFFF}]/gu, "")
+    // Any remaining non-WinAnsi codepoints → "?"
+    .replace(/[^\x09\x0A\x0D\x20-\x7E\xA0-\xFF]/g, "?");
 }
 
 function drawText(
@@ -95,7 +108,7 @@ function drawText(
   font: PDFFont,
   color = DARK,
 ) {
-  page.drawText(text, { x, y, size, font, color });
+  page.drawText(safe(text), { x, y, size, font, color });
 }
 
 function wrapLines(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
@@ -174,16 +187,9 @@ export async function renderDocumentPdf(
 
   // Site name & tagline
   drawText(page, brand.site_name.toUpperCase(), margin + 80, y - 22, 18, bold, BROWN);
-  if (brand.document_footer_tagline) {
-    drawText(
-      page,
-      "QUALITY TIMBER. STRONGER FUTURES.",
-      margin + 80,
-      y - 40,
-      8,
-      font,
-      GREY,
-    );
+  const subTagline = brand.document_footer_tagline || "";
+  if (subTagline) {
+    drawText(page, subTagline.toUpperCase(), margin + 80, y - 40, 8, font, GREY);
   }
 
   y -= headerH + 10;
@@ -438,14 +444,14 @@ export async function renderDocumentPdf(
     color: GREEN,
   });
   const bits: string[] = [];
-  if (brand.contact_phone) bits.push(`☎ ${brand.contact_phone}`);
-  if (brand.contact_email) bits.push(`✉ ${brand.contact_email}`);
-  if (brand.contact_address) bits.push(`📍 ${brand.contact_address}`);
-  if (brand.website_url) bits.push(`🌐 ${brand.website_url}`);
+  if (brand.contact_phone) bits.push(`Tel: ${brand.contact_phone}`);
+  if (brand.contact_email) bits.push(`Email: ${brand.contact_email}`);
+  if (brand.contact_address) bits.push(`Address: ${brand.contact_address}`);
+  if (brand.website_url) bits.push(`Web: ${brand.website_url}`);
   const footerText = bits.join("   |   ");
-  const ftw = font.widthOfTextAtSize(footerText, 8.5);
+  const ftw = font.widthOfTextAtSize(safe(footerText), 8.5);
   const safeText = ftw > width - 20 ? bits.slice(0, 3).join("  |  ") : footerText;
-  const sw = font.widthOfTextAtSize(safeText, 8.5);
+  const sw = font.widthOfTextAtSize(safe(safeText), 8.5);
   drawText(page, safeText, (width - sw) / 2, footY - 12, 8.5, font, rgb(1, 1, 1));
 
   if (brand.document_footer_tagline) {
