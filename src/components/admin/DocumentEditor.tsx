@@ -203,6 +203,7 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
 
   const save = useMutation({
     mutationFn: async (opts: { issue: boolean }) => {
+      if (!form.client_name.trim()) throw new Error("Client name is required.");
       const willIssue = opts.issue;
       let number = form.doc_number;
       const newStatus: DocStatus = willIssue && !number ? "issued" : form.status;
@@ -295,7 +296,7 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
             Save draft
           </Button>
           <Button onClick={() => save.mutate({ issue: true })} disabled={save.isPending}>
-            <FileDown className="h-4 w-4 mr-2" /> {form.doc_number ? "Save" : "Issue"}
+            <FileDown className="h-4 w-4 mr-2" /> {form.doc_number ? "Save changes" : "Issue"}
           </Button>
           <Button variant="secondary" onClick={handleDownload} disabled={downloading}>
             {downloading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
@@ -376,7 +377,7 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
                 <Input placeholder="Size" value={it.size || ""} onChange={(e) => setItem(i, { size: e.target.value })} />
                 <Input placeholder="Unit" value={it.unit || ""} onChange={(e) => setItem(i, { unit: e.target.value })} />
                 <Input type="number" min={0} value={it.qty} onChange={(e) => setItem(i, { qty: Number(e.target.value) })} />
-                <Input type="number" min={0} step={0.01} placeholder="Rate" value={it.rate_cents / 100} onChange={(e) => setItem(i, { rate_cents: Math.round(Number(e.target.value) * 100) })} />
+                <Input type="number" min={0} step={0.01} placeholder="Rate" value={it.rate_cents ? it.rate_cents / 100 : ""} onChange={(e) => setItem(i, { rate_cents: Math.round(Number(e.target.value) * 100) })} />
                 <div className="text-right self-center text-sm tabular-nums pr-2">{(amt / 100).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 <Button size="icon" variant="ghost" onClick={() => setForm((f) => ({ ...f, line_items: f.line_items.filter((_, idx) => idx !== i) }))} disabled={form.line_items.length === 1}>
                   <Trash2 className="h-4 w-4" />
