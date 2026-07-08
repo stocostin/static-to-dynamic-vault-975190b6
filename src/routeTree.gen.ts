@@ -47,6 +47,7 @@ import { Route as AuthenticatedAdminDocumentsRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminChatsRouteImport } from './routes/_authenticated/admin.chats'
 import { Route as AuthenticatedAdminBlogPostsRouteImport } from './routes/_authenticated/admin.blog-posts'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as AuthenticatedAdminDocumentsIndexRouteImport } from './routes/_authenticated/admin.documents.index'
 import { Route as AuthenticatedAdminPagesShopRouteImport } from './routes/_authenticated/admin.pages.shop'
 import { Route as AuthenticatedAdminPagesServicesRouteImport } from './routes/_authenticated/admin.pages.services'
 import { Route as AuthenticatedAdminPagesPortfolioRouteImport } from './routes/_authenticated/admin.pages.portfolio'
@@ -260,6 +261,12 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedAdminDocumentsIndexRoute =
+  AuthenticatedAdminDocumentsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAdminDocumentsRoute,
+  } as any)
 const AuthenticatedAdminPagesShopRoute =
   AuthenticatedAdminPagesShopRouteImport.update({
     id: '/shop',
@@ -362,6 +369,7 @@ export interface FileRoutesByFullPath {
   '/admin/pages/portfolio': typeof AuthenticatedAdminPagesPortfolioRoute
   '/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
   '/admin/pages/shop': typeof AuthenticatedAdminPagesShopRoute
+  '/admin/documents/': typeof AuthenticatedAdminDocumentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -381,7 +389,6 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/blog-posts': typeof AuthenticatedAdminBlogPostsRouteWithChildren
   '/admin/chats': typeof AuthenticatedAdminChatsRoute
-  '/admin/documents': typeof AuthenticatedAdminDocumentsRouteWithChildren
   '/admin/faqs': typeof AuthenticatedAdminFaqsRoute
   '/admin/legacy-images': typeof AuthenticatedAdminLegacyImagesRoute
   '/admin/media': typeof AuthenticatedAdminMediaRoute
@@ -409,6 +416,7 @@ export interface FileRoutesByTo {
   '/admin/pages/portfolio': typeof AuthenticatedAdminPagesPortfolioRoute
   '/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
   '/admin/pages/shop': typeof AuthenticatedAdminPagesShopRoute
+  '/admin/documents': typeof AuthenticatedAdminDocumentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -459,6 +467,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/pages/portfolio': typeof AuthenticatedAdminPagesPortfolioRoute
   '/_authenticated/admin/pages/services': typeof AuthenticatedAdminPagesServicesRoute
   '/_authenticated/admin/pages/shop': typeof AuthenticatedAdminPagesShopRoute
+  '/_authenticated/admin/documents/': typeof AuthenticatedAdminDocumentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -509,6 +518,7 @@ export interface FileRouteTypes {
     | '/admin/pages/portfolio'
     | '/admin/pages/services'
     | '/admin/pages/shop'
+    | '/admin/documents/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -528,7 +538,6 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/admin/blog-posts'
     | '/admin/chats'
-    | '/admin/documents'
     | '/admin/faqs'
     | '/admin/legacy-images'
     | '/admin/media'
@@ -556,6 +565,7 @@ export interface FileRouteTypes {
     | '/admin/pages/portfolio'
     | '/admin/pages/services'
     | '/admin/pages/shop'
+    | '/admin/documents'
   id:
     | '__root__'
     | '/'
@@ -605,6 +615,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/pages/portfolio'
     | '/_authenticated/admin/pages/services'
     | '/_authenticated/admin/pages/shop'
+    | '/_authenticated/admin/documents/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -895,6 +906,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/documents/': {
+      id: '/_authenticated/admin/documents/'
+      path: '/'
+      fullPath: '/admin/documents/'
+      preLoaderRoute: typeof AuthenticatedAdminDocumentsIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminDocumentsRoute
+    }
     '/_authenticated/admin/pages/shop': {
       id: '/_authenticated/admin/pages/shop'
       path: '/shop'
@@ -978,12 +996,15 @@ const AuthenticatedAdminBlogPostsRouteWithChildren =
 interface AuthenticatedAdminDocumentsRouteChildren {
   AuthenticatedAdminDocumentsIdRoute: typeof AuthenticatedAdminDocumentsIdRoute
   AuthenticatedAdminDocumentsNewRoute: typeof AuthenticatedAdminDocumentsNewRoute
+  AuthenticatedAdminDocumentsIndexRoute: typeof AuthenticatedAdminDocumentsIndexRoute
 }
 
 const AuthenticatedAdminDocumentsRouteChildren: AuthenticatedAdminDocumentsRouteChildren =
   {
     AuthenticatedAdminDocumentsIdRoute: AuthenticatedAdminDocumentsIdRoute,
     AuthenticatedAdminDocumentsNewRoute: AuthenticatedAdminDocumentsNewRoute,
+    AuthenticatedAdminDocumentsIndexRoute:
+      AuthenticatedAdminDocumentsIndexRoute,
   }
 
 const AuthenticatedAdminDocumentsRouteWithChildren =
