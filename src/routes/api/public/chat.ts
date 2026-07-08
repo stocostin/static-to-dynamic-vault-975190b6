@@ -149,11 +149,11 @@ export const Route = createFileRoute("/api/public/chat")({
               : null;
           if (sessionId) {
             try {
-              const supabase = createClient(
-                process.env.SUPABASE_URL!,
-                process.env.SUPABASE_PUBLISHABLE_KEY!,
-                { auth: { persistSession: false, autoRefreshToken: false } },
+              // Use service-role client so writes don't require permissive anon RLS on chat tables.
+              const { supabaseAdmin: supabase } = await import(
+                "@/integrations/supabase/client.server"
               );
+
               const lastUser = [...messages].reverse().find((m) => m.role === "user");
               const userAgent = request.headers.get("user-agent")?.slice(0, 500) ?? null;
               const sourcePage =
