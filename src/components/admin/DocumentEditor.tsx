@@ -386,18 +386,17 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
           </Button>
         </div>
         <div className="space-y-2">
-          <div className="hidden md:grid grid-cols-[1fr_120px_80px_70px_110px_120px_40px] gap-2 text-xs text-muted-foreground px-1">
-            <span>Description</span><span>Size</span><span>Unit</span><span>Qty</span><span>Rate</span><span className="text-right">Amount</span><span></span>
+          <div className="hidden md:grid grid-cols-[40px_1fr_80px_130px_130px_40px] gap-2 text-xs text-muted-foreground px-1">
+            <span>No.</span><span>Description</span><span>Qty</span><span>Price/Item</span><span className="text-right">Amount</span><span></span>
           </div>
           {form.line_items.map((it, i) => {
             const amt = (Number(it.qty) || 0) * (Number(it.rate_cents) || 0);
             return (
-              <div key={i} className="grid grid-cols-2 md:grid-cols-[1fr_120px_80px_70px_110px_120px_40px] gap-2">
+              <div key={i} className="grid grid-cols-2 md:grid-cols-[40px_1fr_80px_130px_130px_40px] gap-2">
+                <div className="self-center text-sm text-muted-foreground tabular-nums pl-1">{String(i + 1).padStart(2, "0")}</div>
                 <Input placeholder="Description" value={it.description} onChange={(e) => setItem(i, { description: e.target.value })} />
-                <Input placeholder="Size" value={it.size || ""} onChange={(e) => setItem(i, { size: e.target.value })} />
-                <Input placeholder="Unit" value={it.unit || ""} onChange={(e) => setItem(i, { unit: e.target.value })} />
                 <Input type="number" min={0} value={it.qty} onChange={(e) => setItem(i, { qty: Number(e.target.value) })} />
-                <Input type="number" min={0} step={0.01} placeholder="Rate" value={it.rate_cents ? it.rate_cents / 100 : ""} onChange={(e) => setItem(i, { rate_cents: Math.round(Number(e.target.value) * 100) })} />
+                <Input type="number" min={0} step={0.01} placeholder="Price/Item" value={it.rate_cents ? it.rate_cents / 100 : ""} onChange={(e) => setItem(i, { rate_cents: Math.round(Number(e.target.value) * 100) })} />
                 <div className="text-right self-center text-sm tabular-nums pr-2">{(amt / 100).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 <Button size="icon" variant="ghost" onClick={() => setForm((f) => ({ ...f, line_items: f.line_items.filter((_, idx) => idx !== i) }))} disabled={form.line_items.length === 1}>
                   <Trash2 className="h-4 w-4" />
@@ -406,6 +405,7 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
             );
           })}
         </div>
+
       </Card>
 
       <Card className="p-4 sm:p-6 space-y-4">
