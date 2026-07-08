@@ -71,6 +71,93 @@ export type Database = {
         }
         Relationships: []
       }
+      business_documents: {
+        Row: {
+          client_address: string | null
+          client_email: string | null
+          client_kra_pin: string | null
+          client_name: string
+          client_phone: string | null
+          client_reg_no: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          doc_number: string | null
+          doc_type: Database["public"]["Enums"]["doc_type"]
+          due_date: string | null
+          id: string
+          issue_date: string
+          line_items: Json
+          location: string | null
+          notes: string | null
+          project_name: string | null
+          status: Database["public"]["Enums"]["doc_status"]
+          subtotal_cents: number
+          tax_cents: number
+          tax_enabled: boolean
+          tax_label: string
+          tax_rate: number
+          total_cents: number
+          updated_at: string
+        }
+        Insert: {
+          client_address?: string | null
+          client_email?: string | null
+          client_kra_pin?: string | null
+          client_name?: string
+          client_phone?: string | null
+          client_reg_no?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          doc_number?: string | null
+          doc_type: Database["public"]["Enums"]["doc_type"]
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          line_items?: Json
+          location?: string | null
+          notes?: string | null
+          project_name?: string | null
+          status?: Database["public"]["Enums"]["doc_status"]
+          subtotal_cents?: number
+          tax_cents?: number
+          tax_enabled?: boolean
+          tax_label?: string
+          tax_rate?: number
+          total_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          client_address?: string | null
+          client_email?: string | null
+          client_kra_pin?: string | null
+          client_name?: string
+          client_phone?: string | null
+          client_reg_no?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          doc_number?: string | null
+          doc_type?: Database["public"]["Enums"]["doc_type"]
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          line_items?: Json
+          location?: string | null
+          notes?: string | null
+          project_name?: string | null
+          status?: Database["public"]["Enums"]["doc_status"]
+          subtotal_cents?: number
+          tax_cents?: number
+          tax_enabled?: boolean
+          tax_label?: string
+          tax_rate?: number
+          total_cents?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           created_at: string
@@ -178,6 +265,24 @@ export type Database = {
           phone?: string | null
           source_page?: string | null
           subject?: string | null
+        }
+        Relationships: []
+      }
+      document_counters: {
+        Row: {
+          doc_type: Database["public"]["Enums"]["doc_type"]
+          last_number: number
+          updated_at: string
+        }
+        Insert: {
+          doc_type: Database["public"]["Enums"]["doc_type"]
+          last_number?: number
+          updated_at?: string
+        }
+        Update: {
+          doc_type?: Database["public"]["Enums"]["doc_type"]
+          last_number?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -760,9 +865,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      next_document_number: {
+        Args: { _type: Database["public"]["Enums"]["doc_type"] }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "admin" | "editor" | "user"
+      doc_status: "draft" | "issued" | "paid" | "void"
+      doc_type: "invoice" | "quotation" | "receipt" | "estimate"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -891,6 +1002,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "editor", "user"],
+      doc_status: ["draft", "issued", "paid", "void"],
+      doc_type: ["invoice", "quotation", "receipt", "estimate"],
     },
   },
 } as const
