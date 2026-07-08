@@ -857,14 +857,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_edit: { Args: { _user_id: string }; Returns: boolean }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
       next_document_number: {
         Args: { _type: Database["public"]["Enums"]["doc_type"] }
         Returns: number
