@@ -161,6 +161,11 @@ function ShopProductPage() {
               <span className="text-red-700">Out of stock</span>
             )}
           </p>
+          <ShareButtons
+            className="mt-5"
+            url={absoluteUrl(`/shop/${product.slug}`)}
+            title={product.title}
+          />
           {product.description && (
             <p className="mt-6 whitespace-pre-line leading-relaxed text-foreground">
               {product.description}
