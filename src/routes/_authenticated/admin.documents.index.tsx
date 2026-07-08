@@ -58,10 +58,15 @@ function DocumentsList() {
               {TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Button asChild>
+            <Link to="/admin/documents/new" search={{ type: "quotation" }}>
+              <Plus className="h-4 w-4 mr-1" /> New document
+            </Link>
+          </Button>
           {CREATE_TYPES.map((t) => (
-            <Button key={t.value} asChild variant={t.value === "quotation" ? "default" : "outline"}>
+            <Button key={t.value} asChild variant="outline" size="sm">
               <Link to="/admin/documents/new" search={{ type: t.value }}>
-                <Plus className="h-4 w-4 mr-1" /> {t.label}
+                {t.label}
               </Link>
             </Button>
           ))}
