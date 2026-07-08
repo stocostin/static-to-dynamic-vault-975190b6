@@ -228,11 +228,16 @@ export async function renderDocumentPdf(
   }
   y -= 22;
 
-  // === Client block ===
+  // === Client block === (skip empty / whitespace-only fields)
+  const clean = (v?: string | null) => {
+    const s = (v ?? "").trim();
+    return s.length ? s : "";
+  };
   const lbl = (l: string, v?: string | null) => {
-    if (!v) return;
+    const val = clean(v);
+    if (!val) return;
     drawText(page, `${l}: `, margin, y, 10, bold);
-    drawText(page, v, margin + bold.widthOfTextAtSize(`${l}: `, 10), y, 10, font);
+    drawText(page, val, margin + bold.widthOfTextAtSize(`${l}: `, 10), y, 10, font);
     y -= 14;
   };
   lbl("CLIENT", doc.client_name);
@@ -240,10 +245,9 @@ export async function renderDocumentPdf(
   lbl("PROJECT", doc.project_name);
   lbl("LOCATION", doc.location);
   lbl("KRA PIN", doc.client_kra_pin);
-  if (doc.client_email || doc.client_phone) {
-    const parts = [doc.client_phone, doc.client_email].filter(Boolean).join("  |  ");
-    lbl("CONTACT", parts);
-  }
+  lbl("ADDRESS", doc.client_address);
+  const contactParts = [clean(doc.client_phone), clean(doc.client_email)].filter(Boolean);
+  if (contactParts.length) lbl("CONTACT", contactParts.join("  |  "));
   y -= 6;
 
   // === Line items table ===
