@@ -170,7 +170,10 @@ export function DocumentEditor({ id, initialType }: { id?: string; initialType?:
       contact_phone: readSetting(s, "contact_phone"),
       contact_email: readSetting(s, "contact_email"),
       contact_address: readSetting(s, "contact_address"),
-      website_url: typeof window !== "undefined" ? window.location.host : "",
+      website_url:
+        readSetting(s, "site_url") ||
+        readSetting(s, "contact_website") ||
+        (typeof window !== "undefined" ? window.location.host : ""),
       document_footer_tagline: readSetting(s, "document_footer_tagline"),
       document_prepared_by: readSetting(s, "document_prepared_by"),
       document_bank_details: readSetting(s, "document_bank_details"),
