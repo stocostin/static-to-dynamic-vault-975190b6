@@ -94,8 +94,14 @@ async function fetchImageBytes(url: string): Promise<Uint8Array | null> {
 function safe(s: string | null | undefined): string {
   if (!s) return "";
   return s
+    // Normalize common typographic characters to ASCII
+    .replace(/[\u2022\u25CF\u25AA\u25E6\u2043]/g, "-") // bullets
+    .replace(/[\u2013\u2014\u2212]/g, "-") // en/em/minus dash
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'") // curly single quotes
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"') // curly double quotes
+    .replace(/\u2026/g, "...") // ellipsis
+    .replace(/[\u00A0\u2007\u202F]/g, " ") // nbsp variants
     .replace(/[\u2700-\u27BF\u2600-\u26FF\uE000-\uF8FF\u{1F000}-\u{1FFFF}]/gu, "")
-    // Any remaining non-WinAnsi codepoints → "?"
     .replace(/[^\x09\x0A\x0D\x20-\x7E\xA0-\xFF]/g, "?");
 }
 
