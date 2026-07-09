@@ -189,7 +189,7 @@ function ShopProductPage() {
         <section className="mt-16">
           <h2 className="text-2xl font-bold">Related products</h2>
           <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-            {related.map((r) => {
+            {related.map((r: typeof related[number]) => {
               const rPrice =
                 r.price_cents != null
                   ? `${r.currency || "KES"} ${(r.price_cents / 100).toLocaleString()}`
