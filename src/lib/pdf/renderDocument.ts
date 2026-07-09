@@ -152,26 +152,10 @@ export async function renderDocumentPdf(
   const margin = 40;
   let y = height - margin;
 
-  // === HEADER: Logo + site name (left), brown band right ===
-  const headerH = 90;
-  // Right decorative brown band
-  page.drawRectangle({
-    x: width - 140,
-    y: height - headerH - 10,
-    width: 140,
-    height: headerH + 10,
-    color: BROWN,
-  });
-  page.drawRectangle({
-    x: width - 140,
-    y: height - headerH - 14,
-    width: 140,
-    height: 4,
-    color: GREEN,
-  });
-
-  // Logo (measure so text can sit beside it without overlap)
+  // === HEADER: Logo on top, then site name + tagline stacked below ===
+  // Logo
   let logoW = 0;
+  let logoH = 0;
   const logoMaxH = 60;
   if (brand.logo_url) {
     const bytes = await fetchImageBytes(brand.logo_url);
@@ -189,20 +173,23 @@ export async function renderDocumentPdf(
       if (img) {
         const scale = logoMaxH / img.height;
         logoW = img.width * scale;
-        page.drawImage(img, { x: margin, y: y - logoMaxH, width: logoW, height: logoMaxH });
+        logoH = logoMaxH;
+        page.drawImage(img, { x: margin, y: y - logoH, width: logoW, height: logoH });
       }
     }
   }
 
-  // Site name & tagline placed to the right of the logo, vertically centered
-  const textX = margin + (logoW ? logoW + 16 : 0);
-  const centerY = y - logoMaxH / 2;
-  drawText(page, brand.site_name.toUpperCase(), textX, centerY + 4, 18, bold, BROWN);
+  // Site name & tagline stacked below the logo
+  let headerCursor = y - logoH - 12;
+  drawText(page, brand.site_name.toUpperCase(), margin, headerCursor - 14, 16, bold, BROWN);
+  headerCursor -= 20;
   const DEFAULT_TAGLINE = "DOORS & WINDOWS | FRAMES | STAIRCASE | FURNITURES";
   const subTagline = (brand.document_footer_tagline || "").trim() || DEFAULT_TAGLINE;
-  drawText(page, subTagline.toUpperCase(), textX, centerY - 12, 8, font, GREY);
+  drawText(page, subTagline.toUpperCase(), margin, headerCursor - 10, 8, font, GREY);
+  headerCursor -= 16;
 
-  y -= headerH + 10;
+  y = headerCursor - 4;
+
 
   // Green divider
   page.drawLine({
