@@ -1,5 +1,5 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
-import { getShopProduct } from "@/lib/catalog.functions";
+import { getShopProduct, getRelatedShopProducts } from "@/lib/catalog.functions";
 import { absoluteUrl } from "@/lib/site";
 import { ShareButtons } from "@/components/ShareButtons";
 
@@ -7,7 +7,10 @@ export const Route = createFileRoute("/shop/$slug")({
   loader: async ({ params }) => {
     const product = await getShopProduct({ data: { slug: params.slug } });
     if (!product) throw notFound();
-    return { product };
+    const related = await getRelatedShopProducts({
+      data: { slug: product.slug, category: product.category ?? null, limit: 4 },
+    });
+    return { product, related };
   },
   head: ({ loaderData, params }) => {
     if (!loaderData) {
