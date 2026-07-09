@@ -1136,7 +1136,13 @@ function postProcess(html: string): string {
       '$1=$2/assets/',
     )
     .replace(/url\((['"]?)assets\//g, "url($1/assets/")
-    .replace(/assets\/images\/placeholder\.jpg/g, PLACEHOLDER_IMG);
+    .replace(/assets\/images\/placeholder\.jpg/g, PLACEHOLDER_IMG)
+    // Rewrite any leftover legacy .html links (root-relative or bare) to clean routes.
+    .replace(
+      /href=("|')\/?(about|services|portfolio|shop|blog|contact|index)\.html(#[^"']*)?\1/gi,
+      (_m, q, slug, hash = "") =>
+        `href=${q}${slug.toLowerCase() === "index" ? "/" : "/" + slug.toLowerCase()}${hash}${q}`,
+    );
   const needsRotate = rewritten.includes('class="auto-rotate"');
   const needsShop = rewritten.includes('id="productsContainer"');
   const inject = (needsRotate ? AUTO_ROTATE_SCRIPT : "") + (needsShop ? SHOP_CONTROLS_SCRIPT : "") + ASSISTANT_WIDGET;
