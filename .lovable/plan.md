@@ -1,32 +1,23 @@
 ## Goal
-Ensure long line-item descriptions wrap strictly inside the Description column and never bleed into the Qty column in the generated PDF.
+Make line-item rows easier to read by adding a clear alternating (zebra) style plus a thin horizontal separator between every row.
 
-## Changes (in `src/lib/pdf/renderDocument.ts`)
+## Change (only `src/lib/pdf/renderDocument.ts`, line-items table)
 
-1. **Hard-wrap safeguard in `wrapLines`**
-   - Current `wrapLines` splits on whitespace only, so a single very long token (e.g. `Mahogany-hardwood-double-leaf-panel-door-2400x1200mm-with-architrave`) stays on one line and overflows.
-   - Extend it: if a single word's width exceeds `maxWidth`, break it character-by-character into chunks that fit. Applies to any caller, but critical for the Description cell.
+1. **Stronger zebra shading**
+   - Replace the current `LIGHT` (`rgb(0.95,0.95,0.95)`) fill used on even rows with a slightly warmer, more visible tint (e.g. `rgb(0.96, 0.94, 0.90)` — soft cream that complements the brown/green brand) applied to every other row.
+   - Keep odd rows white (no fill) for contrast.
 
-2. **Sanitize before measuring**
-   - `wrapLines` currently measures raw text but `drawText` renders `safe(text)`. Non-WinAnsi glyphs get replaced with `?` at draw time, changing width. Run input through `safe()` inside `wrapLines` (or measure the sanitized string) so wrap width matches drawn width.
+2. **Row separators on every row**
+   - Draw a thin `rgb(0.85,0.85,0.85)` bottom border under every row (currently only one line is drawn, which visually merges tall multi-line rows).
+   - Keep the existing thicker `BROWN` bottom border under the last row / table bottom.
 
-3. **Use a slightly tighter `descMaxW`**
-   - Keep `descPad = 6` but compute `descMaxW = descCol.w - descPad * 2 - 2` (2pt safety) to guarantee no glyph tail crosses the column border even with kerning rounding.
+3. **Vertical column dividers (optional, subtle)**
+   - Add faint `rgb(0.9,0.9,0.9)` vertical lines between the 5 columns spanning the full table height so the eye tracks Qty / Price / Amount alignment.
 
-4. **Confirm row-height math already added**
-   - Keep the existing `thisRowH = max(rowH, lines * lineHeight + 10)` and `ensureRowSpace(thisRowH)` — no change, just verify still in place.
+No other sections (header, totals, notes, signatures, footer) change. No business logic changes.
 
 ## Verification
-
-- Add a temporary dev harness (not committed) OR use existing document editor:
-  - Create a sample document with 3 line items whose descriptions are: (a) short, (b) long multi-word sentence ~30 words, (c) a single 80-character unbroken token.
-  - Generate the PDF via the existing Download action.
-  - Rasterize with `pdftoppm -jpeg -r 150` and visually inspect page 1:
-    - Description text stays inside its column x-range `[tableX + descPad, tableX + descCol.w - descPad]`.
-    - Qty/Price/Amount columns render cleanly, vertically centered.
-    - Zebra background and bottom border expand to full row height.
-    - Multi-line row page-breaks correctly when placed near page bottom.
-- Report issues found and fixes applied per the PDF QA checklist.
-
-## Out of scope
-Header layout, footer, totals, notes, bank details, signatures — untouched.
+Regenerate a test PDF with mixed short + long descriptions, rasterize with `pdftoppm -jpeg -r 150`, and visually confirm:
+- Alternating fill is clearly visible but not distracting.
+- Every row has a bottom separator, including multi-line rows.
+- Column dividers align with header cells and don't overlap text.

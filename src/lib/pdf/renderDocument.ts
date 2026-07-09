@@ -343,7 +343,7 @@ export async function renderDocumentPdf(
         y: rowY,
         width: tableW,
         height: thisRowH,
-        color: LIGHT,
+        color: rgb(0.96, 0.94, 0.9),
       });
     }
     const amount = (Number(item.qty) || 0) * (Number(item.rate_cents) || 0);
@@ -379,12 +379,24 @@ export async function renderDocumentPdf(
       cx += c.w;
     });
 
-    // Row border
+    // Vertical column dividers (subtle)
+    let dx = tableX;
+    for (let i = 0; i < cols.length - 1; i++) {
+      dx += cols[i].w;
+      page.drawLine({
+        start: { x: dx, y: rowY },
+        end: { x: dx, y: rowY + thisRowH },
+        thickness: 0.4,
+        color: rgb(0.9, 0.9, 0.9),
+      });
+    }
+
+    // Row bottom border
     page.drawLine({
       start: { x: tableX, y: rowY },
       end: { x: tableX + tableW, y: rowY },
       thickness: 0.5,
-      color: rgb(0.8, 0.8, 0.8),
+      color: rgb(0.85, 0.85, 0.85),
     });
     y -= thisRowH;
 
