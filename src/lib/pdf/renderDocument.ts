@@ -289,8 +289,8 @@ export async function renderDocumentPdf(
     if (withTableHeader) drawTableHeader();
   };
 
-  const ensureRowSpace = () => {
-    if (y - rowH < MIN_Y) newPage(true);
+  const ensureRowSpace = (h: number = rowH) => {
+    if (y - h < MIN_Y) newPage(true);
   };
   const ensurePlainSpace = (needed: number) => {
     if (y - needed < MIN_Y) newPage(false);
@@ -303,41 +303,59 @@ export async function renderDocumentPdf(
   const renderItems = doc.line_items.filter(
     (it) => (it.description ?? "").trim().length > 0,
   );
+  const descCol = cols[1];
+  const descPad = 6;
+  const descMaxW = descCol.w - descPad * 2;
+  const bodySize = 9.5;
+  const lineHeight = 12;
+
   renderItems.forEach((item, idx) => {
-    ensureRowSpace();
-    const rowY = y - rowH + 4;
+    const descLines = wrapLines(item.description || "", font, bodySize, descMaxW);
+    const thisRowH = Math.max(rowH, descLines.length * lineHeight + 10);
+    ensureRowSpace(thisRowH);
+    const rowY = y - thisRowH + 4;
     if (idx % 2 === 0) {
       page.drawRectangle({
         x: tableX,
         y: rowY,
         width: tableW,
-        height: rowH,
+        height: thisRowH,
         color: LIGHT,
       });
     }
     const amount = (Number(item.qty) || 0) * (Number(item.rate_cents) || 0);
     const vals = [
       String(idx + 1).padStart(2, "0"),
-      item.description || "",
+      "", // description drawn separately (multi-line)
       String(item.qty || 0),
       (item.rate_cents / 100).toFixed(2),
       (amount / 100).toFixed(2),
     ];
+    const centerTextY = y - thisRowH / 2 - bodySize / 2 + 2;
     let cx = tableX;
     cols.forEach((c, i) => {
-      const f = i >= 2 ? mono : font;
-      const s = 9.5;
-      const text = vals[i];
-      const tw = f.widthOfTextAtSize(text, s);
-      const tx =
-        c.align === "center"
-          ? cx + (c.w - tw) / 2
-          : c.align === "right"
-            ? cx + c.w - tw - 6
-            : cx + 6;
-      drawText(page, text, tx, y - 14, s, f, DARK);
+      if (i === 1) {
+        // Multi-line description, top-aligned within the row
+        let ly = y - 14;
+        for (const line of descLines) {
+          drawText(page, line, cx + descPad, ly, bodySize, font, DARK);
+          ly -= lineHeight;
+        }
+      } else {
+        const f = i >= 2 ? mono : font;
+        const text = vals[i];
+        const tw = f.widthOfTextAtSize(text, bodySize);
+        const tx =
+          c.align === "center"
+            ? cx + (c.w - tw) / 2
+            : c.align === "right"
+              ? cx + c.w - tw - 6
+              : cx + 6;
+        drawText(page, text, tx, centerTextY, bodySize, f, DARK);
+      }
       cx += c.w;
     });
+
     // Row border
     page.drawLine({
       start: { x: tableX, y: rowY },
