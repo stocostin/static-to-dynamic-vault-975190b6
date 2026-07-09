@@ -117,18 +117,41 @@ function drawText(
   page.drawText(safe(text), { x, y, size, font, color });
 }
 
+function breakLongWord(word: string, font: PDFFont, size: number, maxWidth: number): string[] {
+  const parts: string[] = [];
+  let cur = "";
+  for (const ch of word) {
+    const test = cur + ch;
+    if (font.widthOfTextAtSize(test, size) > maxWidth && cur) {
+      parts.push(cur);
+      cur = ch;
+    } else {
+      cur = test;
+    }
+  }
+  if (cur) parts.push(cur);
+  return parts;
+}
+
 function wrapLines(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
+  const sanitized = safe(text);
   const out: string[] = [];
-  for (const paragraph of text.split(/\n/)) {
-    const words = paragraph.split(/\s+/);
+  for (const paragraph of sanitized.split(/\n/)) {
+    const words = paragraph.split(/\s+/).filter(Boolean);
     let line = "";
-    for (const w of words) {
-      const test = line ? `${line} ${w}` : w;
-      if (font.widthOfTextAtSize(test, size) > maxWidth && line) {
-        out.push(line);
-        line = w;
-      } else {
-        line = test;
+    for (const raw of words) {
+      const pieces =
+        font.widthOfTextAtSize(raw, size) > maxWidth
+          ? breakLongWord(raw, font, size, maxWidth)
+          : [raw];
+      for (const w of pieces) {
+        const test = line ? `${line} ${w}` : w;
+        if (font.widthOfTextAtSize(test, size) > maxWidth && line) {
+          out.push(line);
+          line = w;
+        } else {
+          line = test;
+        }
       }
     }
     out.push(line);
@@ -305,7 +328,7 @@ export async function renderDocumentPdf(
   );
   const descCol = cols[1];
   const descPad = 6;
-  const descMaxW = descCol.w - descPad * 2;
+  const descMaxW = descCol.w - descPad * 2 - 2;
   const bodySize = 9.5;
   const lineHeight = 12;
 
