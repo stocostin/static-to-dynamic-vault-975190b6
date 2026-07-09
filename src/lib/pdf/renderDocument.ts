@@ -363,7 +363,8 @@ export async function renderDocumentPdf(
       thickness: 0.5,
       color: rgb(0.8, 0.8, 0.8),
     });
-    y -= rowH;
+    y -= thisRowH;
+
   });
 
   // Table bottom border
