@@ -54,8 +54,15 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preload" as="image" href="assets/images/hero-bg.jpg" fetchpriority="high">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@400;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@400;600&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    </noscript>
 </head>
 <body>
     
@@ -63,11 +70,10 @@
 <div id="loading-overlay">
   <div class="loading-content">
     <p class="loading-text">Welcome to:</p>
-    <img src="assets/images/logo.png" alt="Shachavir Timber Limited Logo" class="heartbeat-logo" />
+    <img src="assets/images/logo.png" alt="Shachavir Timber Limited Logo" class="heartbeat-logo" fetchpriority="high" width="200" height="200" />
     <p class="loading-text" style="font-family: 'Dancing Script', cursive; font-size: 1.6rem; letter-spacing: 1px;">
         "Crafting Kenya’s Finest Woodwork"
     </p>
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
   </div>
 </div>
 
@@ -286,7 +292,7 @@ window.addEventListener('load', function() {
             </p>
             <div class="projects-grid">
                 <div class="project-card">
-                    <img src="assets/images/door-sample.jpg" alt="Custom Mahogany Door">
+                    <img loading="lazy" decoding="async" src="assets/images/door-sample.jpg" alt="Custom Mahogany Door">
                     <div class="project-info">
                         <h3>Mahogany Entry Door</h3>
                         <p>Karen Residence</p>
@@ -294,7 +300,7 @@ window.addEventListener('load', function() {
                     </div>
                 </div>
                 <div class="project-card">
-                    <img src="assets/images/staircase-sample.jpg" alt="Custom Staircase">
+                    <img loading="lazy" decoding="async" src="assets/images/staircase-sample.jpg" alt="Custom Staircase">
                     <div class="project-info">
                         <h3>Floating Staircase</h3>
                         <p>Runda Office Complex</p>
@@ -302,7 +308,7 @@ window.addEventListener('load', function() {
                     </div>
                 </div>
                 <div class="project-card">
-                    <img src="assets/images/furniture-sample.jpg" alt="Dining Set">
+                    <img loading="lazy" decoding="async" src="assets/images/furniture-sample.jpg" alt="Dining Set">
                     <div class="project-info">
                         <h3>Dining Room Set</h3>
                         <p>Custom Oak Design</p>
@@ -372,7 +378,7 @@ window.addEventListener('load', function() {
             <!-- QR Code -->
             <div class="google-rating-qr">
                 <p>Scan the QR code to leave your review:</p>
-                <img src="assets/images/qr-code.png" alt="Scan to Rate Us on Google" />
+                <img loading="lazy" decoding="async" src="assets/images/qr-code.png" alt="Scan to Rate Us on Google" />
             </div>
 
             <!-- Review Button -->
@@ -474,19 +480,25 @@ window.addEventListener('load', function() {
         <i class="fas fa-arrow-up"></i>
     </a>
 
-    <script src="assets/js/main.js"></script>
+    <script defer src="assets/js/main.js"></script>
     <script>
-const hero = document.querySelector('.hero');
-const images = [
-    "assets/images/hero-bg.jpg",
-    "assets/images/hero-bg2.jpg",
-    "assets/images/hero-bg3.jpg"
-];
-let idx = 0;
-setInterval(() => {
-    idx = (idx + 1) % images.length;
-    hero.style.backgroundImage = `url('${images[idx]}')`;
-}, 4000); // Change every 4 seconds
+(function(){
+  var images = ["/assets/images/hero-bg.jpg","/assets/images/hero-bg2.jpg","/assets/images/hero-bg3.jpg"];
+  function start(){
+    var hero = document.querySelector('.hero');
+    if(!hero) return;
+    // Set the LCP hero image immediately.
+    hero.style.backgroundImage = "url('" + images[0] + "')";
+    var idx = 0;
+    setInterval(function(){
+      idx = (idx + 1) % images.length;
+      hero.style.backgroundImage = "url('" + images[idx] + "')";
+    }, 4000);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', start);
+  } else { start(); }
+})();
 </script>
 </body>
 </html>
