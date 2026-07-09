@@ -328,7 +328,7 @@ export async function renderDocumentPdf(
   );
   const descCol = cols[1];
   const descPad = 6;
-  const descMaxW = descCol.w - descPad * 2;
+  const descMaxW = descCol.w - descPad * 2 - 2;
   const bodySize = 9.5;
   const lineHeight = 12;
 
