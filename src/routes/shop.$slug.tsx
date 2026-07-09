@@ -111,7 +111,7 @@ export const Route = createFileRoute("/shop/$slug")({
 });
 
 function ShopProductPage() {
-  const { product } = Route.useLoaderData();
+  const { product, related } = Route.useLoaderData();
   const price =
     product.price_cents != null
       ? `${product.currency || "KES"} ${(product.price_cents / 100).toLocaleString()}`
