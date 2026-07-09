@@ -1,5 +1,5 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
-import { getShopProduct } from "@/lib/catalog.functions";
+import { getShopProduct, getRelatedShopProducts } from "@/lib/catalog.functions";
 import { absoluteUrl } from "@/lib/site";
 import { ShareButtons } from "@/components/ShareButtons";
 
@@ -7,7 +7,10 @@ export const Route = createFileRoute("/shop/$slug")({
   loader: async ({ params }) => {
     const product = await getShopProduct({ data: { slug: params.slug } });
     if (!product) throw notFound();
-    return { product };
+    const related = await getRelatedShopProducts({
+      data: { slug: product.slug, category: product.category ?? null, limit: 4 },
+    });
+    return { product, related };
   },
   head: ({ loaderData, params }) => {
     if (!loaderData) {
@@ -108,7 +111,7 @@ export const Route = createFileRoute("/shop/$slug")({
 });
 
 function ShopProductPage() {
-  const { product } = Route.useLoaderData();
+  const { product, related } = Route.useLoaderData();
   const price =
     product.price_cents != null
       ? `${product.currency || "KES"} ${(product.price_cents / 100).toLocaleString()}`
@@ -181,6 +184,53 @@ function ShopProductPage() {
           </a>
         </div>
       </div>
+
+      {related.length > 0 && (
+        <section className="mt-16">
+          <h2 className="text-2xl font-bold">Related products</h2>
+          <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+            {related.map((r: typeof related[number]) => {
+              const rPrice =
+                r.price_cents != null
+                  ? `${r.currency || "KES"} ${(r.price_cents / 100).toLocaleString()}`
+                  : null;
+              const img = r.image_url || "/assets/images/placeholder.jpg";
+              return (
+                <Link
+                  key={r.slug}
+                  to="/shop/$slug"
+                  params={{ slug: r.slug }}
+                  className="group block overflow-hidden rounded-lg border bg-card transition hover:shadow-md"
+                >
+                  <div className="aspect-square w-full overflow-hidden bg-muted">
+                    <img
+                      src={img}
+                      alt={r.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-3">
+                    {r.category && (
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        {r.category}
+                      </p>
+                    )}
+                    <h3 className="mt-1 line-clamp-2 text-sm font-medium">
+                      {r.title}
+                    </h3>
+                    {rPrice && (
+                      <p className="mt-1 text-sm font-semibold text-primary">
+                        {rPrice}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </main>
   );
 }
