@@ -101,8 +101,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Shachavir Timber Limited crafts custom doors, frames, staircases and bespoke furniture in Kenya using premium hardwoods and expert joinery.",
       },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/cGOpaipV10dhvHxVbPTWgJ1iFdt2/social-images/social-1783531383831-Capture.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/cGOpaipV10dhvHxVbPTWgJ1iFdt2/social-images/social-1783531383831-Capture.webp" },
     ],
     links: [
       {
