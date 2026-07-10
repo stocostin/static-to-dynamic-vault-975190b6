@@ -971,23 +971,55 @@ function applyNamedSection(root: HTMLElement, slug: string, key: string, content
           }
         }
       }
+      const collectList = (
+        primary: unknown,
+        legacyA: unknown,
+        legacyB: unknown,
+        itemKey: string,
+      ): string[] => {
+        const list: string[] = [];
+        if (Array.isArray(primary)) {
+          for (const it of primary) {
+            const v = typeof it === "string" ? it : it && typeof it === "object" ? str((it as Record<string, unknown>)[itemKey]) : "";
+            if (v) list.push(v);
+          }
+        }
+        if (!list.length) {
+          const a = str(legacyA), b = str(legacyB);
+          if (a) list.push(a);
+          if (b) list.push(b);
+        }
+        return list;
+      };
       if (items[1]) {
         const div = items[1].querySelector("div");
         if (div) {
-          const paras = div.querySelectorAll("p");
-          const phones = [str(content.phone), str(content.phone_2)].filter(Boolean);
-          for (let i = 0; i < Math.min(paras.length, phones.length); i++) {
-            paras[i].set_content(`<a href="tel:${escapeHtml(phones[i].replace(/\s+/g, ""))}">${escapeHtml(phones[i])}</a>`);
+          const h3 = div.querySelector("h3");
+          const heading = h3 ? h3.toString() : "<h3>Phone</h3>";
+          const phones = collectList(content.phones, content.phone, content.phone_2, "number");
+          if (phones.length) {
+            div.set_content(
+              heading +
+                phones
+                  .map((p) => `<p><a href="tel:${escapeHtml(p.replace(/\s+/g, ""))}">${escapeHtml(p)}</a></p>`)
+                  .join(""),
+            );
           }
         }
       }
       if (items[3]) {
         const div = items[3].querySelector("div");
         if (div) {
-          const paras = div.querySelectorAll("p");
-          const emails = [str(content.email), str(content.email_2)].filter(Boolean);
-          for (let i = 0; i < Math.min(paras.length, emails.length); i++) {
-            paras[i].set_content(`<a href="mailto:${escapeHtml(emails[i])}">${escapeHtml(emails[i])}</a>`);
+          const h3 = div.querySelector("h3");
+          const heading = h3 ? h3.toString() : "<h3>Email</h3>";
+          const emails = collectList(content.emails, content.email, content.email_2, "address");
+          if (emails.length) {
+            div.set_content(
+              heading +
+                emails
+                  .map((e) => `<p><a href="mailto:${escapeHtml(e)}">${escapeHtml(e)}</a></p>`)
+                  .join(""),
+            );
           }
         }
       }
@@ -1273,11 +1305,15 @@ document.addEventListener('DOMContentLoaded', function(){
     try {
       var data = Object.fromEntries(new FormData(f).entries());
       var res = await fetch('/api/public/contact', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
-      if (!res.ok) throw new Error('Request failed');
+      var payload = null; try { payload = await res.json(); } catch(_){}
+      if (!res.ok) {
+        var msg = (payload && (payload.error || payload.message)) || 'Request failed';
+        throw new Error(msg);
+      }
       f.reset();
       alert('Thanks! We received your message and will get back to you shortly.');
     } catch (err) {
-      alert('Sorry, we could not send your message. Please WhatsApp us instead.');
+      alert('Sorry, we could not send your message: ' + (err && err.message ? err.message : 'unknown error') + '. Please WhatsApp us instead.');
     } finally { if (btn) { btn.disabled = false; btn.textContent = orig; } }
   });
 });
@@ -1333,4 +1369,98 @@ export async function hydrateShop(html: string): Promise<string> {
     }
     return root;
   }, html);
+}
+
+export async function hydrateBlogPost(
+  html: string,
+  slug: string,
+): Promise<{ body: string; status: number }> {
+  const { data: post } = await sb()
+    .from("blog_posts")
+    .select("slug,title,excerpt,cover_image_url,body_html,category,author,tags,published_at,is_published,seo_title,meta_description")
+    .eq("slug", slug)
+    .eq("is_published", true)
+    .maybeSingle();
+
+  if (!post) {
+    const body = await safe(async () => {
+      const root = parseDoc(html);
+      await applyCommon(root, "blog", "/blog");
+      setTitle(root, "Post not found");
+      setInner(
+        root,
+        ".blog-grid",
+        `<div style="grid-column:1/-1;text-align:center;padding:3rem 1rem;">
+          <h2 style="margin:0 0 .5rem;">Post not found</h2>
+          <p style="color:#666;margin:0 0 1.25rem;">The article you're looking for may have been moved or unpublished.</p>
+          <a href="/blog" class="btn btn-primary">Back to blog</a>
+        </div>`,
+      );
+      return root;
+    }, html);
+    return { body, status: 404 };
+  }
+
+  const body = await safe(async () => {
+    const root = parseDoc(html);
+    await applyCommon(root, "blog", "/blog");
+
+    const title = post.seo_title ?? post.title;
+    const desc = (post.meta_description ?? post.excerpt ?? "").trim();
+    if (title) {
+      setTitle(root, title);
+      setMeta(root, "property", "og:title", title);
+      setMeta(root, "name", "twitter:title", title);
+    }
+    if (desc) {
+      setMeta(root, "name", "description", desc);
+      setMeta(root, "property", "og:description", desc);
+      setMeta(root, "name", "twitter:description", desc);
+    }
+    if (post.cover_image_url) {
+      setMeta(root, "property", "og:image", post.cover_image_url);
+      setMeta(root, "name", "twitter:image", post.cover_image_url);
+    }
+
+    const date = post.published_at
+      ? new Date(post.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+      : "";
+    const tagList = Array.isArray(post.tags) ? (post.tags as string[]).filter(Boolean) : [];
+    const cover = post.cover_image_url
+      ? `<div class="blog-image" style="margin-bottom:1.5rem;"><img src="${escapeHtml(post.cover_image_url)}" alt="${escapeHtml(post.title)}" style="width:100%;border-radius:8px;object-fit:cover;"></div>`
+      : "";
+    const metaBits = [
+      post.category ? `<span class="category">${escapeHtml(post.category)}</span>` : "",
+      date ? `<span class="date">${escapeHtml(date)}</span>` : "",
+      post.author ? `<span class="author">By ${escapeHtml(post.author)}</span>` : "",
+    ].filter(Boolean).join(" · ");
+    const tagsHtml = tagList.length
+      ? `<div class="blog-tags" style="margin-top:2rem;display:flex;gap:.5rem;flex-wrap:wrap;">${tagList
+          .map((t) => `<span style="background:#f0ebe4;color:#5b3a1a;padding:.25rem .75rem;border-radius:999px;font-size:.85rem;">${escapeHtml(t)}</span>`)
+          .join("")}</div>`
+      : "";
+
+    const article = `
+      <article class="blog-article" style="grid-column:1/-1;max-width:820px;margin:0 auto;background:#fff;padding:1.5rem;border-radius:8px;">
+        <a href="/blog" class="read-more" style="display:inline-block;margin-bottom:1rem;"><i class="fas fa-arrow-left"></i> Back to blog</a>
+        <h1 style="margin:0 0 .5rem;line-height:1.2;">${escapeHtml(post.title)}</h1>
+        ${metaBits ? `<div class="blog-meta" style="color:#666;margin-bottom:1.5rem;">${metaBits}</div>` : ""}
+        ${cover}
+        <div class="blog-body" style="font-size:1.05rem;line-height:1.75;color:#222;">${post.body_html ?? ""}</div>
+        ${tagsHtml}
+      </article>`;
+
+    setInner(root, ".blog-grid", article);
+    // Also inject prose styles for common tags inside body_html
+    const head = root.querySelector("head");
+    if (head) {
+      head.insertAdjacentHTML(
+        "beforeend",
+        `<style>.blog-body h2{font-size:1.6rem;margin:2rem 0 .75rem;}.blog-body h3{font-size:1.3rem;margin:1.5rem 0 .5rem;}.blog-body p{margin:0 0 1rem;}.blog-body img{max-width:100%;height:auto;border-radius:6px;margin:1rem 0;}.blog-body ul,.blog-body ol{margin:0 0 1rem 1.5rem;}.blog-body blockquote{border-left:4px solid #8B4513;padding:.5rem 1rem;color:#555;background:#faf7f2;margin:1rem 0;}.blog-body a{color:#8B4513;text-decoration:underline;}.blog-body pre{background:#1f1f1f;color:#eee;padding:1rem;border-radius:6px;overflow:auto;}.blog-body code{font-family:ui-monospace,monospace;background:#f2ede6;padding:.1rem .3rem;border-radius:3px;}.blog-body pre code{background:transparent;padding:0;color:inherit;}.blog-body table{border-collapse:collapse;width:100%;margin:1rem 0;}.blog-body th,.blog-body td{border:1px solid #ddd;padding:.5rem;}</style>`,
+      );
+    }
+    return root;
+  }, html);
+
+  return { body, status: 200 };
 }
