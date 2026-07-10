@@ -1,41 +1,38 @@
-# Fix blog editing + upgrade editor
+Three fixes for public-facing issues.
 
-## Problem
+## 1. Blog detail pages (`/blog/:slug`) returning 404
 
-Saving a blog post throws `function public.can_edit(uuid) does not exist` (same root cause as the earlier documents bug). In migration `20260708183807`, `public.can_edit` and `public.has_role` were relocated to the `private` schema, but the RLS policies on `blog_posts` (and several other tables) were never rewritten and still call `public.can_edit(auth.uid())` / `public.has_role(...)`. Any INSERT/UPDATE/DELETE against those tables fails RLS evaluation.
+Blog list at `/blog` works, but every "Read More" link goes to `/blog/<slug>` and there is no route file for it — so "blogs are not showing" from the visitor's perspective.
 
-Affected policies still referencing `public.can_edit` / `public.has_role`:
-- `blog_posts`, `services`, `portfolio_projects`, `shop_products`, `faqs`, `testimonials`, `team_members`, `pages`, `page_sections`, `menus`, `menu_items`, `site_settings`, `media_assets`, `user_roles`, `contact_messages` (admin policies) — anywhere the old helper names appear in existing migrations.
+Add `src/routes/blog.$slug.tsx` as a server route that:
+- Loads the post from `blog_posts` by slug (only `is_published = true`) using the server publishable client (matching the existing pattern in `legacy-hydrate.server.ts`).
+- Returns a full HTML page built from the existing `src/legacy/blog.html` shell (header, footer, styles) so it visually matches the rest of the site. A new `hydrateBlogPost(html, slug)` helper in `legacy-hydrate.server.ts` will:
+  - Run `applyCommon` for header/footer/social/menus.
+  - Replace the `.blog-grid` region with a single-article layout: cover image, title, category + date meta, author, and `body_html` rendered inside a `.blog-article` container styled by existing prose CSS.
+  - Set `<title>` and meta description/OG tags from the post (`seo_title` / `meta_description` fallback to title/excerpt, `cover_image_url` → og:image).
+  - Return 404 HTML (reuse `error-page.ts`) when the slug is missing or unpublished.
 
-## Fix — Part 1: SQL migration
+Also link the list-page cards' images to the detail page (currently only the title/read-more link).
 
-Drop and recreate every RLS policy that still references `public.can_edit` or `public.has_role`, repointing them to `private.can_edit` / `private.has_role`. Same USING / WITH CHECK semantics, no behavioural change — only the schema qualifier moves. This keeps the helpers out of the PostgREST-exposed `public` schema (the reason they were moved) while restoring writes.
+## 2. Contact CMS: support more than two phones and emails
 
-## Fix — Part 2: Rich-text editor upgrades
+Currently `admin.pages.contact.tsx` exposes only `phone`, `phone_2`, `email`, `email_2`.
 
-Update `src/components/admin/RichTextEditor.tsx` to add capabilities expected in a professional blog editor:
+- Change the spec to two repeaters: `phones` (list of `{ number }`) and `emails` (list of `{ address }`), replacing the four single-value fields. Keep backward compatibility by falling back to `phone`/`phone_2`/`email`/`email_2` when the repeater arrays are empty (so existing saved content keeps rendering until an editor re-saves).
+- In `legacy-hydrate.server.ts` `contact:details` case, rebuild the phone `<div>` and email `<div>` innerHTML from the arrays (any length), producing one `<p><a href="tel:...">...</a></p>` per entry, instead of writing into a fixed number of `<p>` tags.
 
-- **Tables** (`@tiptap/extension-table` + row/cell/header) with insert / add row / add column / delete controls.
-- **Code blocks with language** via `@tiptap/extension-code-block-lowlight` + `lowlight` and a small language set (js, ts, html, css, bash, json).
-- **Task lists** (`@tiptap/extension-task-list`, `@tiptap/extension-task-item`) — checkboxes.
-- **Text color + highlight** (`@tiptap/extension-color`, `@tiptap/extension-text-style`, `@tiptap/extension-highlight`).
-- **Typography** (`@tiptap/extension-typography`) for smart quotes / dashes.
-- **YouTube embed** (`@tiptap/extension-youtube`) via a "Insert video" toolbar button that prompts for a URL.
-- **Character / word count** (`@tiptap/extension-character-count`) shown under the editor.
-- Image improvement: after inserting an image, prompt for alt text and set it on the node (accessibility + SEO).
-- Toolbar reorganized into grouped rows so the new controls stay usable.
-- Extend the editor's Tailwind `prose` classes so tables, code blocks, task lists, and highlights render correctly in the editor.
+## 3. Contact form submit failing
 
-No changes to the public blog rendering pipeline; posts continue saving as HTML into `blog_posts.body_html`.
+Root cause: the `contact_messages` INSERT policy has a `CHECK` that requires `length(email) BETWEEN 3 AND 320`. The public form marks email as optional and the API sends `""` when empty, so the check fails and the insert is rejected → generic "could not send" error.
+
+Fix on the frontend (no schema change):
+- Make email required in the legacy contact form: add `required` to `<input type="email" id="email" name="email">` in `src/legacy/contact.html`, and update the label to reflect it.
+- Tighten the Zod schema in `src/routes/api/public/contact.ts` to require a valid email (`z.string().email().max(200)`), returning a clear 400 message when missing so the client can surface it.
+- Improve the enhancer script in `legacy-hydrate.server.ts` to show the server's error message when the response is not ok (instead of a generic fallback), so future failures are visible.
 
 ## Verification
 
-- Save a blog post from `/admin/blog-posts/:id` — succeeds without the RLS error.
-- Toggle publish from the list view — succeeds.
-- New editor controls (table, code block, task list, color, highlight, YouTube, counter) all work.
+- `curl /blog/2023-wood-design-trends` returns 200 with the post body.
+- `/admin/pages/contact` shows repeaters; adding a third phone renders three `<p>` entries on `/contact`.
+- Submitting `/contact` with name, phone, email, and message succeeds; submitting without email shows an inline validation error.
 - `bunx tsgo --noEmit` clean.
-
-## Technical notes
-
-- Migration is idempotent via `DROP POLICY IF EXISTS` + `CREATE POLICY`.
-- Editor deps added with `bun add @tiptap/extension-table @tiptap/extension-table-row @tiptap/extension-table-cell @tiptap/extension-table-header @tiptap/extension-code-block-lowlight lowlight @tiptap/extension-task-list @tiptap/extension-task-item @tiptap/extension-color @tiptap/extension-text-style @tiptap/extension-highlight @tiptap/extension-typography @tiptap/extension-youtube @tiptap/extension-character-count`.
