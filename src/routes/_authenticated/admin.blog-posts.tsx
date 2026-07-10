@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,8 +19,14 @@ export const Route = createFileRoute("/_authenticated/admin/blog-posts")({
 
 function BlogPostsList() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [creating, setCreating] = useState(false);
   const [newTitle, setNewTitle] = useState("");
+
+  if (pathname !== "/admin/blog-posts") {
+    return <Outlet />;
+  }
 
   const listQ = useQuery({
     queryKey: ["blog_posts", "list"],
@@ -50,7 +56,7 @@ function BlogPostsList() {
     onSuccess: (id) => {
       qc.invalidateQueries({ queryKey: ["blog_posts"] });
       setNewTitle(""); setCreating(false);
-      window.location.href = `/admin/blog-posts/${id}`;
+      navigate({ to: "/admin/blog-posts/$id", params: { id } });
     },
     onError: (e: Error) => toast.error(e.message),
   });
