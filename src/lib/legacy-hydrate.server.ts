@@ -971,23 +971,55 @@ function applyNamedSection(root: HTMLElement, slug: string, key: string, content
           }
         }
       }
+      const collectList = (
+        primary: unknown,
+        legacyA: unknown,
+        legacyB: unknown,
+        itemKey: string,
+      ): string[] => {
+        const list: string[] = [];
+        if (Array.isArray(primary)) {
+          for (const it of primary) {
+            const v = typeof it === "string" ? it : it && typeof it === "object" ? str((it as Record<string, unknown>)[itemKey]) : "";
+            if (v) list.push(v);
+          }
+        }
+        if (!list.length) {
+          const a = str(legacyA), b = str(legacyB);
+          if (a) list.push(a);
+          if (b) list.push(b);
+        }
+        return list;
+      };
       if (items[1]) {
         const div = items[1].querySelector("div");
         if (div) {
-          const paras = div.querySelectorAll("p");
-          const phones = [str(content.phone), str(content.phone_2)].filter(Boolean);
-          for (let i = 0; i < Math.min(paras.length, phones.length); i++) {
-            paras[i].set_content(`<a href="tel:${escapeHtml(phones[i].replace(/\s+/g, ""))}">${escapeHtml(phones[i])}</a>`);
+          const h3 = div.querySelector("h3");
+          const heading = h3 ? h3.toString() : "<h3>Phone</h3>";
+          const phones = collectList(content.phones, content.phone, content.phone_2, "number");
+          if (phones.length) {
+            div.set_content(
+              heading +
+                phones
+                  .map((p) => `<p><a href="tel:${escapeHtml(p.replace(/\s+/g, ""))}">${escapeHtml(p)}</a></p>`)
+                  .join(""),
+            );
           }
         }
       }
       if (items[3]) {
         const div = items[3].querySelector("div");
         if (div) {
-          const paras = div.querySelectorAll("p");
-          const emails = [str(content.email), str(content.email_2)].filter(Boolean);
-          for (let i = 0; i < Math.min(paras.length, emails.length); i++) {
-            paras[i].set_content(`<a href="mailto:${escapeHtml(emails[i])}">${escapeHtml(emails[i])}</a>`);
+          const h3 = div.querySelector("h3");
+          const heading = h3 ? h3.toString() : "<h3>Email</h3>";
+          const emails = collectList(content.emails, content.email, content.email_2, "address");
+          if (emails.length) {
+            div.set_content(
+              heading +
+                emails
+                  .map((e) => `<p><a href="mailto:${escapeHtml(e)}">${escapeHtml(e)}</a></p>`)
+                  .join(""),
+            );
           }
         }
       }
