@@ -1305,11 +1305,15 @@ document.addEventListener('DOMContentLoaded', function(){
     try {
       var data = Object.fromEntries(new FormData(f).entries());
       var res = await fetch('/api/public/contact', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
-      if (!res.ok) throw new Error('Request failed');
+      var payload = null; try { payload = await res.json(); } catch(_){}
+      if (!res.ok) {
+        var msg = (payload && (payload.error || payload.message)) || 'Request failed';
+        throw new Error(msg);
+      }
       f.reset();
       alert('Thanks! We received your message and will get back to you shortly.');
     } catch (err) {
-      alert('Sorry, we could not send your message. Please WhatsApp us instead.');
+      alert('Sorry, we could not send your message: ' + (err && err.message ? err.message : 'unknown error') + '. Please WhatsApp us instead.');
     } finally { if (btn) { btn.disabled = false; btn.textContent = orig; } }
   });
 });
