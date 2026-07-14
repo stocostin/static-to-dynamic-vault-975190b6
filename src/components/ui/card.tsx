@@ -1,3 +1,4 @@
+// Rebuild bump: force new content hash — CDN was serving a broken artifact for the previous chunk.
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
