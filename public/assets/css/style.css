@@ -736,6 +736,15 @@ footer {
     color: var(--accent-orange);
 }
 
+.info-item p,
+.info-item a {
+    color: var(--dark-color, #222);
+}
+
+.info-item a:hover {
+    color: var(--accent-orange);
+}
+
 .footer-bottom {
     text-align: center;
     padding-top: 20px;
