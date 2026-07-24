@@ -194,75 +194,91 @@ export function ResourceManager({
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-6xl">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+    <div className="p-4 sm:p-8 space-y-6 max-w-7xl mx-auto">
+      <div className="admin-page-header flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4">
         <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-semibold truncate">{title}</h1>
+          <h1 className="admin-title text-2xl sm:text-3xl truncate">{title}</h1>
           {description && (
-            <p className="text-sm text-muted-foreground mt-1">{description}</p>
+            <p className="text-sm text-[color:var(--admin-muted-fg)] mt-1.5 max-w-2xl">{description}</p>
           )}
         </div>
-        <Button onClick={openCreate} className="shrink-0 self-start sm:self-auto">
+        <Button
+          onClick={openCreate}
+          className="shrink-0 self-start sm:self-auto bg-[color:var(--admin-brown)] hover:bg-[oklch(0.26_0.045_45)] text-white shadow-sm"
+        >
           <Plus className="h-4 w-4 mr-2" /> New
         </Button>
       </div>
 
-
-      <Card>
+      <div className="admin-card overflow-hidden">
         {listQuery.isLoading ? (
-          <div className="p-8 flex justify-center">
-            <Loader2 className="h-5 w-5 animate-spin" />
+          <div className="p-10 flex justify-center">
+            <Loader2 className="h-5 w-5 animate-spin text-[color:var(--admin-brown)]" />
           </div>
         ) : listQuery.error ? (
           <div className="p-6 text-sm text-destructive">
             {(listQuery.error as Error).message}
           </div>
         ) : (listQuery.data ?? []).length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">
-            No items yet. Click "New" to add one.
+          <div className="p-10 text-center">
+            <div className="mx-auto h-12 w-12 rounded-full bg-[color:var(--admin-gold-soft)] flex items-center justify-center mb-3">
+              <Plus className="h-5 w-5 text-[color:var(--admin-brown)]" />
+            </div>
+            <p className="text-sm text-[color:var(--admin-muted-fg)]">No items yet.</p>
+            <Button
+              onClick={openCreate}
+              variant="ghost"
+              size="sm"
+              className="mt-2 text-[color:var(--admin-brown)] hover:bg-[color:var(--admin-gold-soft)]"
+            >
+              Create your first
+            </Button>
           </div>
         ) : (
           <div className="w-full overflow-x-auto">
-          <Table>
-
-            <TableHeader>
-              <TableRow>
-                {listColumns.map((c) => (
-                  <TableHead key={c.key}>{c.label}</TableHead>
-                ))}
-                <TableHead className="w-24 text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {listQuery.data!.map((row) => (
-                <TableRow key={row.id}>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[color:var(--admin-bg)] hover:bg-[color:var(--admin-bg)]">
                   {listColumns.map((c) => (
-                    <TableCell key={c.key} className="max-w-xs">
-                      {renderCell(row[c.key], c.key)}
-                    </TableCell>
+                    <TableHead key={c.key} className="text-[color:var(--admin-brown)] font-semibold uppercase text-[11px] tracking-wider">
+                      {c.label}
+                    </TableHead>
                   ))}
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(row)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (confirm("Delete this item?")) deleteMutation.mutate(row.id);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                  <TableHead className="w-24 text-right text-[color:var(--admin-brown)] font-semibold uppercase text-[11px] tracking-wider">
+                    Actions
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {listQuery.data!.map((row) => (
+                  <TableRow key={row.id} className="admin-table-row border-[color:var(--admin-border)]">
+                    {listColumns.map((c) => (
+                      <TableCell key={c.key} className="max-w-xs">
+                        {renderCell(row[c.key], c.key)}
+                      </TableCell>
+                    ))}
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(row)} className="hover:bg-[color:var(--admin-gold-soft)] text-[color:var(--admin-brown)]">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hover:bg-destructive/10 text-destructive"
+                        onClick={() => {
+                          if (confirm("Delete this item?")) deleteMutation.mutate(row.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )}
-
-      </Card>
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
