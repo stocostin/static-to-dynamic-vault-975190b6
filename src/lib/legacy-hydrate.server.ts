@@ -1250,6 +1250,11 @@ function postProcess(html: string): string {
     .replace(
       /(<body[^>]*>)/i,
       `$1\n<a href="#main" class="skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to main content</a>`,
+    )
+    // 6) Neutralize the leftover overlay-fade inline script (overlay was removed above).
+    .replace(
+      /<script>\s*window\.addEventListener\('load',\s*function\(\)\s*\{\s*setTimeout\(function\(\)\s*\{\s*const overlay = document\.getElementById\('loading-overlay'\);[\s\S]*?<\/script>/i,
+      "",
     );
   const needsRotate = rewritten.includes('class="auto-rotate"');
   const needsShop = rewritten.includes('id="productsContainer"');
