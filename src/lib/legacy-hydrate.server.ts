@@ -452,23 +452,33 @@ function renderTestimonialDots(count: number): string {
     .join("");
 }
 
+function initialsFor(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 function renderTeamMembers(
   rows: Array<{ name: string; position: string | null; bio: string | null; photo_url: string | null }>,
 ): string {
   return rows
-    .map(
-      (r) => `
+    .map((r) => {
+      const photo = r.photo_url && r.photo_url.trim();
+      const avatar = photo
+        ? `<img src="${escapeHtml(photo)}" alt="${escapeHtml(r.name)}" loading="lazy">`
+        : `<div class="member-initials" aria-hidden="true">${escapeHtml(initialsFor(r.name))}</div>`;
+      return `
                 <div class="team-member">
-                    <div class="member-image">
-                        <img src="${escapeHtml(r.photo_url ?? "assets/images/placeholder.jpg")}" alt="${escapeHtml(r.name)}">
-                    </div>
+                    <div class="member-image">${avatar}</div>
                     <h3>${escapeHtml(r.name)}</h3>
                     <p>${escapeHtml(r.position ?? "")}</p>
                     <p>${escapeHtml(r.bio ?? "")}</p>
-                </div>`,
-    )
+                </div>`;
+    })
     .join("");
 }
+
 
 // --- shared transforms ------------------------------------------------------
 
