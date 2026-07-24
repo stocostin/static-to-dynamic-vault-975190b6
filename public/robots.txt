@@ -2,3 +2,8 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /auth
+Disallow: /mcp
+Disallow: /.mcp
+Disallow: /.well-known
+
+Sitemap: https://shachavirtimberltd.com/sitemap.xml

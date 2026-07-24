@@ -1184,7 +1184,10 @@ function postProcess(html: string): string {
       /href=("|')\/?(about|services|portfolio|shop|blog|contact|index)\.html(#[^"']*)?\1/gi,
       (_m, q, slug, hash = "") =>
         `href=${q}${slug.toLowerCase() === "index" ? "/" : "/" + slug.toLowerCase()}${hash}${q}`,
-    );
+    )
+    // Wrap primary page content in a <main> landmark for a11y (single <main> per page).
+    .replace(/(<\/header>)/i, "$1\n<main id=\"main\">")
+    .replace(/(<footer[\s>])/i, "</main>\n$1");
   const needsRotate = rewritten.includes('class="auto-rotate"');
   const needsShop = rewritten.includes('id="productsContainer"');
   const inject = (needsRotate ? AUTO_ROTATE_SCRIPT : "") + (needsShop ? SHOP_CONTROLS_SCRIPT : "") + ASSISTANT_WIDGET;

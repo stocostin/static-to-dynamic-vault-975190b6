@@ -93,7 +93,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Shachavir Timber Limited crafts custom doors, frames, staircases and bespoke furniture in Kenya using premium hardwoods and expert joinery.",
       },
-      { property: "og:url", content: "https://shachavirtimberltd.com/" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Shachavir Timber Limited — Premium Woodwork in Kenya" },
       {
@@ -106,6 +105,33 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: appCss,
+      },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://shachavirtimberltd.com/#organization",
+              name: "Shachavir Timber Limited",
+              url: "https://shachavirtimberltd.com/",
+              logo: "https://shachavirtimberltd.com/assets/images/logo.png",
+              description:
+                "Shachavir Timber Limited crafts custom doors, frames, staircases and bespoke furniture in Kenya using premium hardwoods and expert joinery.",
+              areaServed: "KE",
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://shachavirtimberltd.com/#website",
+              url: "https://shachavirtimberltd.com/",
+              name: "Shachavir Timber Limited",
+              publisher: { "@id": "https://shachavirtimberltd.com/#organization" },
+            },
+          ],
+        }),
       },
     ],
   }),
