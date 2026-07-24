@@ -1255,6 +1255,61 @@ function postProcess(html: string): string {
     .replace(
       /<script>\s*window\.addEventListener\('load',\s*function\(\)\s*\{\s*setTimeout\(function\(\)\s*\{\s*const overlay = document\.getElementById\('loading-overlay'\);[\s\S]*?<\/script>/i,
       "",
+    )
+    // 7) Accessible names for social icon links (icon-only <a> with FontAwesome)
+    .replace(
+      /<a\s+href="(https?:\/\/[^"]*facebook\.com[^"]*)"><i class="fab fa-facebook-f"><\/i><\/a>/gi,
+      `<a href="$1" aria-label="Facebook" rel="noopener"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>`,
+    )
+    .replace(
+      /<a\s+href="([^"]*)"><i class="fab fa-instagram"><\/i><\/a>/gi,
+      `<a href="$1" aria-label="Instagram" rel="noopener"><i class="fab fa-instagram" aria-hidden="true"></i></a>`,
+    )
+    .replace(
+      /<a\s+href="([^"]*)"><i class="fab fa-linkedin-in"><\/i><\/a>/gi,
+      `<a href="$1" aria-label="LinkedIn" rel="noopener"><i class="fab fa-linkedin-in" aria-hidden="true"></i></a>`,
+    )
+    .replace(
+      /<a\s+href="([^"]*)"><i class="fab fa-(twitter|x-twitter)"><\/i><\/a>/gi,
+      `<a href="$1" aria-label="Twitter" rel="noopener"><i class="fab fa-$2" aria-hidden="true"></i></a>`,
+    )
+    // 8) Shop search + category filter labels
+    .replace(
+      /<input\s+type="text"\s+id="searchInput"\s+placeholder="([^"]*)">/i,
+      `<label for="searchInput" class="sr-only" style="position:absolute;left:-9999px;">Search products</label><input type="text" id="searchInput" placeholder="$1" aria-label="Search products">`,
+    )
+    .replace(
+      /<select\s+id="categoryFilter">/i,
+      `<label for="categoryFilter" class="sr-only" style="position:absolute;left:-9999px;">Filter by category</label><select id="categoryFilter" aria-label="Filter by category">`,
+    )
+    // 9) Newsletter email input label
+    .replace(
+      /<form\s+class="newsletter-form">\s*<input\s+type="email"\s+placeholder="([^"]*)"\s+required>/i,
+      `<form class="newsletter-form"><label for="newsletter-email" class="sr-only" style="position:absolute;left:-9999px;">Email address</label><input id="newsletter-email" type="email" placeholder="$1" aria-label="Email address" required>`,
+    )
+    // 10) LocalBusiness structured data (safe to inject sitewide; search engines dedupe)
+    .replace(
+      /(<\/head>)/i,
+      `<script type="application/ld+json">${JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        name: "Shachavir Timber Ltd",
+        url: "https://shachavirtimberltd.com/",
+        telephone: "+254 700 000 000",
+        image: "https://shachavirtimberltd.com/assets/images/logo.png",
+        address: {
+          "@type": "PostalAddress",
+          addressCountry: "KE",
+          addressLocality: "Nairobi",
+        },
+        sameAs: ["https://www.facebook.com/profile.php?id=61578653117756"],
+        openingHoursSpecification: [{
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+          opens: "08:00",
+          closes: "18:00",
+        }],
+      })}</script>$1`,
     );
   const needsRotate = rewritten.includes('class="auto-rotate"');
   const needsShop = rewritten.includes('id="productsContainer"');
