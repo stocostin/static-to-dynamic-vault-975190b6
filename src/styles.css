@@ -132,6 +132,144 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
+/* ============================================================
+ * Admin (CMS) design tokens — warm branded (brown / gold / cream)
+ * ============================================================ */
+:root {
+  --admin-bg: oklch(0.968 0.012 78);
+  --admin-surface: oklch(1 0 0);
+  --admin-surface-2: oklch(0.985 0.008 78);
+  --admin-border: oklch(0.9 0.018 70);
+  --admin-border-strong: oklch(0.82 0.03 65);
+  --admin-brown: oklch(0.32 0.05 45);
+  --admin-brown-fg: oklch(0.98 0.01 78);
+  --admin-brown-soft: oklch(0.32 0.05 45 / 0.08);
+  --admin-gold: oklch(0.68 0.12 75);
+  --admin-gold-soft: oklch(0.68 0.12 75 / 0.14);
+  --admin-gold-strong: oklch(0.6 0.13 70);
+  --admin-muted-fg: oklch(0.45 0.02 60);
+  --admin-shadow: 0 1px 2px oklch(0.32 0.05 45 / 0.05),
+                  0 1px 3px oklch(0.32 0.05 45 / 0.06);
+  --admin-shadow-hover: 0 4px 6px oklch(0.32 0.05 45 / 0.06),
+                        0 10px 24px -8px oklch(0.32 0.05 45 / 0.14);
+}
+
+@utility admin-page {
+  min-height: 100%;
+  background-color: var(--admin-bg);
+  background-image:
+    radial-gradient(circle at 0% 0%, oklch(0.68 0.12 75 / 0.06), transparent 40%),
+    radial-gradient(circle at 100% 0%, oklch(0.32 0.05 45 / 0.05), transparent 45%);
+}
+
+@utility admin-card {
+  background-color: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 0.75rem;
+  box-shadow: var(--admin-shadow);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+@utility admin-card-hover {
+  &:hover {
+    box-shadow: var(--admin-shadow-hover);
+    border-color: var(--admin-border-strong);
+    transform: translateY(-1px);
+  }
+}
+
+@utility admin-page-header {
+  position: relative;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--admin-border);
+  margin-bottom: 1.5rem;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    height: 2px;
+    width: 3rem;
+    background: linear-gradient(90deg, var(--admin-gold), var(--admin-brown));
+    border-radius: 2px;
+  }
+}
+
+@utility admin-title {
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  color: var(--admin-brown);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+@utility admin-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--admin-gold-strong);
+}
+
+@utility admin-nav-group-label {
+  padding: 0.25rem 0.75rem 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--admin-gold-strong);
+}
+
+@utility admin-nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--admin-muted-fg);
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: var(--admin-gold-soft);
+    color: var(--admin-brown);
+  }
+}
+
+@utility admin-nav-link-active {
+  background: var(--admin-brown);
+  color: var(--admin-brown-fg);
+  font-weight: 500;
+  box-shadow: inset 3px 0 0 var(--admin-gold);
+
+  &:hover {
+    background: var(--admin-brown);
+    color: var(--admin-brown-fg);
+  }
+}
+
+@utility admin-stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 0.625rem;
+  background: var(--admin-gold-soft);
+  color: var(--admin-brown);
+  border: 1px solid var(--admin-border);
+}
+
+@utility admin-table-row {
+  &:nth-child(even) {
+    background: var(--admin-surface-2);
+  }
+  &:hover {
+    background: var(--admin-gold-soft);
+  }
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
