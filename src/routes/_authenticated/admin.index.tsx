@@ -254,18 +254,17 @@ function AdminDashboard() {
                 >
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="font-medium text-sm truncate flex items-center gap-2">
-                      {c.visitor_name || "Visitor"}
-                      {c.unread_count > 0 && (
-                        <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-[#6F4E37] text-white text-[10px] font-semibold">
-                          {c.unread_count}
-                        </span>
+                      Visitor
+                      {!c.is_read && (
+                        <span className="inline-flex items-center justify-center h-2 w-2 rounded-full bg-[#6F4E37]" />
                       )}
                     </span>
                     <span className="text-xs text-muted-foreground shrink-0">{timeAgo(c.updated_at)}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                    {c.last_message_preview || "—"}
+                    {c.last_message || c.first_message || "—"}
                   </p>
+
                 </Link>
               ))
             )}
