@@ -1258,20 +1258,20 @@ function postProcess(html: string): string {
     )
     // 7) Accessible names for social icon links (icon-only <a> with FontAwesome)
     .replace(
-      /<a\s+href="(https?:\/\/[^"]*facebook\.com[^"]*)"><i class="fab fa-facebook-f"><\/i><\/a>/gi,
-      `<a href="$1" aria-label="Facebook" rel="noopener"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>`,
+      /<a([^>]*?)>\s*<i class="fab fa-facebook-f"><\/i>\s*<\/a>/gi,
+      `<a$1 aria-label="Facebook"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>`,
     )
     .replace(
-      /<a\s+href="([^"]*)"><i class="fab fa-instagram"><\/i><\/a>/gi,
-      `<a href="$1" aria-label="Instagram" rel="noopener"><i class="fab fa-instagram" aria-hidden="true"></i></a>`,
+      /<a([^>]*?)>\s*<i class="fab fa-instagram"><\/i>\s*<\/a>/gi,
+      `<a$1 aria-label="Instagram"><i class="fab fa-instagram" aria-hidden="true"></i></a>`,
     )
     .replace(
-      /<a\s+href="([^"]*)"><i class="fab fa-linkedin-in"><\/i><\/a>/gi,
-      `<a href="$1" aria-label="LinkedIn" rel="noopener"><i class="fab fa-linkedin-in" aria-hidden="true"></i></a>`,
+      /<a([^>]*?)>\s*<i class="fab fa-linkedin-in"><\/i>\s*<\/a>/gi,
+      `<a$1 aria-label="LinkedIn"><i class="fab fa-linkedin-in" aria-hidden="true"></i></a>`,
     )
     .replace(
-      /<a\s+href="([^"]*)"><i class="fab fa-(twitter|x-twitter)"><\/i><\/a>/gi,
-      `<a href="$1" aria-label="Twitter" rel="noopener"><i class="fab fa-$2" aria-hidden="true"></i></a>`,
+      /<a([^>]*?)>\s*<i class="fab fa-(twitter|x-twitter)"><\/i>\s*<\/a>/gi,
+      `<a$1 aria-label="Twitter"><i class="fab fa-$2" aria-hidden="true"></i></a>`,
     )
     // 8) Shop search + category filter labels
     .replace(
