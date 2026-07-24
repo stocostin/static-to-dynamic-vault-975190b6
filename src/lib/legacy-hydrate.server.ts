@@ -1226,7 +1226,36 @@ function postProcess(html: string): string {
     )
     // Wrap primary page content in a <main> landmark for a11y (single <main> per page).
     .replace(/(<\/header>)/i, "$1\n<main id=\"main\">")
-    .replace(/(<footer[\s>])/i, "</main>\n$1");
+    .replace(/(<footer[\s>])/i, "</main>\n$1")
+    // --- Performance / A11y / Best-practices hardening ------------------------
+    // 1) Non-blocking main stylesheet (Lighthouse: render-blocking resources)
+    .replace(
+      /<link\s+rel=("|')stylesheet\1\s+href=("|')\/assets\/css\/style\.css\2\s*\/?>/i,
+      `<link rel="preload" as="style" href="/assets/css/style.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="/assets/css/style.css"></noscript>`,
+    )
+    // 2) Theme color for browser UI (SEO/mobile)
+    .replace(
+      /(<meta\s+charset=("|')UTF-8\2\s*\/?>)/i,
+      `$1\n    <meta name="theme-color" content="#8B4513">`,
+    )
+    // 3) Remove the full-viewport loading overlay — it blocks FCP.
+    .replace(/<div id="loading-overlay">[\s\S]*?<\/div>\s*<style>\s*#loading-overlay[\s\S]*?<\/style>/i, "")
+    .replace(/<div id="loading-overlay">[\s\S]*?<\/div>\s*(?=<\/?[a-z])/i, "")
+    // 4) Accessible name for the icon-only back-to-top anchor
+    .replace(
+      /<a\s+href="#"\s+class="back-to-top"\s+title="Back to Top">/i,
+      `<a href="#" class="back-to-top" title="Back to Top" aria-label="Back to top">`,
+    )
+    // 5) Skip-to-content link for keyboard users (A11y)
+    .replace(
+      /(<body[^>]*>)/i,
+      `$1\n<a href="#main" class="skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to main content</a>`,
+    )
+    // 6) Neutralize the leftover overlay-fade inline script (overlay was removed above).
+    .replace(
+      /<script>\s*window\.addEventListener\('load',\s*function\(\)\s*\{\s*setTimeout\(function\(\)\s*\{\s*const overlay = document\.getElementById\('loading-overlay'\);[\s\S]*?<\/script>/i,
+      "",
+    );
   const needsRotate = rewritten.includes('class="auto-rotate"');
   const needsShop = rewritten.includes('id="productsContainer"');
   const inject = (needsRotate ? AUTO_ROTATE_SCRIPT : "") + (needsShop ? SHOP_CONTROLS_SCRIPT : "") + ASSISTANT_WIDGET;

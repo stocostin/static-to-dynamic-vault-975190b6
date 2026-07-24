@@ -1,67 +1,68 @@
-## Goal
-Elevate the admin area (dashboard + every sub-page) to look professional and cohesive, using the existing warm brown/gold palette. No database or business-logic changes — appearance only.
+# Goal
 
-## Scope
-- `/admin` (dashboard home)
-- All admin sub-pages: Blog Posts, Products, Portfolio, Pages (Home/About/Services/Contact/Portfolio), Messages, Chat, Documents (Invoice/Quotation/Receipt/Estimate lists + editor), Media, Team, Site Settings
+Take the mobile Lighthouse report from **76 / 91 / 96 / 92 / 2-of-3** to **100 / 100 / 100 / 100 / 3-of-3** on `https://shachavirtimberltd.com/`.
 
-## Design direction
-Warm branded, balanced density.
-- Surfaces: cream (`#F7F1E6`) page background, white cards with subtle brown-tinted borders and soft shadows
-- Primary: deep brown `#3E2A1E`; Accent: gold `#B8873B`
-- Typography: existing serif for headings, sans for body; tighten sizes and weights for hierarchy
-- Rounded-lg cards, consistent 6-unit padding, hover lift on interactive cards
+The site is server-rendered from `src/legacy/*.html` via `src/lib/legacy-hydrate.server.ts`, so most fixes land in those two places.
 
-## Changes
+> Note: Lighthouse only re-scores after the site is **published**. All work below has to ship in a publish to move the numbers.
 
-### 1. Shared admin shell
-- Add a consistent page header component used across every admin sub-page: title (serif), subtitle/description, right-aligned primary action button, thin gold underline accent
-- Refine the admin sidebar: active-route highlight in gold, section labels in muted brown, icon + label alignment, collapsed mini state polish
-- Top bar: breadcrumb (Admin › Section), subtle border-bottom, cream backdrop
+---
 
-### 2. Dashboard home (`admin.index.tsx`)
-- Hero header row: greeting + date + "Publish" CTA
-- Stat cards (4): unread messages, active chats, published blogs, products — each with color-coded icon chip (brown/gold/olive/sand), large number, subtle trend line row, hover elevation
-- Quick Actions row: 4 tiles (New blog, New product, New document, Site settings) with icons + short descriptions
-- Two-column activity area: "Latest messages" and "Recent chats" as clean list cards with avatar initials, timestamp, unread dot
-- Small "System" strip at bottom: site status, last publish, storage indicator
+## 1. Performance (76 → 100)
 
-### 3. Sub-page polish (applied uniformly)
-- List pages (Blog/Products/Portfolio/Messages/Documents/Media/Team):
-  - Toolbar row: search input, filter chips, "New" primary button
-  - Replace bare tables with card-wrapped tables: zebra rows, hover highlight, status badges in brand colors, action icons instead of text buttons where appropriate
-  - Empty states: centered illustration block with icon + helpful copy + CTA
-- Editor pages (Blog editor, Product editor, Document editor, Page editors):
-  - Two-column layout on desktop: main editor card + right rail with meta/SEO/publish card
-  - Sticky save bar at bottom with status pill (Draft / Published / Unsaved changes)
-  - Section cards with clear labels and helper text under fields
-- Site Settings: group into tabbed cards (Branding, Contact, Documents, SEO, Social) with the same card treatment
+Current pain points from the report: FCP 3.0s, LCP 4.5s, Speed Index 5.0s. Root causes on the current page: a full-viewport loading overlay, three preloaded remote stylesheets that block first paint, an unoptimized hero JPG with a 3-image rotator, and FontAwesome loaded up-front for a few icons.
 
-### 4. Design tokens (styles.css)
-- Add/refine semantic tokens: `--admin-bg`, `--admin-surface`, `--admin-border`, `--admin-accent`, `--admin-accent-soft`, `--shadow-card`, `--shadow-card-hover`
-- Add a shared `.admin-card`, `.admin-page-header`, `.admin-stat`, `.admin-empty` utility layer via `@utility` in Tailwind v4 style
-- All colors via tokens — no hardcoded hex in components
+Changes:
+1. **Kill the loading overlay's paint block.** Remove the JS-driven "Welcome to:" overlay from the critical path — either drop it entirely or fade it in only after `load` so FCP fires on real content, not a spinner.
+2. **Inline critical CSS.** Extract the ~4KB of above-the-fold rules (nav, hero, hero text, CTA) into a `<style>` block in `<head>`, and load `assets/css/style.css` with `media="print" onload="this.media='all'"` so it becomes non-blocking.
+3. **Optimize the hero image.** Generate AVIF + WebP variants of `hero-bg.jpg` at 3 widths (768 / 1280 / 1920), serve via `<picture>` with `fetchpriority="high"` and explicit `width`/`height`. Drop the JS background-image swap; make hero-bg1 a real `<img>` (the LCP element) instead of a CSS background.
+4. **Delay the hero rotator.** Move it behind `requestIdleCallback` (or after `load`) so the two extra images don't compete with LCP.
+5. **Font strategy.** Self-host Merriweather (400/700) + Open Sans (400/600) + Dancing Script (700) as subset WOFF2 in `src/legacy/assets/fonts/`, drop the two Google Fonts stylesheets, and use `@font-face` with `font-display: swap`. Eliminates 2 render-blocking round-trips to `fonts.googleapis.com`.
+6. **Defer FontAwesome.** Replace the ~5 above-the-fold icons (menu, WhatsApp, back-to-top) with inline SVG. Load the FA stylesheet with the same non-blocking `media="print"` trick, or drop FA entirely and use inline SVGs for the remaining icons.
+7. **Compress remaining images.** Re-encode all `assets/images/*.jpg|png` (portfolio thumbnails, product tiles) to AVIF/WebP with explicit width/height and `loading="lazy"` below the fold. Legacy pages already got partial treatment; finish it on `index.html`, `shop.html`, `portfolio.html`, `blog.html`.
+8. **Trim JS.** `assets/js/main.js` runs on every page; audit for unused sliders/carousels and gate to pages that need them.
 
-### 5. Micro-polish
-- Buttons: consistent sizing, gold primary with brown hover, ghost variant for secondary actions
-- Badges: status (published/draft/archived) with brand-tinted backgrounds
-- Skeleton loaders on list pages instead of spinners
-- Toasts: match brand palette
+Target: LCP ≤ 2.5s, FCP ≤ 1.8s, SI ≤ 3.4s → 100.
 
-## Out of scope
-- No database, RLS, schema, or server-function changes
-- No changes to public-site pages
-- No changes to PDF rendering
-- No new features — visual only
+## 2. Accessibility (91 → 100)
 
-## Files touched (expected)
-- `src/styles.css` (tokens + utilities)
-- `src/components/admin/AdminShell.tsx`, `AdminSidebar.tsx`, `AdminPageHeader.tsx` (new/refined)
-- `src/routes/_authenticated/admin.index.tsx`
-- All `src/routes/_authenticated/admin.*.tsx` sub-pages (presentational updates)
-- `src/components/admin/DocumentEditor.tsx` (layout wrapper + right rail only, no logic)
+Likely deductions: low-contrast body text, icon-only anchors without accessible names, and missing labels on the "Message Us" / "Shop With Us" buttons if wrapped inline. To fix:
+- Bump muted text tokens to WCAG AA (≥ 4.5:1). Concrete: darken the "Why Choose…" paragraph color and the footer text.
+- Add `aria-label` to the mobile menu toggle, back-to-top link, and every social-icon `<a>` in the footer.
+- Add a visually-hidden `<h1>` on pages where the visible headline is inside a decorative wrapper.
+- Ensure the loading overlay (if kept) uses `role="status"` and `aria-live="polite"`, and is `aria-hidden` once removed.
+- Add a "Skip to main content" link at the top of `<body>` targeting `#main`.
+
+## 3. Best Practices (96 → 100)
+
+Typical residual deductions on this template: `Permissions-Policy` header not set, browser errors from the FA beta CDN, and the old-jQuery CSP profile. Actions:
+- Serve a small `Permissions-Policy` and `Referrer-Policy: strict-origin-when-cross-origin` via the SSR response headers in `legacy-hydrate.server.ts`.
+- Upgrade the FontAwesome CDN from the 6.0.0-beta3 URL to a stable release (or drop it — see perf item 6).
+- Ensure no `console.error` fires on load (audit `main.js`, remove references to elements that don't exist on every page).
+- Add `<meta name="theme-color" content="#…">` and confirm the favicon set is complete (192/512 PNG for PWA hint).
+
+## 4. SEO (92 → 100)
+
+Remaining deductions are usually tap-target size on mobile and one or two pages still missing a unique meta description. Actions:
+- Audit tap targets on the hero CTAs and nav — enforce ≥ 44×44 CSS px with padding.
+- Verify each legacy page has a unique `<title>` and `<meta description>` (spot-checked `index.html`; do the same for `shop.html`, `portfolio.html`, `about.html`, `services.html`, `contact.html`, `blog.html`).
+- Confirm every `<a>` has discernible text (fixes overlap with A11y).
+
+## 5. Agentic Browsing (2/3 → 3/3)
+
+The missing check is almost always `/llms.txt`. Add `public/llms.txt` at the site root listing the public routes (Home, About, Services, Portfolio, Shop, Blog, Contact) per the llms.txt spec, plus a one-line summary of what Shachavir Timber does.
+
+---
 
 ## Verification
-- Visit each admin route in the preview at desktop and mobile viewports
-- Confirm no console errors, no layout overflow, active nav highlight works, empty states render
-- Confirm document editor still saves and PDF still downloads unchanged
+
+After the edits land:
+1. Publish the project.
+2. Re-run Lighthouse from the SEO panel (or PageSpeed Insights on `https://shachavirtimberltd.com/`).
+3. Update the SEO findings via `seo_chat--update_findings` once each category is at 100.
+
+## Scope notes
+
+- No backend/data changes — this is presentation + static asset work only.
+- Hero image variants require running an image-encode step; I'll generate the AVIF/WebP files from the existing JPGs during build.
+- Reaching a perfect **100** on mobile Performance is aggressive — if any single item can't quite close the gap (e.g. a third-party embed we can't defer), I'll flag it before finishing rather than silently landing at 98.
