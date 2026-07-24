@@ -84,12 +84,10 @@ const groups: NavGroup[] = [
 function NavContent({ pathname, onNavigate, onSignOut }: { pathname: string; onNavigate?: () => void; onSignOut: () => void }) {
   return (
     <>
-      <nav className="flex-1 overflow-y-auto p-2 space-y-3">
+      <nav className="flex-1 overflow-y-auto p-3 space-y-4">
         {groups.map((g) => (
           <div key={g.label} className="space-y-0.5">
-            <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {g.label}
-            </div>
+            <div className="admin-nav-group-label">{g.label}</div>
             {g.items.map((item) => {
               const active = item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(item.to + "/");
               const Icon = item.icon;
@@ -98,9 +96,7 @@ function NavContent({ pathname, onNavigate, onSignOut }: { pathname: string; onN
                   key={item.to}
                   to={item.to as never}
                   onClick={onNavigate}
-                  className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors ${
-                    active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                  }`}
+                  className={`admin-nav-link ${active ? "admin-nav-link-active" : ""}`}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
                   <span className="truncate">{item.label}</span>
@@ -110,17 +106,31 @@ function NavContent({ pathname, onNavigate, onSignOut }: { pathname: string; onN
           </div>
         ))}
       </nav>
-      <div className="p-2 border-t space-y-1">
-        <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+      <div className="p-3 border-t space-y-1 bg-[color:var(--admin-bg)]/60">
+        <Button asChild variant="ghost" size="sm" className="w-full justify-start text-[color:var(--admin-brown)] hover:bg-[color:var(--admin-gold-soft)]">
           <a href="/" target="_blank" rel="noreferrer">
             <Globe className="h-4 w-4 mr-2" /> View site
           </a>
         </Button>
-        <Button variant="ghost" size="sm" className="w-full justify-start" onClick={onSignOut}>
+        <Button variant="ghost" size="sm" className="w-full justify-start text-[color:var(--admin-brown)] hover:bg-[color:var(--admin-gold-soft)]" onClick={onSignOut}>
           <LogOut className="h-4 w-4 mr-2" /> Sign out
         </Button>
       </div>
     </>
+  );
+}
+
+function BrandMark() {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[color:var(--admin-brown)] to-[color:var(--admin-gold)] flex items-center justify-center text-white font-serif font-bold text-sm shadow-sm">
+        S
+      </div>
+      <div className="min-w-0">
+        <div className="text-sm font-semibold text-[color:var(--admin-brown)] leading-tight font-serif">Shachavir</div>
+        <div className="text-[10px] tracking-wider uppercase text-[color:var(--admin-gold-strong)] leading-tight">CMS Console</div>
+      </div>
+    </div>
   );
 }
 
@@ -134,20 +144,18 @@ export function AdminShell() {
   };
 
   return (
-    <div className="min-h-screen flex w-full bg-muted/30">
+    <div className="min-h-screen flex w-full bg-[color:var(--admin-bg)]">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-60 border-r bg-card flex-col shrink-0">
-        <div className="px-5 py-4 border-b">
-          <Link to="/admin" className="text-base font-semibold">
-            Shachavir CMS
-          </Link>
+      <aside className="hidden lg:flex w-64 border-r border-[color:var(--admin-border)] bg-[color:var(--admin-surface)] flex-col shrink-0">
+        <div className="px-5 py-4 border-b border-[color:var(--admin-border)]">
+          <Link to="/admin"><BrandMark /></Link>
         </div>
         <NavContent pathname={pathname} onSignOut={signOut} />
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile top bar */}
-        <header className="lg:hidden sticky top-0 z-30 flex items-center gap-2 border-b bg-card px-3 py-2">
+        <header className="lg:hidden sticky top-0 z-30 flex items-center gap-2 border-b border-[color:var(--admin-border)] bg-[color:var(--admin-surface)] px-3 py-2">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Open menu">
@@ -155,18 +163,16 @@ export function AdminShell() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-72 p-0 flex flex-col">
-              <SheetHeader className="px-5 py-4 border-b">
-                <SheetTitle className="text-left text-base">Shachavir CMS</SheetTitle>
+              <SheetHeader className="px-5 py-4 border-b border-[color:var(--admin-border)]">
+                <SheetTitle className="text-left"><BrandMark /></SheetTitle>
               </SheetHeader>
               <NavContent pathname={pathname} onNavigate={() => setOpen(false)} onSignOut={signOut} />
             </SheetContent>
           </Sheet>
-          <Link to="/admin" className="text-sm font-semibold truncate">
-            Shachavir CMS
-          </Link>
+          <BrandMark />
         </header>
 
-        <main className="flex-1 overflow-x-hidden min-w-0">
+        <main className="flex-1 overflow-x-hidden min-w-0 admin-page">
           <Outlet />
         </main>
       </div>
