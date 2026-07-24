@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import html from "../legacy/services.html?raw";
-import { legacyHtmlHeaders } from "@/lib/legacy-response";
 
 export const Route = createFileRoute("/services")({
   server: {
@@ -8,7 +7,12 @@ export const Route = createFileRoute("/services")({
       GET: async () => {
         const { hydrateServices } = await import("@/lib/legacy-hydrate.server");
         const body = await hydrateServices(html);
-        return new Response(body, { headers: legacyHtmlHeaders() });
+        return new Response(body, {
+          headers: {
+            "content-type": "text/html; charset=utf-8",
+            "cache-control": "no-store",
+          },
+        });
       },
     },
   },

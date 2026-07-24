@@ -27,7 +27,7 @@ export const Route = createFileRoute("/assets/images/$")({
           status: 200,
           headers: {
             "Content-Type": contentTypeFor(splat),
-            "Cache-Control": "public, max-age=31536000, immutable",
+            "Cache-Control": "public, max-age=300",
           },
         });
       },
