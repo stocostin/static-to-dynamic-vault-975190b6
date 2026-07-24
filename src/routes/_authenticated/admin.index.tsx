@@ -97,12 +97,13 @@ function AdminDashboard() {
     queryFn: async () => {
       const { data } = await supabase
         .from("chat_conversations")
-        .select("id, visitor_name, last_message_preview, updated_at, unread_count")
+        .select("id, first_message, last_message, updated_at, is_read")
         .order("updated_at", { ascending: false })
         .limit(5);
       return data ?? [];
     },
   });
+
 
   const today = new Date().toLocaleDateString(undefined, {
     weekday: "long",
