@@ -928,6 +928,21 @@ footer {
     object-fit: cover;
 }
 
+.member-initials {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text-light);
+    background: linear-gradient(135deg, var(--primary-color) 0%, #8B6749 100%);
+    letter-spacing: 1px;
+}
+
+
 .team-member h3 {
     color: var(--primary-color);
     margin-bottom: 5px;
