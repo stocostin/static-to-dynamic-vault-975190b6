@@ -9,6 +9,19 @@ interface SitemapEntry {
   priority?: string;
 }
 
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function sitemapLoc(path: string): string {
+  return encodeURI(BASE_URL + path).replace(/#/g, "%23");
+}
+
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
@@ -45,7 +58,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         const urls = entries.map((e) =>
           [
             `  <url>`,
-            `    <loc>${BASE_URL}${e.path}</loc>`,
+            `    <loc>${escapeXml(sitemapLoc(e.path))}</loc>`,
             e.changefreq ? `    <changefreq>${e.changefreq}</changefreq>` : null,
             e.priority ? `    <priority>${e.priority}</priority>` : null,
             `  </url>`,

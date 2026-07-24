@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { SITE_URL } from "@/lib/site";
 
 function sb() {
   return createClient<Database>(
@@ -12,15 +12,7 @@ function sb() {
 }
 
 function origin(): string {
-  try {
-    const req = getRequest();
-    const proto = req.headers.get("x-forwarded-proto") ?? "https";
-    const host = req.headers.get("host");
-    if (host) return `${proto}://${host}`;
-  } catch {
-    /* no request context */
-  }
-  return "";
+  return SITE_URL;
 }
 
 function absolutize(url: string | null | undefined, base: string): string | null {

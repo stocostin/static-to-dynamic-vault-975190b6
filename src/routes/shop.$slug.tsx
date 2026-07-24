@@ -68,6 +68,7 @@ export const Route = createFileRoute("/shop/$slug")({
     if (priceMajor) {
       ld.offers = {
         "@type": "Offer",
+        url,
         price: priceMajor,
         priceCurrency: p.currency || "KES",
         availability: p.in_stock
@@ -132,6 +133,9 @@ function ShopProductPage() {
           <img
             src={heroImg}
             alt={product.title}
+            width="900"
+            height="675"
+            fetchPriority="high"
             className="w-full rounded-lg object-cover"
           />
           {gallery.length > 1 && (
@@ -141,6 +145,8 @@ function ShopProductPage() {
                   key={src}
                   src={src}
                   alt=""
+                    width="220"
+                    height="220"
                   className="aspect-square w-full rounded object-cover"
                 />
               ))}
@@ -206,6 +212,8 @@ function ShopProductPage() {
                     <img
                       src={img}
                       alt={r.title}
+                      width="320"
+                      height="320"
                       loading="lazy"
                       className="h-full w-full object-cover transition group-hover:scale-105"
                     />

@@ -93,6 +93,39 @@ type SectionOverride = {
   content: Record<string, unknown>;
 };
 
+const SITE_URL = "https://shachavirtimberltd.com";
+const GOOGLE_SITE_VERIFICATION = "WySE75Pwbzg2es-v72PY36o3HsztYCqXXwRC4xc6Gt0";
+
+function absoluteSiteUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path;
+  if (!path || path === "/") return `${SITE_URL}/`;
+  return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+function setCanonical(root: HTMLElement, href: string): void {
+  const link = root.querySelector('link[rel="canonical"]');
+  if (link) {
+    link.setAttribute("href", href);
+    return;
+  }
+  const head = root.querySelector("head");
+  if (head) {
+    head.insertAdjacentHTML(
+      "beforeend",
+      `\n    <link rel="canonical" href="${escapeHtml(href)}">`,
+    );
+  }
+}
+
+function appendJsonLd(root: HTMLElement, data: Record<string, unknown>): void {
+  const head = root.querySelector("head");
+  if (!head) return;
+  head.insertAdjacentHTML(
+    "beforeend",
+    `\n    <script type="application/ld+json">${JSON.stringify(data).replace(/<\//g, "<\\/")}</script>`,
+  );
+}
+
 async function loadSiteContext(version: string): Promise<SiteContext> {
   return cached(`site-context`, version, async () => {
     const c = sb();
@@ -702,8 +735,13 @@ function applyGlobalWhatsApp(root: HTMLElement, ctx: SiteContext) {
   }
 }
 
-function applyMeta(root: HTMLElement, ctx: SiteContext, slug: string) {
+function applyMeta(root: HTMLElement, ctx: SiteContext, slug: string, activePath: string) {
   const p = ctx.pages.get(slug);
+  const pageUrl = absoluteSiteUrl(activePath);
+  setCanonical(root, pageUrl);
+  setMeta(root, "property", "og:url", pageUrl);
+  setMeta(root, "property", "og:type", "website");
+  setMeta(root, "name", "twitter:card", "summary_large_image");
   if (!p) return;
   const title = p.seo_title ?? p.title;
   if (title) {
@@ -717,12 +755,9 @@ function applyMeta(root: HTMLElement, ctx: SiteContext, slug: string) {
     setMeta(root, "name", "twitter:description", p.meta_description);
   }
   if (p.og_image_url) {
-    setMeta(root, "property", "og:image", p.og_image_url);
-    setMeta(root, "name", "twitter:image", p.og_image_url);
-  }
-  if (p.canonical_url) {
-    const link = root.querySelector('link[rel="canonical"]');
-    if (link) link.setAttribute("href", p.canonical_url);
+    const imageUrl = absoluteSiteUrl(p.og_image_url);
+    setMeta(root, "property", "og:image", imageUrl);
+    setMeta(root, "name", "twitter:image", imageUrl);
   }
 }
 
@@ -1079,7 +1114,7 @@ function applyNamedSection(root: HTMLElement, slug: string, key: string, content
 async function applyCommon(root: HTMLElement, slug: string, activePath: string) {
   const version = await getContentVersion();
   const ctx = await loadSiteContext(version);
-  applyMeta(root, ctx, slug);
+  applyMeta(root, ctx, slug, activePath);
   applyHeaderLogo(root, ctx);
   applyLoadingOverlay(root, ctx);
   applyMenus(root, ctx, activePath);
@@ -1169,6 +1204,10 @@ fetch("/api/public/chat",{method:"POST",headers:{"Content-Type":"application/jso
 
 function postProcess(html: string): string {
   const rewritten = html
+    .replace(
+      /<meta\s+name=("|')google-site-verification\1\s+content=("|')[^"']*\2\s*\/?>/i,
+      `<meta name="google-site-verification" content="${GOOGLE_SITE_VERIFICATION}">`,
+    )
     .replace(
       /https?:\/\/[^"'\s)]+\/storage\/v1\/object\/public\/admin-uploads\/([^"'\s)]+)/g,
       "/uploads/$1",
@@ -1390,7 +1429,7 @@ export async function hydrateBlogPost(
 ): Promise<{ body: string; status: number }> {
   const { data: post } = await sb()
     .from("blog_posts")
-    .select("slug,title,excerpt,cover_image_url,body_html,category,author,tags,published_at,is_published,seo_title,meta_description")
+    .select("slug,title,excerpt,cover_image_url,body_html,category,author,tags,published_at,created_at,is_published,seo_title,meta_description")
     .eq("slug", slug)
     .eq("is_published", true)
     .maybeSingle();
@@ -1420,6 +1459,8 @@ export async function hydrateBlogPost(
 
     const title = post.seo_title ?? post.title;
     const desc = (post.meta_description ?? post.excerpt ?? "").trim();
+    const url = absoluteSiteUrl(`/blog/${slug}`);
+    const publishedAt = post.published_at ?? post.created_at;
     if (title) {
       setTitle(root, title);
       setMeta(root, "property", "og:title", title);
@@ -1430,10 +1471,38 @@ export async function hydrateBlogPost(
       setMeta(root, "property", "og:description", desc);
       setMeta(root, "name", "twitter:description", desc);
     }
-    if (post.cover_image_url) {
-      setMeta(root, "property", "og:image", post.cover_image_url);
-      setMeta(root, "name", "twitter:image", post.cover_image_url);
+    const coverImageUrl = post.cover_image_url ? absoluteSiteUrl(post.cover_image_url) : null;
+    if (coverImageUrl) {
+      setMeta(root, "property", "og:image", coverImageUrl);
+      setMeta(root, "name", "twitter:image", coverImageUrl);
     }
+    setCanonical(root, url);
+    setMeta(root, "property", "og:url", url);
+    setMeta(root, "property", "og:type", "article");
+    appendJsonLd(root, {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: post.title,
+      description: desc || undefined,
+      image: coverImageUrl || undefined,
+      datePublished: publishedAt || undefined,
+      author: {
+        "@type": post.author ? "Person" : "Organization",
+        name: post.author || "Shachavir Timber Limited",
+      },
+      publisher: {
+        "@type": "Organization",
+        name: "Shachavir Timber Limited",
+        logo: {
+          "@type": "ImageObject",
+          url: `${SITE_URL}/assets/images/logo.png`,
+        },
+      },
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": url,
+      },
+    });
 
     const date = post.published_at
       ? new Date(post.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
