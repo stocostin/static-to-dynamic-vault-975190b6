@@ -233,9 +233,13 @@ async function loadTeam(version: string) {
     const { data } = await sb()
       .from("team_members_public")
       .select("name,position,bio,photo_url")
-      .eq("is_published", true)
       .order("sort_order", { ascending: true });
-    return data ?? [];
+    return (data ?? []).map((m) => ({
+      name: m.name ?? "",
+      position: m.position,
+      bio: m.bio,
+      photo_url: m.photo_url,
+    }));
   });
 }
 
