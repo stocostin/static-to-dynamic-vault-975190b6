@@ -231,15 +231,11 @@ async function loadTestimonials(version: string) {
 async function loadTeam(version: string) {
   return cached("team", version, async () => {
     const { data } = await sb()
-      .from("team_members_public")
+      .from("team_members")
       .select("name,position,bio,photo_url")
+      .eq("is_published", true)
       .order("sort_order", { ascending: true });
-    return (data ?? []).map((m) => ({
-      name: m.name ?? "",
-      position: m.position,
-      bio: m.bio,
-      photo_url: m.photo_url,
-    }));
+    return data ?? [];
   });
 }
 

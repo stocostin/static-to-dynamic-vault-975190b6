@@ -854,45 +854,7 @@ export type Database = {
       }
     }
     Views: {
-      team_members_public: {
-        Row: {
-          bio: string | null
-          created_at: string | null
-          id: string | null
-          name: string | null
-          photo_url: string | null
-          position: string | null
-          skills: Json | null
-          social_links: Json | null
-          sort_order: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          bio?: string | null
-          created_at?: string | null
-          id?: string | null
-          name?: string | null
-          photo_url?: string | null
-          position?: string | null
-          skills?: Json | null
-          social_links?: Json | null
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          bio?: string | null
-          created_at?: string | null
-          id?: string | null
-          name?: string | null
-          photo_url?: string | null
-          position?: string | null
-          skills?: Json | null
-          social_links?: Json | null
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       next_document_number: {
