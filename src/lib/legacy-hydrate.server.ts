@@ -93,7 +93,7 @@ type SectionOverride = {
   content: Record<string, unknown>;
 };
 
-const SITE_URL = "https://shachavirtimberltd.com";
+const SITE_URL = "https://shachavirtimber.com";
 const GOOGLE_SITE_VERIFICATION = "WySE75Pwbzg2es-v72PY36o3HsztYCqXXwRC4xc6Gt0";
 
 function absoluteSiteUrl(path: string): string {

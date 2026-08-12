@@ -7,4 +7,4 @@ Disallow: /.mcp
 Disallow: /.well-known
 Disallow: /uploads
 
-Sitemap: https://shachavirtimberltd.com/sitemap.xml
+Sitemap: https://shachavirtimber.com/sitemap.xml
