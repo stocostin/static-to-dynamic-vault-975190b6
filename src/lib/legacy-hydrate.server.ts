@@ -734,6 +734,30 @@ function applyGlobalWhatsApp(root: HTMLElement, ctx: SiteContext) {
   }
 }
 
+function localBusinessJsonLd(ctx: SiteContext): Record<string, unknown> {
+  const s = (ctx as unknown as { settings?: Record<string, string> }).settings ?? {};
+  const phone = s["contact_phone"] || "+254721499606";
+  const address = s["contact_address"] || "Ruai Bypass, Nairobi";
+  const [street, locality] = address.split(",").map((x) => x.trim());
+  return {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": `${SITE_URL}/#localbusiness`,
+    name: s["site_name"] || "Shachavir Timber Limited",
+    url: `${SITE_URL}/`,
+    image: `${SITE_URL}/assets/images/logo.png`,
+    telephone: phone,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: street || address,
+      addressLocality: locality || "Nairobi",
+      addressCountry: "KE",
+    },
+    areaServed: "KE",
+    priceRange: "$$",
+  };
+}
+
 function applyMeta(root: HTMLElement, ctx: SiteContext, slug: string, activePath: string) {
   const p = ctx.pages.get(slug);
   const pageUrl = absoluteSiteUrl(activePath);
@@ -741,6 +765,7 @@ function applyMeta(root: HTMLElement, ctx: SiteContext, slug: string, activePath
   setMeta(root, "property", "og:url", pageUrl);
   setMeta(root, "property", "og:type", "website");
   setMeta(root, "name", "twitter:card", "summary_large_image");
+  appendJsonLd(root, localBusinessJsonLd(ctx));
   if (!p) return;
   const title = p.seo_title ?? p.title;
   if (title) {
