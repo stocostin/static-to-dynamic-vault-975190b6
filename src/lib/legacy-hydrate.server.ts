@@ -735,7 +735,7 @@ function applyGlobalWhatsApp(root: HTMLElement, ctx: SiteContext) {
 }
 
 function localBusinessJsonLd(ctx: SiteContext): Record<string, unknown> {
-  const s = (ctx as unknown as { settings?: Record<string, string> }).settings ?? {};
+  const s = ctx.settings;
   const phone = s["contact_phone"] || "+254721499606";
   const address = s["contact_address"] || "Ruai Bypass, Nairobi";
   const [street, locality] = address.split(",").map((x) => x.trim());
