@@ -94,7 +94,7 @@ type SectionOverride = {
 };
 
 const SITE_URL = "https://shachavirtimber.com";
-const GOOGLE_SITE_VERIFICATION = "WySE75Pwbzg2es-v72PY36o3HsztYCqXXwRC4xc6Gt0";
+const GOOGLE_SITE_VERIFICATION = "Xv-zdmEIYKqoW_sKlMzkd6Q3WqQi8QaMJxaDML1qcGI";
 
 function absoluteSiteUrl(path: string): string {
   if (/^https?:\/\//i.test(path)) return path;
