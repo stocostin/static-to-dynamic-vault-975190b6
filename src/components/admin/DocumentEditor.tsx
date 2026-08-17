@@ -64,12 +64,18 @@ function defaultState(type: DocType): FormState {
     location: "",
     line_items: [emptyItem()],
     currency: "KES",
-    notes: "",
+    notes: DEFAULT_NOTES,
     tax_enabled: false,
     tax_rate: 16,
     tax_label: "VAT",
   };
 }
+
+const DEFAULT_NOTES = `- Prices are valid for 14 days from the date of this document.
+- Payment terms: 60% deposit, balance on delivery.
+- Goods once sold are not returnable.
+- Delivery time: 2 - 3 working days upon confirmation.
+- Paybill 400200   Account number 1089950`;
 
 function readSetting(rows: { key: string; value: unknown }[] | undefined, key: string): string {
   const row = rows?.find((r) => r.key === key);
