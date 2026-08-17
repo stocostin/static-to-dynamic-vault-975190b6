@@ -74,7 +74,7 @@ function defaultState(type: DocType): FormState {
 const DEFAULT_NOTES = `- Prices are valid for 14 days from the date of this document.
 - Payment terms: 60% deposit, balance on delivery.
 - Goods once sold are not returnable.
-- Delivery time: 2 - 3 working days upon confirmation.
+- Delivery time: 2 - 3 weeks upon confirmation.
 - Paybill 400200   Account number 1089950`;
 
 function readSetting(rows: { key: string; value: unknown }[] | undefined, key: string): string {
